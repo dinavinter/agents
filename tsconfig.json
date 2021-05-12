@@ -9,12 +9,10 @@
     "jsx": "preserve",
     "resolveJsonModule": true,
     "noEmit": true,
-    "newLine": "lf",
-    "sourceMap": true,
     "skipLibCheck": true,
     "jsxImportSource": "solid-js",
     "types": ["vite/client"]
   },
-  "include": ["./src"],
+  "include": ["./src/**/*", "./playground/**/*"],
   "exclude": ["node_modules/"]
 }
