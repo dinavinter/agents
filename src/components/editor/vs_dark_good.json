@@ -37,13 +37,31 @@
     { "foreground": "#569cd6", "token": "REDACTED" },
     { "foreground": "#d7ba7d", "token": "REDACTED" },
     { "foreground": "#9cdcfe", "token": "REDACTED" },
+    {
+      "foreground": "#d7ba7d",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#d7ba7d",
+      "token": "REDACTED"
+    },
     { "foreground": "#d7ba7d", "token": "REDACTED" },
-    { "foreground": "#d7ba7d", "token": "REDACTED" },
-    { "foreground": "#d7ba7d", "token": "REDACTED" },
-    { "foreground": "#d7ba7d", "token": "REDACTED" },
-    { "foreground": "#d7ba7d", "token": "REDACTED" },
-    { "foreground": "#d7ba7d", "token": "REDACTED" },
-    { "foreground": "#d7ba7d", "token": "source.css.less entity.other.attribute-name.id" },
+    {
+      "foreground": "#d7ba7d",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#d7ba7d",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#d7ba7d",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#d7ba7d",
+      "token": "source.css.less entity.other.attribute-name.id"
+    },
     { "foreground": "#d7ba7d", "token": "REDACTED" },
     { "foreground": "#f44747", "token": "invalid" },
     { "fontStyle": "underline", "token": "REDACTED" },
@@ -53,15 +71,24 @@
     { "foreground": "#b5cea8", "token": "REDACTED" },
     { "foreground": "#ce9178", "token": "REDACTED" },
     { "foreground": "#569cd6", "token": "REDACTED" },
-    { "foreground": "#6A9955", "token": "REDACTED" },
-    { "foreground": "#6796e6", "token": "REDACTED" },
+    {
+      "foreground": "#6A9955",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#6796e6",
+      "token": "REDACTED"
+    },
     { "foreground": "#ce9178", "token": "REDACTED" },
     { "foreground": "#808080", "token": "REDACTED" },
     { "foreground": "#569cd6", "token": "REDACTED" },
     { "foreground": "#569cd6", "token": "REDACTED" },
     { "foreground": "#ce9178", "token": "REDACTED" },
     { "foreground": "#b5cea8", "token": "REDACTED" },
-    { "foreground": "#9cdcfe", "token": "REDACTED" },
+    {
+      "foreground": "#9cdcfe",
+      "token": "REDACTED"
+    },
     { "foreground": "#569cd6", "token": "REDACTED" },
     { "foreground": "#569cd6", "token": "storage" },
     { "foreground": "#569cd6", "token": "REDACTED" },
@@ -72,8 +99,14 @@
     { "foreground": "#ce9178", "token": "REDACTED" },
     { "foreground": "#ce9178", "token": "REDACTED" },
     { "foreground": "#d16969", "token": "REDACTED" },
-    { "foreground": "#569cd6", "token": "REDACTED" },
-    { "foreground": "#569cd6", "token": "REDACTED" },
+    {
+      "foreground": "#569cd6",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#569cd6",
+      "token": "REDACTED"
+    },
     { "foreground": "#569cd6", "token": "REDACTED" },
     { "foreground": "#d4d4d4", "token": "REDACTED" },
     { "foreground": "#9cdcfe", "token": "REDACTED" },
@@ -96,8 +129,14 @@
     { "foreground": "#569cd6", "token": "REDACTED" },
     { "foreground": "#569cd6", "token": "REDACTED" },
     { "foreground": "#b5cea8", "token": "REDACTED" },
-    { "foreground": "#569cd6", "token": "REDACTED" },
-    { "foreground": "#569cd6", "token": "REDACTED" },
+    {
+      "foreground": "#569cd6",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#569cd6",
+      "token": "REDACTED"
+    },
     { "foreground": "#9cdcfe", "token": "REDACTED" },
     { "foreground": "#b5cea8", "token": "REDACTED" },
     { "foreground": "#d4d4d4", "token": "REDACTED" },
@@ -107,7 +146,10 @@
     { "foreground": "#DCDCAA", "token": "REDACTED" },
     { "foreground": "#DCDCAA", "token": "REDACTED" },
     { "foreground": "#DCDCAA", "token": "REDACTED" },
-    { "foreground": "#DCDCAA", "token": "source.powershell variable.other.member" },
+    {
+      "foreground": "#DCDCAA",
+      "token": "source.powershell variable.other.member"
+    },
     { "foreground": "#DCDCAA", "token": "REDACTED" },
     { "foreground": "#4EC9B0", "token": "REDACTED" },
     { "foreground": "#4EC9B0", "token": "REDACTED" },
@@ -169,15 +211,36 @@
     { "foreground": "#CE9178", "token": "REDACTED" },
     { "foreground": "#CE9178", "token": "REDACTED" },
     { "foreground": "#CE9178", "token": "REDACTED" },
+    {
+      "foreground": "#CE9178",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#CE9178",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#CE9178",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#CE9178",
+      "token": "REDACTED"
+    },
     { "foreground": "#CE9178", "token": "REDACTED" },
     { "foreground": "#CE9178", "token": "REDACTED" },
-    { "foreground": "#CE9178", "token": "REDACTED" },
-    { "foreground": "#CE9178", "token": "REDACTED" },
-    { "foreground": "#CE9178", "token": "REDACTED" },
-    { "foreground": "#CE9178", "token": "REDACTED" },
-    { "foreground": "#d16969", "token": "REDACTED" },
-    { "foreground": "#d16969", "token": "REDACTED" },
-    { "foreground": "#d16969", "token": "REDACTED" },
+    {
+      "foreground": "#d16969",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#d16969",
+      "token": "REDACTED"
+    },
+    {
+      "foreground": "#d16969",
+      "token": "REDACTED"
+    },
     { "foreground": "#d16969", "token": "REDACTED" },
     { "foreground": "#DCDCAA", "token": "REDACTED" },
     { "foreground": "#DCDCAA", "token": "REDACTED" },
