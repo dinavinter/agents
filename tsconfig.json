@@ -17,6 +17,6 @@
     "jsxImportSource": "solid-js",
     "types": ["vite/client"]
   },
-  "include": ["./src/**/*", "./playground/**/*", "./types/types.d.ts"],
+  "include": ["./src/**/*", "./playground/**/*", "repl/**/*"],
   "exclude": ["node_modules/"]
 }
