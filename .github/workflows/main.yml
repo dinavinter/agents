@@ -1,0 +1,90 @@
+name: Setup SAP AI Monorepo
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup-monorepo:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'lts'
+
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    - name: Create nx workspace
+      run: |
+        pnpm create nx-workspace sap-ai --packageManager=pnpm --preset=apps --appName=sap-ai-demo --style=css --nx-cloud=false
+        cd sap-ai
+        pnpm init
+        pnpm install
+
+    - name: Set up SAP AI Demo App
+      run: |
+        cd sap-ai
+        pnpm add ai dotenv tsx
+        mkdir -p apps/sap-ai-demo/src
+        echo 'import { CoreMessage, streamText } from "ai";
+        import { config } from "dotenv";
+        import * as readline from "node:readline/promises";
+        import { openaiGP4o } from "../providers/openai.js";
+        import { tokenService } from "../providers/sap-token.js";
+        
+        config();
+        
+        const terminal = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        
+        const messages: CoreMessage[] = [];
+        
+        async function main() {
+            tokenService.credentialsFromEnv();
+        
+            while (true) {
+                const userInput = await terminal.question("You: ");
+                messages.push({ role: "user", content: userInput });
+        
+                const result = await streamText({
+                    model: openaiGP4o(),
+                    system: "You are a helpful, respectful and honest assistant.",
+                    messages,
+                });
+        
+                let fullResponse = "";
+                process.stdout.write("\nAssistant: ");
+                for await (const delta of result.textStream) {
+                    fullResponse += delta;
+                    process.stdout.write(delta);
+                }
+                process.stdout.write("\n\n");
+        
+                messages.push({ role: "assistant", content: fullResponse });
+            }
+        }
+
+        main().catch(console.error);' > apps/sap-ai-demo/src/index.ts
+        echo '{
+  "name": "sap-ai-demo",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "tsx ./src/index.ts"
+  },
+  "dependencies": {
+    "ai": "^latest",
+    "dotenv": "^latest",
+    "tsx": "^latest"
+  }
+}' > apps/sap-ai-demo/package.json
+        pnpm install --prefix apps/sap-ai-demo
