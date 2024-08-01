@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "packageManager": "pnpm@9.6.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsx ./index.ts"
@@ -11,8 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ai-sdk/openai": "^0.0.40",
     "ai": "^3.2.43",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "sap-ai-token":"workshrpace:*"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
