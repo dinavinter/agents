@@ -21,7 +21,8 @@ jobs:
       with:
         persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
         fetch-depth: 0             # otherwise, you will fail to push refs to dest repo
-        branch: ${{ github.event.inputs.branch }}
+        branch: main
+
 
 
 
@@ -55,12 +56,14 @@ jobs:
 
     - name: Add tsx script to package.json
       run: |
+        cd apps/simple-chat
         jq '.scripts += {"start": "tsx ./index.ts"}' package.json > tmp.json
         mv tmp.json package.json
 
 
     - name: Set tsConfig
       run: |
+        cd apps/simple-chat
         echo '{
         "extends": "@tsconfig/node22/tsconfig.json",
         "compilerOptions": {
