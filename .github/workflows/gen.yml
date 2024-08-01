@@ -30,8 +30,6 @@ jobs:
         echo "packages:" > pnpm-workspace.yaml
         echo "  - apps/*" >> pnpm-workspace.yaml
 
-
-
     - name: Set up SAP AI Demo App
       run: |
         mkdir -p apps/sap-ai-demo
@@ -41,6 +39,12 @@ jobs:
         pnpm add -D tsx typescript @tsconfig/node22 @types/node @types/react @types/react-dom  @types/react-test-renderer
         touch index.ts
         echo "console.log('Hello, SAP AI!')" > index.ts
+
+    - name: Add tsx script to package.json
+      run: |
+        jq '.scripts += {"start": "tsx ./index.ts"}' package.json > tmp.json
+        mv tmp.json package.json
+
 
     - name: Set tsConfig
       run: |
@@ -56,18 +60,13 @@ jobs:
             "ESNext.Symbol"
           ]
         }
-       }  ' > tsconfig.json
+        }  ' > tsconfig.json
 
 
-    - name: Add tsx script to package.json
-      run: |
-        jq '.scripts += {"start": "tsx ./index.ts"}' package.json > tmp.json
-        mv tmp.json package.json
-
-
-
-
-
-
+    - name: Commit & Push changes
+      uses: actions-js/push@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
 
 
