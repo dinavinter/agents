@@ -22,7 +22,7 @@ jobs:
 
     - name: Create nx workspace
       run: |
-        pnpx create-nx-workspace@latest app --preset=ts --appName=api --nxCloud=github --skipGit --useGitHub --packageManager=pnpm --e2eTestRunner=none --bundler=tcs --docker
+        pnpx create-nx-workspace@latest app --preset=ts --appName=api --nxCloud=github --skipGit --useGitHub --packageManager=pnpm --e2eTestRunner=none --bundler=vite --docker
         rm -rf app/node_modules
         mv app/* .
         rm -rf app
