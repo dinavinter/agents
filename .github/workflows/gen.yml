@@ -1,0 +1,73 @@
+name: Generate AI Monorepo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-monorepo:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'lts'
+
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    - name: Create nx workspace
+      run: |
+        pnpx create-nx-workspace@latest app --preset=ts --appName=api --nxCloud=github --skipGit --useGitHub --packageManager=pnpm --e2eTestRunner=none --bundler=tcs --docker
+        rm -rf app/node_modules
+        mv app/* .
+        rm -rf app
+        touch pnpm-workspace.yaml
+        echo "packages:" > pnpm-workspace.yaml
+        echo "  - apps/*" >> pnpm-workspace.yaml
+
+
+
+    - name: Set up SAP AI Demo App
+      run: |
+        mkdir -p apps/sap-ai-demo
+        cd apps/sap-ai-demo
+        pnpm init
+        pnpm add ai dotenv
+        pnpm add -D tsx typescript @tsconfig/node22 @types/node @types/react @types/react-dom  @types/react-test-renderer
+        touch index.ts
+        echo "console.log('Hello, SAP AI!')" > index.ts
+
+    - name: Set tsConfig
+      run: |
+        echo '{
+        "extends": "@tsconfig/node22/tsconfig.json",
+        "compilerOptions": {
+          "skipLibCheck": true,
+          "esModuleInterop": true,
+          "isolatedModules": true,
+          "module": "NodeNext",
+          "moduleDetection": "force",
+          "lib": [
+            "ESNext.Symbol"
+          ]
+        }
+       }  ' > tsconfig.json
+
+
+    - name: Add tsx script to package.json
+      run: |
+        jq '.scripts += {"start": "tsx ./index.ts"}' package.json > tmp.json
+        mv tmp.json package.json
+
+
+
+
+
+
+
+
