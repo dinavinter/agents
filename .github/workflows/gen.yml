@@ -2,7 +2,15 @@ name: Generate Monorepo
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to generate to'
+        required: true
+        default: 'main'
 
+permissions:
+  actions: read
+  contents: write
 jobs:
   setup-monorepo:
     runs-on: ubuntu-latest
