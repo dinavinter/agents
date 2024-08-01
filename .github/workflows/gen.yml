@@ -10,6 +10,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+        fetch-depth: 0             # otherwise, you will fail to push refs to dest repo
+
 
 
     - name: Set up Node.js
@@ -32,13 +36,13 @@ jobs:
 
     - name: Set up SAP AI Demo App
       run: |
-        mkdir -p apps/sap-ai-demo
-        cd apps/sap-ai-demo
+        mkdir -p apps/simple-chat
+        cd apps/simple-chat
         pnpm init
         pnpm add ai dotenv
         pnpm add -D tsx typescript @tsconfig/node22 @types/node @types/react @types/react-dom  @types/react-test-renderer
         touch index.ts
-        echo "console.log('Hello, SAP AI!')" > index.ts
+        echo "console.log('Hello!')" > index.ts
 
     - name: Add tsx script to package.json
       run: |
