@@ -1,10 +1,27 @@
 import {tokenService} from "./index";
+ 
 
+export const fetchWithLog :typeof fetch = async (url, request) => {
+    console.debug('ai-request',url, {
+        method: request?.method,
+        headers: request?.headers && Object.fromEntries(Object.entries(request.headers)) ,
+        body: request?.body
+    }) 
+    
+    const response = await fetch(url, request)
+    
+    console.debug('ai-response', response.statusText, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: await response.text()
+    } )
+    return response;
+}
 
-export const sapAIFetch:typeof fetch = async (url, request) => {
-    //  console.debug('ai-request', url, request) 
+export const sapAIFetch: typeof fetch = async (url, request) => {
 
-    const response=await  fetch(`${url}/?api-version=${process.env.OPENAI_API_VERSION}`,
+    return await fetch(`${url}/?api-version=${process.env.OPENAI_API_VERSION}`,
         {
             ...request,
             body: request?.body,
@@ -14,14 +31,10 @@ export const sapAIFetch:typeof fetch = async (url, request) => {
                     Object.entries(request.headers)
                 ) : {}),
                 'ai-resource-group': 'default',
-                Authorization:  `Bearer ${await tokenService.accessToken()}`
+                Authorization: `Bearer ${await tokenService.accessToken()}`
             }
         }
-    )
-    // console.debug('ai-response', response)
-    return response;
-
-
+    ); 
 }
 
 
