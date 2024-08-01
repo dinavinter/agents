@@ -33,32 +33,78 @@ importers:
         specifier: ~5.5.2
         version: 5.5.4
 
-  apps/langchain:
+  apps/agent:
     dependencies:
+      '@ai-sdk/openai':
+        specifier: ^0.0.40
+        version: 0.0.40(zod@3.23.8)
       '@langchain/community':
-        specifier: ^0.2.22
-        version: 0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2)
+        specifier: ^0.2.17
+        version: 0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2)
       '@langchain/core':
         specifier: ^0.2.14
-        version: 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+        version: 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
       '@langchain/openai':
         specifier: ^0.2.5
-        version: 0.2.5(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))
-      cheerio:
-        specifier: 1.0.0-rc.12
-        version: 1.0.0-rc.12
+        version: 0.2.5(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))
+      '@statelyai/agent':
+        specifier: ^1.0.0
+        version: 1.0.0(openai@4.53.2)(react@18.3.1)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.35(typescript@5.5.4))(zod@3.23.8)
+      ai:
+        specifier: ^3.2.43
+        version: 3.2.43(openai@4.53.2)(react@18.3.1)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.35(typescript@5.5.4))(zod@3.23.8)
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
-      hnswlib-node:
-        specifier: ^3.0.0
-        version: 3.0.0
-      langchain:
-        specifier: ^0.2.12
-        version: 0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2)
       sap-ai-token:
         specifier: workspace:*
         version: link:../../libs/sap-ai-token
+      xstate:
+        specifier: ^5.16.0
+        version: 5.17.1
+    devDependencies:
+      '@tsconfig/node22':
+        specifier: ^22.0.0
+        version: 22.0.0
+      '@types/node':
+        specifier: ^22.0.2
+        version: 22.0.2
+      '@types/react':
+        specifier: ^18.3.3
+        version: 18.3.3
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.0
+      '@types/react-test-renderer':
+        specifier: ^18.3.0
+        version: 18.3.0
+      tsx:
+        specifier: ^4.16.3
+        version: 4.16.3
+      typescript:
+        specifier: ~5.5.2
+        version: 5.5.4
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+
+  apps/ai-sdk:
+    dependencies:
+      '@ai-sdk/openai':
+        specifier: ^0.0.40
+        version: 0.0.40(zod@3.23.8)
+      ai:
+        specifier: ^3.2.43
+        version: 3.2.43(openai@4.53.2)(react@18.3.1)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.35(typescript@5.5.4))(zod@3.23.8)
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
+      sap-ai-token:
+        specifier: workspace:*
+        version: link:../../libs/sap-ai-token
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@tsconfig/node22':
         specifier: ^22.0.0
@@ -82,17 +128,29 @@ importers:
         specifier: ~5.5.2
         version: 5.5.4
 
-  apps/simple-chat:
+  apps/langchain:
     dependencies:
-      '@ai-sdk/openai':
-        specifier: ^0.0.40
-        version: 0.0.40(zod@3.23.8)
-      ai:
-        specifier: ^3.2.43
-        version: 3.2.43(openai@4.53.2)(react@18.3.1)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.35(typescript@5.5.4))(zod@3.23.8)
+      '@langchain/community':
+        specifier: ^0.2.22
+        version: 0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2)
+      '@langchain/core':
+        specifier: ^0.2.14
+        version: 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      '@langchain/openai':
+        specifier: ^0.2.5
+        version: 0.2.5(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))
+      cheerio:
+        specifier: 1.0.0-rc.12
+        version: 1.0.0-rc.12
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
+      hnswlib-node:
+        specifier: ^3.0.0
+        version: 3.0.0
+      langchain:
+        specifier: ^0.2.12
+        version: 0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2)
       sap-ai-token:
         specifier: workspace:*
         version: link:../../libs/sap-ai-token
@@ -161,11 +219,26 @@ importers:
 
 packages:
 
+  '@ai-sdk/openai@0.0.31':
+    resolution: {integrity: sha512-7ehX2N0NzCdxUOYXutwYgu6gdWO+zS/v8pWEd7VW8QpNq3equ0VZ0j+pDUNv4f3GJ449QwySb6+V+DHM9W/pLg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
   '@ai-sdk/openai@0.0.40':
     resolution: {integrity: sha512-9Iq1UaBHA5ZzNv6j3govuKGXrbrjuWvZIgWNJv4xzXlDMHu9P9hnqlBr/Aiay54WwCuTVNhTzAUTfFgnTs2kbQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
+
+  '@ai-sdk/provider-utils@0.0.15':
+    resolution: {integrity: sha512-eTkIaZc/Ud96DYG40lLuKWJvZ2GoW/wT4KH9r1f3wGUhj5wgQN+bzgdI57z60VOEDuMmDVuILVnTLFe0HNT5Iw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
 
   '@ai-sdk/provider-utils@1.0.5':
     resolution: {integrity: sha512-XfOawxk95X3S43arn2iQIFyWGMi0DTxsf9ETc6t7bh91RPWOOPYN1tsmS5MTKD33OGJeaDQ/gnVRzXUCRBrckQ==}
@@ -175,6 +248,10 @@ packages:
     peerDependenciesMeta:
       zod:
         optional: true
+
+  '@ai-sdk/provider@0.0.10':
+    resolution: {integrity: sha512-NzkrtREQpHID1cTqY/C4CI30PVOaXWKYytDR2EcytmFgnP7Z6+CrGIA/YCnNhYAuUm6Nx+nGpRL/Hmyrv7NYzg==}
+    engines: {node: '>=18'}
 
   '@ai-sdk/provider@0.0.14':
     resolution: {integrity: sha512-gaQ5Y033nro9iX1YUjEDFDRhmMcEiCk56LJdIUbX5ozEiCNCfpiBpEqrjSp/Gp5RzBS2W0BVxfG7UGW6Ezcrzg==}
@@ -1746,6 +1823,9 @@ packages:
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
 
+  '@statelyai/agent@1.0.0':
+    resolution: {integrity: sha512-lt/H5URTdxtTD9WBDVtZ/VQoSfbDtcJytA6QnNbyvdLjmXm4xzTkFSAX9wi1T3R5sp2NsasO5GhX/RVx1mSe2w==}
+
   '@swc-node/core@1.13.3':
     resolution: {integrity: sha512-OGsvXIid2Go21kiNqeTIn79jcaX4l0G93X2rAnas4LFoDyA9wAwVK7xZdm+QsKoMn5Mus2yFLCc4OtX2dD/PWA==}
     engines: {node: '>= 10'}
@@ -1952,6 +2032,11 @@ packages:
 
   '@vue/shared@3.4.35':
     resolution: {integrity: sha512-hvuhBYYDe+b1G8KHxsQ0diDqDMA8D9laxWZhNAjE83VZb5UDaXl9Xnz7cGdDSyiHM90qqI/CyGMcpBpiDy6VVQ==}
+
+  '@xstate/graph@2.0.0':
+    resolution: {integrity: sha512-wmTdXnnmvE3EUyAwO1kYdp4drGymp+zNUhy/C0KFajzIw2EHfnEtYvognP0H08PzLgY1b1MvMD6yj1Ijyl7c+Q==}
+    peerDependencies:
+      xstate: ^5.13.0
 
   '@yarnpkg/lockfile@1.1.0':
     resolution: {integrity: sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==}
@@ -3098,6 +3183,10 @@ packages:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
 
+  object-hash@3.0.0:
+    resolution: {integrity: sha512-RSn9F68PjH9HqtltsSnqYC1XXoWe9Bju5+213R98cNGttag9q9yAOTzdbsqvIa7aNm5WffBZFpWYr2aWrklWAw==}
+    engines: {node: '>= 6'}
+
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
@@ -3698,10 +3787,25 @@ packages:
 
 snapshots:
 
+  '@ai-sdk/openai@0.0.31(zod@3.23.8)':
+    dependencies:
+      '@ai-sdk/provider': 0.0.10
+      '@ai-sdk/provider-utils': 0.0.15(zod@3.23.8)
+      zod: 3.23.8
+
   '@ai-sdk/openai@0.0.40(zod@3.23.8)':
     dependencies:
       '@ai-sdk/provider': 0.0.14
       '@ai-sdk/provider-utils': 1.0.5(zod@3.23.8)
+      zod: 3.23.8
+
+  '@ai-sdk/provider-utils@0.0.15(zod@3.23.8)':
+    dependencies:
+      '@ai-sdk/provider': 0.0.10
+      eventsource-parser: 1.1.2
+      nanoid: 3.3.6
+      secure-json-parse: 2.7.0
+    optionalDependencies:
       zod: 3.23.8
 
   '@ai-sdk/provider-utils@1.0.5(zod@3.23.8)':
@@ -3712,6 +3816,10 @@ snapshots:
       secure-json-parse: 2.7.0
     optionalDependencies:
       zod: 3.23.8
+
+  '@ai-sdk/provider@0.0.10':
+    dependencies:
+      json-schema: 0.4.0
 
   '@ai-sdk/provider@0.0.14':
     dependencies:
@@ -4813,6 +4921,40 @@ snapshots:
       - peggy
       - pyodide
 
+  '@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2)':
+    dependencies:
+      '@langchain/core': 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      '@langchain/openai': 0.2.5(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))
+      binary-extensions: 2.3.0
+      expr-eval: 2.0.2
+      flat: 5.0.2
+      js-yaml: 4.1.0
+      langchain: 0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2)
+      langsmith: 0.1.40(@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2))(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      uuid: 10.0.0
+      zod: 3.23.8
+      zod-to-json-schema: 3.22.5(zod@3.23.8)
+    optionalDependencies:
+      hnswlib-node: 3.0.0
+      ignore: 5.3.1
+    transitivePeerDependencies:
+      - '@gomomento/sdk-web'
+      - '@langchain/anthropic'
+      - '@langchain/aws'
+      - '@langchain/cohere'
+      - '@langchain/google-genai'
+      - '@langchain/google-vertexai'
+      - '@langchain/groq'
+      - '@langchain/mistralai'
+      - '@langchain/ollama'
+      - axios
+      - encoding
+      - fast-xml-parser
+      - handlebars
+      - openai
+      - peggy
+      - pyodide
+
   '@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)':
     dependencies:
       ansi-styles: 5.2.0
@@ -4820,6 +4962,24 @@ snapshots:
       decamelize: 1.2.0
       js-tiktoken: 1.0.12
       langsmith: 0.1.40(@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2))(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      ml-distance: 4.0.1
+      mustache: 4.2.0
+      p-queue: 6.6.2
+      p-retry: 4.6.2
+      uuid: 10.0.0
+      zod: 3.23.8
+      zod-to-json-schema: 3.22.5(zod@3.23.8)
+    transitivePeerDependencies:
+      - langchain
+      - openai
+
+  '@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)':
+    dependencies:
+      ansi-styles: 5.2.0
+      camelcase: 6.3.0
+      decamelize: 1.2.0
+      js-tiktoken: 1.0.12
+      langsmith: 0.1.40(@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2))(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
       ml-distance: 4.0.1
       mustache: 4.2.0
       p-queue: 6.6.2
@@ -4842,9 +5002,28 @@ snapshots:
       - encoding
       - langchain
 
+  '@langchain/openai@0.2.5(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))':
+    dependencies:
+      '@langchain/core': 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      js-tiktoken: 1.0.12
+      openai: 4.53.2
+      zod: 3.23.8
+      zod-to-json-schema: 3.22.5(zod@3.23.8)
+    transitivePeerDependencies:
+      - encoding
+      - langchain
+
   '@langchain/textsplitters@0.0.3(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)':
     dependencies:
       '@langchain/core': 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      js-tiktoken: 1.0.12
+    transitivePeerDependencies:
+      - langchain
+      - openai
+
+  '@langchain/textsplitters@0.0.3(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)':
+    dependencies:
+      '@langchain/core': 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
       js-tiktoken: 1.0.12
     transitivePeerDependencies:
       - langchain
@@ -5059,6 +5238,22 @@ snapshots:
     optional: true
 
   '@sinclair/typebox@0.27.8': {}
+
+  '@statelyai/agent@1.0.0(openai@4.53.2)(react@18.3.1)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.35(typescript@5.5.4))(zod@3.23.8)':
+    dependencies:
+      '@ai-sdk/openai': 0.0.31(zod@3.23.8)
+      '@xstate/graph': 2.0.0(xstate@5.17.1)
+      ai: 3.2.43(openai@4.53.2)(react@18.3.1)(sswr@2.1.0(svelte@4.2.18))(svelte@4.2.18)(vue@3.4.35(typescript@5.5.4))(zod@3.23.8)
+      object-hash: 3.0.0
+      xstate: 5.17.1
+    transitivePeerDependencies:
+      - openai
+      - react
+      - solid-js
+      - sswr
+      - svelte
+      - vue
+      - zod
 
   '@swc-node/core@1.13.3(@swc/core@1.5.29(@swc/helpers@0.5.12))(@swc/types@0.1.12)':
     dependencies:
@@ -5288,6 +5483,10 @@ snapshots:
       vue: 3.4.35(typescript@5.5.4)
 
   '@vue/shared@3.4.35': {}
+
+  '@xstate/graph@2.0.0(xstate@5.17.1)':
+    dependencies:
+      xstate: 5.17.1
 
   '@yarnpkg/lockfile@1.1.0': {}
 
@@ -6095,6 +6294,32 @@ snapshots:
       - encoding
       - openai
 
+  langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2):
+    dependencies:
+      '@langchain/core': 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      '@langchain/openai': 0.2.5(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))
+      '@langchain/textsplitters': 0.0.3(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      binary-extensions: 2.3.0
+      js-tiktoken: 1.0.12
+      js-yaml: 4.1.0
+      jsonpointer: 5.0.1
+      langchainhub: 0.0.11
+      langsmith: 0.1.40(@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2))(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      ml-distance: 4.0.1
+      openapi-types: 12.1.3
+      p-retry: 4.6.2
+      uuid: 10.0.0
+      yaml: 2.5.0
+      zod: 3.23.8
+      zod-to-json-schema: 3.22.5(zod@3.23.8)
+    optionalDependencies:
+      '@langchain/community': 0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2)
+      axios: 1.7.2
+      ignore: 5.3.1
+    transitivePeerDependencies:
+      - encoding
+      - openai
+
   langchainhub@0.0.11: {}
 
   langsmith@0.1.40(@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2))(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2):
@@ -6108,6 +6333,19 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
       langchain: 0.2.12(@langchain/community@0.2.22(axios@1.7.2)(cheerio@1.0.0-rc.12)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(cheerio@1.0.0-rc.12)(ignore@5.3.1)(openai@4.53.2)
+      openai: 4.53.2
+
+  langsmith@0.1.40(@langchain/core@0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2))(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2):
+    dependencies:
+      '@types/uuid': 9.0.8
+      commander: 10.0.1
+      p-queue: 6.6.2
+      p-retry: 4.6.2
+      semver: 7.6.3
+      uuid: 9.0.1
+    optionalDependencies:
+      '@langchain/core': 0.2.18(langchain@0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2))(openai@4.53.2)
+      langchain: 0.2.12(@langchain/community@0.2.22(axios@1.7.2)(hnswlib-node@3.0.0)(ignore@5.3.1)(openai@4.53.2))(axios@1.7.2)(ignore@5.3.1)(openai@4.53.2)
       openai: 4.53.2
 
   lilconfig@3.1.2: {}
@@ -6304,6 +6542,8 @@ snapshots:
       - debug
 
   object-assign@4.1.1: {}
+
+  object-hash@3.0.0: {}
 
   once@1.4.0:
     dependencies:
