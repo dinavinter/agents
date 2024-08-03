@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "packageManager": "pnpm@9.6.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "pnpm tsx-env ./index.ts",
+    "dev": "pnpm tsx-env ./api.ts --watch",
     "news": "pnpm tsx-env  ./examples/newspaper.ts",
     "support": "tsx  --env-file=../../.env ./examples/support.ts",
     "simple": "pnpm tsx-env ./examples/simple.ts",
@@ -17,15 +19,17 @@
   "license": "ISC",
   "dependencies": {
     "@ai-sdk/openai": "^0.0.40",
+    "@ai-sdk/ui-utils": "^0.0.24",
     "@langchain/community": "^0.2.17",
     "@langchain/core": "^0.2.14",
     "@langchain/openai": "^0.2.5",
     "@statelyai/agent": "^1.0.0",
     "ai": "^3.2.43",
+    "atomico": "^1.79.2",
     "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
     "sap-ai-token": "workspace:*",
-     "xstate": "^5.16.0"
-
+    "xstate": "^5.16.0"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
@@ -36,6 +40,5 @@
     "tsx": "^4.16.3",
     "typescript": "~5.5.2",
     "zod": "^3.23.8"
-
   }
 }

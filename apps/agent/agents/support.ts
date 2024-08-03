@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { createActor, log, setup } from 'xstate';
+import {createActor, log, PromiseActorLogic, setup} from 'xstate';
 import { createAgent, fromDecision} from "@statelyai/agent";
 import {openaiGP4o} from "../providers/openai.js";
+import {renderActor} from "../render";
  
 const agent = createAgent({
     name: 'support-agent',
@@ -33,6 +34,7 @@ const agent = createAgent({
     },
 });
 
+
 const machine = setup({
     types: {
         events: agent.eventTypes,
@@ -41,15 +43,15 @@ const machine = setup({
             customerIssue: string;
         },
     },
-        actors: { agent: fromDecision(agent) },
+        actors: { agent: fromDecision(agent) , render: undefined as unknown as renderActor},
 }).createMachine({
     initial: 'frontline',
     context: ({ input }) => ({
         customerIssue: input,
     }),
     states: {
-        frontline: {
-            invoke: {
+        frontline: {  
+            invoke: [{
                 src: 'agent',
                 input: ({ context }) => ({
                     context,
@@ -60,9 +62,20 @@ const machine = setup({
           Instead, immediately transfer them to the billing or technical team by asking the user to hold for a moment.
           Otherwise, just respond conversationally.`,
                     goal: `The previous conversation is an interaction between a customer support representative and a user.
-          Classify whether the representative is routing the user to a billing or technical team, or whether they are just responding conversationally.`,
-                }),
-            },
+          Classify whether the representative is routing the user to a billing or technical team, or whether they are just responding conversationally.`, 
+                })  
+            },{
+                src:'render',
+                input:({context})=>({
+                    render: (html) => html`<div>
+                        <h1>Frontline Support</h1>
+                        <p>How can I help you today?</p>
+                        <p>${context.customerIssue}</p>
+                    </div>
+                    `
+                })
+               } 
+           ],
             on: {
                 'agent.frontline.classify': [
                     {
@@ -83,15 +96,25 @@ const machine = setup({
             },
         },
         billing: {
-            invoke: {
+            invoke: [{
                 src: 'agent',
                 input: {
                     system:
                         'Your job is to detect whether a billing support representative wants to refund the user.',
                     goal: `The following text is a response from a customer support representative. Extract whether they want to refund the user or not.`,
                 },
-            },
-            on: {
+            }, {
+                src:'render',
+                input:({context})=>({
+                    render: (html) => html`<div>
+                        <h1>Billing Support</h1>
+                        <p>How can I help you today?</p>
+                        <p>${context.customerIssue}</p>
+                    </div>
+                    `
+                })
+               }],
+             on: {
                 'agent.refund': {
                     actions: log(({ event }) => event),
                     target: 'refund',
@@ -99,14 +122,24 @@ const machine = setup({
             },
         },
         technical: {
-            invoke: {
+            invoke: [{
                 src: 'agent',
                 input: {
                     context: true,
                     system: `You are an expert at diagnosing technical computer issues. You work for a company called LangCorp that sells computers. Help the user to the best of your ability, but be concise in your responses.`,
                     goal: 'Solve the customer issue.',
                 },
-            },
+            }, {
+                src:'render',
+                input:({context})=>({
+                    render: (html) => html`<div>
+                        <h1>Technical Support</h1>
+                        <p>How can I help you today?</p>
+                        <p>${context.customerIssue}</p>
+                    </div>
+                    `
+                })
+            }],
             on: {
                 'agent.technical.solve': {
                     actions: log(({ event }) => event),
@@ -135,7 +168,20 @@ const machine = setup({
             },
         },
         end: {
+            invoke: {
+                src: 'render',
+                input: ({context}) => ({
+                    render: (html) => html`
+                        <div>
+                            <h1>End of Conversation</h1>
+                            <p>Thank you for chatting with us today!</p>
+                        </div>
+                    `
+                })
+            },
+            
             type: 'final',
+            
         },
     },
 });
@@ -146,6 +192,5 @@ export function create( create?: typeof createActor<typeof machine>) {
         input: `I've changed my mind and I want a refund for order #182818!`,
     })
 }
-
 export default create
  
