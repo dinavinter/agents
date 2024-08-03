@@ -28,6 +28,8 @@
     "atomico": "^1.79.2",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
+    "fastify-sse": "^1.0.0",
+    "fastify-sse-v2": "^4.0.0",
     "sap-ai-token": "workspace:*",
     "xstate": "^5.16.0"
   },
