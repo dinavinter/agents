@@ -1,13 +1,21 @@
 {
 "extends": "@tsconfig/node22/tsconfig.json",
 "compilerOptions": {
+  "allowJs": true,
   "skipLibCheck": true,
   "esModuleInterop": true,
   "isolatedModules": true,
   "module": "NodeNext",
   "moduleDetection": "force",
   "lib": [
-    "ESNext.Symbol"
-  ]
+    "ESNext.Symbol",
+    "es2023"
+  ],
+
+  "jsx": "react-jsx",
+  "jsxImportSource": "atomico",
+    "moduleResolution": "node",
+  
+
 }
 }  
