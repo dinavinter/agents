@@ -12,6 +12,8 @@ import {StreamData, StreamingTextResponse, streamObject, streamToResponse} from 
 import {tokenService} from "sap-ai-token";
 import {Thread}  from './temp';
 import {renderActor} from "./render";
+import {routes} from "./htmlAgent";
+import {VNodeAny} from "atomico/types/vnode";
 
 tokenService.credentialsFromEnv();
  
@@ -110,7 +112,7 @@ fastify.get('/temp', async function handler(request, reply) {
         <${Thread} ></${Thread}>
     `)
 })
-export function sendHtml(reply:FastifyReply,  html:any )
+export function sendHtml(reply:FastifyReply,  html:VNodeAny )
 {
     reply.type('text/html')
     reply.send(`
@@ -133,6 +135,8 @@ export function sendHtml(reply:FastifyReply,  html:any )
     )
 }
 
+
+routes(fastify);
 
 // Run the server!
 try {
