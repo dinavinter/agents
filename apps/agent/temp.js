@@ -76,6 +76,7 @@ function component() {
       'support',
       'tictac',
       'raffle',
+        "github"
     ]
     return html`<host shadowDom>
     <h1>Atomico webcomponent</h1>

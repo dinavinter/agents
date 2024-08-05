@@ -9,7 +9,7 @@ import fs from "node:fs";
 import {Streamable} from "./streamable";
 import {FastifySSEPlugin} from "fastify-sse-v2";
 import {StreamData} from "ai";
-function generateActorId() {
+ function generateActorId() {
     return Math.random().toString(36).substring(2, 8);
 }
 
@@ -35,7 +35,11 @@ export function routes(fastify: FastifyInstance) {
         reply.send(fs.readFileSync('streamable.js'))
 
     })
+    fastify.get('/view/animate.js', async function handler(request, reply) {
+        reply.type('application/javascript')
+        reply.send(fs.readFileSync('anime.js'))
 
+    })
     fastify.get('/view/:agent', async function handler(request, reply:FastifyReply) {
         const {agent} = request.params as { agent: string };
         const create = await import(`./agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
@@ -114,25 +118,43 @@ export function routes(fastify: FastifyInstance) {
     })
 
 }
-export function sendHtml(reply:FastifyReply,  html:VNodeAny )
+export function sendHtml(reply:FastifyReply,  node:VNodeAny )
 {
     // reply.type('text/html')
-    reply.send(`
-    <script type="importmap">
-    {
-      "imports": {
-        "atomico": "https://unpkg.com/atomico",
-        "ai": "https://unpkg.com/ai@3.3.0",
-        "ai/rsc": "https://esm.sh/ai@3.3.0/rsc",
-        "@ai-sdk/ui-utils": "https://esm.sh/@ai-sdk/ui-utils@0.0.24"
-      }
-    }
-    </script> 
+    reply.send(`<html>
+      <head>
+        <link rel="import" href="https://esm.sh/polymate/polymate-view.html"> </link>
+         <script type="importmap">
+        {
+          "imports": {
+            "atomico": "https://unpkg.com/atomico",
+            "ai": "https://unpkg.com/ai@3.3.0",
+            "ai/rsc": "https://esm.sh/ai@3.3.0/rsc",
+            "@ai-sdk/ui-utils": "https://esm.sh/@ai-sdk/ui-utils@0.0.24",
+            "animejs":"https://cdn.jsdelivr.net/npm/animejs@3.2.2/+esm",
+            "@atomico/hooks":"https://esm.sh/@atomico/hooks@4.4.1",
+            "@atomico/hooks/use-attributes":"https://esm.sh/@atomico/hooks@4.4.1/use-attributes"
+            
+          }
+        }
+        </script> 
+         <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" ></script>
+<!--         <script src="https://esm.sh/@atomico/hooks@4.4.1/use-attributes" type="module"></script>-->
+             <script type="module" src="https://unpkg.com/@lottiefiles/dotlottie-wc@latest/dist/dotlottie-wc.js"></script>
+
+
 <!--      <script src="https://unpkg.com/ai" type="module"></script>-->
       <script src="https://esm.sh/ai@3.3.0/rsc" type="module"></script>
+     
        <script src="./streamable.js" type="module"></script>
-
-      ${html.render() } `
+       <script src="./animate.js" type="module"></script>
+       </head>
+       <body>
+ 
+       ${node.render() } 
+         </body>
+         </html>
+`
     )
 }
 

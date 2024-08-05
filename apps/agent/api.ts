@@ -5,7 +5,7 @@ import {Component} from './component.js';
 import Fastify, {FastifyReply} from 'fastify' 
 import * as fs from "node:fs";
 import {AnyActorRef, AnyStateMachine, createActor, fromPromise, PromiseActorLogic} from "xstate";
-import {logger} from "./logger";
+import {logger, loggerInspector} from "./logger";
 import {ReadableStream} from "node:stream/web";
 import {Readable} from "node:stream";
 import {StreamData, StreamingTextResponse, streamObject, streamToResponse} from "ai";
@@ -44,10 +44,14 @@ fastify.get('/agents/:agent', async function handler(request, reply) {
                 actors: {
                     terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
                 }
-            }), options));
+            }), {
+                ...options,
+                inspect:loggerInspector,
+                logger: (v) => console.log(v)
+            }));
 
 
-        logger(service)
+        // logger(service)
         const data = new StreamData();
 
         const stream = new ReadableStream({

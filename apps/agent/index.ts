@@ -1,7 +1,8 @@
 import readline from "node:readline/promises";
 import { tokenService } from "sap-ai-token";
 import {AnyActorRef, AnyStateMachine, createActor, fromPromise, waitFor} from "xstate";
-import {logger} from "./logger";
+import {logger, loggerInspector} from "./logger";
+import { argv } from "node:process";
 
 const terminal = readline.createInterface({
     input: process.stdin,
@@ -22,17 +23,22 @@ function waitToComplete(actor: AnyActorRef) {
 async function main() {
     tokenService.credentialsFromEnv();
 
-    const agent = await terminal.question('What agent to run? (simple, news, support, tictac,  raffle) ');
+    console.log(argv, "arguments", arguments)
+    argv.forEach((v) => console.log(v))
+    const agent = argv[2] || await terminal.question('What agent to run? (simple, news, support, tictac,  raffle) ');
     const create = await import(`./agents/${agent}.ts`).then((m) => m.default) as (create:typeof  createActor<AnyStateMachine>) => AnyActorRef;
     const actor = create((logic, options) => createActor(
         logic.provide({
             actors: {
                 terminal: fromPromise( ({input}:{input:string}) =>  terminal.question(input))
             }
-        }), options));
+        }), {
+            ...options,
+            inspect:loggerInspector
+        }));
     
     
-    logger(actor)
+    // logger(actor)
     actor.start();
     await waitToComplete(actor);
 

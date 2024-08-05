@@ -1,5 +1,8 @@
 import {VNodeAny} from "atomico/types/vnode";
 import {CallbackActorLogic, fromPromise, PromiseActorLogic} from "xstate";
+import {LottiePlayer} from "lottie-web";
+import { z } from "zod";
+import {jsonSchemaToZod} from "json-schema-to-zod";
 
 export type html<R = any>={(
         strings: TemplateStringsArray,
@@ -18,3 +21,7 @@ export type renderActor = PromiseActorLogic< void, {render:render}  >;
 // })
 
 export type renderCallbackActor = CallbackActorLogic< {type: "render", node: VNodeAny }  >;
+
+export type animateCallbackActor = CallbackActorLogic< {type: "animate", lottie: LottiePlayer }  >;
+
+
