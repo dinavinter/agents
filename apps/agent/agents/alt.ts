@@ -30,7 +30,7 @@ export const config =   createMachine({
         output: [] as Output,
         actors: {} as {
             logic: PromiseActorLogic<Record<string, File>, GithubSource>;
-            src: 'repo';
+            src: 'puller';
         } | {
             src: 'analyze';
             logic: PromiseActorLogic<Analysis,File>;
@@ -43,7 +43,7 @@ export const config =   createMachine({
     states: {
         reading: { 
             invoke: {
-                src: 'repo',
+                src: 'puller',
                 input: ({context}) => context.source, 
                 onDone: {
                     target: 'analyzing',
@@ -107,7 +107,7 @@ export const config =   createMachine({
 
 const machine= config.provide({
     actors: {
-        repo: fromPromise(async function read({input:options}) {
+        puller: fromPromise(async function read({input:options}) {
             const files=  await getRepoFiles(options)  
             return files
                 .filter(f => f.path.endsWith('.png') || f.path.endsWith('.jpg'))
