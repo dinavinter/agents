@@ -55,7 +55,6 @@ function component({url}) {
     }, [url]);
         
     return html`<host shadowDom> 
-     <${state} />
     <slot/>
   </host>`;
 }
