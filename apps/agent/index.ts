@@ -1,8 +1,9 @@
 import readline from "node:readline/promises";
 import { tokenService } from "sap-ai-token";
-import {AnyActorRef, AnyStateMachine, createActor, fromPromise, waitFor} from "xstate";
+import {AnyActorRef, AnyStateMachine, createActor, fromCallback, fromPromise, waitFor} from "xstate";
 import {logger, loggerInspector} from "./logger";
 import { argv } from "node:process";
+import {renderCallbackActor} from "./render";
 
 const terminal = readline.createInterface({
     input: process.stdin,
@@ -30,7 +31,12 @@ async function main() {
     const actor = create((logic, options) => createActor(
         logic.provide({
             actors: {
-                terminal: fromPromise( ({input}:{input:string}) =>  terminal.question(input))
+                terminal: fromPromise( ({input}:{input:string}) =>  terminal.question(input)),
+                renderer: fromCallback(({receive}) => {
+                    receive(({node}) => {
+                        // terminal.write(node.render());
+                    }) 
+                }) satisfies renderCallbackActor
             }
         }), {
             ...options,

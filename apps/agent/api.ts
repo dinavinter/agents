@@ -1,19 +1,20 @@
 // Import the framework and instantiate it
 import 'atomico/ssr/load';
-import {html, render} from 'atomico';
-import {Component} from './component.js';
+import {html} from 'atomico';
+import {Component} from './ui/components/component.js';
 import Fastify, {FastifyReply} from 'fastify' 
 import * as fs from "node:fs";
 import {AnyActorRef, AnyStateMachine, createActor, fromPromise, PromiseActorLogic} from "xstate";
-import {logger, loggerInspector} from "./logger";
+import { loggerInspector} from "./utils/logger";
 import {ReadableStream} from "node:stream/web";
-import {Readable} from "node:stream";
-import {StreamData, StreamingTextResponse, streamObject, streamToResponse} from "ai";
+import {StreamData, streamToResponse} from "ai";
 import {tokenService} from "sap-ai-token";
-import {Thread}  from './temp';
-import {renderActor} from "./render";
-import {routes} from "./htmlAgent";
+import {Agents}  from './ui/components/agents';
+import {routes} from "./ui/api";
 import {VNodeAny} from "atomico/types/vnode";
+import fastifyStatic from "@fastify/static";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
 
 tokenService.credentialsFromEnv();
  
@@ -21,6 +22,35 @@ const fastify = Fastify({
     logger: true
 })
 // Declare a route
+
+// @ts-ignore
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the directory
+console.log(__dirname);
+console.log(path.join(__dirname, 'ui', "components"));
+fastify.register(fastifyStatic, {
+    root: path.join(__dirname, 'ui', "components"),
+    prefix: '/ui/components', // optional: default '/'
+    // constraints: {  } ,// optional: default {}
+    // prefixAvoidTrailingSlash: true,
+    extensions: ['js'],
+    setHeaders: (res,path,) => {
+        console.log(path);
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Access-Control-Allow-Methods', 'GET')
+        res.setHeader('Access-Control-Allow-Headers', 'content-type')
+        res.setHeader('content-type' , 'application/javascript')
+    }
+})
+
+
+
+
+// fastify.register(fastifyStatic, {
+//     root: path.join(__dirname, 'node_modules'),
+//     prefix: '/node_modules/',
+//     decorateReply: false // the reply decorator has been added by the first plugin registration
+// })
 
 fastify.get('/component.js', async function handler(request, reply) {
     reply.type('application/javascript')
@@ -33,7 +63,7 @@ fastify.get('/temp.js', async function handler(request, reply) {
     reply.send(fs.readFileSync('temp.js'))
 
 })
-const noop = (v) => v;
+const noop = (v:any) => v;
 
 fastify.get('/agents/:agent', async function handler(request, reply) {
     const { agent } = request.params as {agent:string};
@@ -45,7 +75,7 @@ fastify.get('/agents/:agent', async function handler(request, reply) {
                     terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
                 }
             }), {
-                ...options,
+                ...(options || {}),
                 inspect:loggerInspector,
                 logger: (v) => console.log(v)
             }));
@@ -113,7 +143,7 @@ fastify.get('/', async function handler(request, reply) {
 
 fastify.get('/temp', async function handler(request, reply) {
     sendHtml(reply, html`
-        <${Thread} ></${Thread}>
+        <${Agents} ></${Agents}>
     `)
 })
 export function sendHtml(reply:FastifyReply,  html:VNodeAny )

@@ -1,17 +1,20 @@
 import {AnyActorRef, AnyStateMachine, createActor, fromCallback, fromPromise, waitFor} from "xstate";
-import {logger} from "./logger";
+import {logger, loggerInspector} from "../utils/logger";
 import {ReadableStream} from "node:stream/web";
 import {c, html} from "atomico";
 import {FastifyInstance, FastifyReply} from "fastify";
 import {renderActor, renderCallbackActor} from "./render";
 import {VNodeAny} from "atomico/types/vnode";
-import fs from "node:fs";
-import {Streamable} from "./streamable";
+import {Streamable} from "./components/streamable";
 import {FastifySSEPlugin} from "fastify-sse-v2";
 import {StreamData} from "ai";
+import path from "node:path";
+import fastifyStatic from "@fastify/static";
  function generateActorId() {
     return Math.random().toString(36).substring(2, 8);
 }
+
+
 
 const services: Record<string, AnyActorRef> = {};
 
@@ -24,55 +27,23 @@ const Component = c(() => {
 
 
 export function routes(fastify: FastifyInstance) {
-    fastify.register(FastifySSEPlugin);
-
-
-
+    fastify.register(FastifySSEPlugin); 
     const noop = (v: any) => v;
 
-    fastify.get('/view/streamable.js', async function handler(request, reply) {
-        reply.type('application/javascript')
-        reply.send(fs.readFileSync('streamable.js'))
 
-    })
-    fastify.get('/view/animate.js', async function handler(request, reply) {
-        reply.type('application/javascript')
-        reply.send(fs.readFileSync('anime.js'))
-
-    })
     fastify.get('/view/:agent', async function handler(request, reply:FastifyReply) {
         const {agent} = request.params as { agent: string };
-        const create = await import(`./agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
-        const workflowId = generateActorId(); // generate a unique ID
-
-        // services[workflowId]= create((logic, options) => createActor(
-        //     logic.provide({
-        //         actors: {
-        //             terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something"))
-        //         }
-        //     }), {
-        //         id: workflowId,
-        //         ...options
-        //     }));
-         
-  
+         const workflowId = generateActorId();   
          reply.serializer(noop);
          reply.type('text/html');
          sendHtml(reply, html`
             <${Streamable} url="${agent}/${workflowId}">
-                <h1>${workflowId}</h1> 
-            </${Streamable}>`)
-         // reply.header('Connection', 'keep-alive');
-         // reply.hijack()
-        
-     
-        // reply.send(response);
-
+            </${Streamable}>`) 
     })
     
     fastify.get('/view/:agent/:workflow', async function handler(request, reply) {
         const {agent, workflow} = request.params as { agent: string, workflow:string };
-        const create = await import(`./agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
+        const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
          const service = create((logic, options) => createActor(
             logic.provide({
                 actors: {
@@ -86,17 +57,11 @@ export function routes(fastify: FastifyInstance) {
                 }
             }), {
                 id: workflow, 
+                 inspect:loggerInspector,
                 ...options
             }));
 
-        async function* events() {    
-            
-          
-        }
         service.start();
-        // await  waitFor( service, state => state.matches('done') || state.type === 'final');
-        // console.log("done")
-        // reply.sse({ event: 'close' })
 
         request.socket.on('close', () => {
             console.log("closing");
@@ -128,30 +93,31 @@ export function sendHtml(reply:FastifyReply,  node:VNodeAny )
         {
           "imports": {
             "atomico": "https://unpkg.com/atomico",
-            "ai": "https://unpkg.com/ai@3.3.0",
-            "ai/rsc": "https://esm.sh/ai@3.3.0/rsc",
-            "@ai-sdk/ui-utils": "https://esm.sh/@ai-sdk/ui-utils@0.0.24",
             "animejs":"https://cdn.jsdelivr.net/npm/animejs@3.2.2/+esm",
-            "@atomico/hooks":"https://esm.sh/@atomico/hooks@4.4.1",
-            "@atomico/hooks/use-attributes":"https://esm.sh/@atomico/hooks@4.4.1/use-attributes"
+            "@atomico/hooks":"https://esm.sh/@atomico/hooks@4.4.1"
             
           }
         }
         </script> 
          <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" ></script>
-<!--         <script src="https://esm.sh/@atomico/hooks@4.4.1/use-attributes" type="module"></script>-->
-             <script type="module" src="https://unpkg.com/@lottiefiles/dotlottie-wc@latest/dist/dotlottie-wc.js"></script>
-
-
-<!--      <script src="https://unpkg.com/ai" type="module"></script>-->
-      <script src="https://esm.sh/ai@3.3.0/rsc" type="module"></script>
-     
-       <script src="./streamable.js" type="module"></script>
-       <script src="./animate.js" type="module"></script>
+       <script src="/ui/components/streamable.js" type="module"></script>
+       <script  src="/ui/components/svg.js" type="module"> </script>
        </head>
        <body>
- 
-       ${node.render() } 
+           <style>
+                body {
+                     font-family: sans-serif;
+                }
+                #app {
+                    display: block;
+                    margin: 0 auto;
+                    max-width: 800px;
+                    padding: 20px;
+                }
+              </style>
+           <div id="app">
+                 ${node.render() } 
+           </div>
          </body>
          </html>
 `
