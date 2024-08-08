@@ -1,7 +1,7 @@
 import {c, css, html, useCallback, useEffect, useMemo, useRef, useState} from "atomico";
     
 
-function component({url, default: defaultValue}) {
+function component({src, default: defaultValue}) {
     const [state, setState] = useState([]); 
     const span = useRef();
     // const callback=useCallback((event) => {
@@ -12,9 +12,9 @@ function component({url, default: defaultValue}) {
     //  });
     
     const source= useMemo(()=> {
-        console.log("create event source", url)
-        return  new EventSource(url)
-    }, [url]);
+        console.log("create event source", src)
+        return  new EventSource(src)
+    }, [src]);
     
      useEffect(async () => {
          console.log("useEffect event source")
@@ -31,7 +31,7 @@ function component({url, default: defaultValue}) {
 }
 
 component.props = {
-    url: { type: String, value: "" },
+    src: { type: String, value: "" },
     default: { type: String, value: "" },
 };
 

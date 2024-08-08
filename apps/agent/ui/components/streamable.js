@@ -2,8 +2,7 @@ import {c, css, html, useCallback, useEffect, useHost, useMemo, useProp, useStat
 import {useRender} from "@atomico/hooks";
    
 
-function component({url}) {
-    const host =useHost();
+function component({ src}) {
     const [state, setState] = useState([]);
     const callback=useCallback((event) => {
         console.log("streamable update host callback", {data:event.data})
@@ -15,9 +14,9 @@ function component({url}) {
     }, []);
 
     const source= useMemo(()=> {
-        console.log("streamable create event source", url)
-        return typeof EventSource !== "undefined" && new EventSource(url)
-    }, [url]);
+        console.log("streamable create event source", src)
+        return typeof EventSource !== "undefined" && new EventSource(src)
+    }, [src]);
 
     useEffect(async () => {
         console.log("streamable useEffect event source")
@@ -35,7 +34,7 @@ function component({url}) {
 }
 
 component.props = {
-    url: { type: String, value: "" },
+    src: { type: String, value: "" },
 };
 
 component.styles = css`

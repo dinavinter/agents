@@ -4,14 +4,26 @@ import {LottiePlayer} from "lottie-web";
 import { z } from "zod";
 import {jsonSchemaToZod} from "json-schema-to-zod";
 import {EventMessage} from "fastify-sse-v2";
+import {TextStream} from "./components/text";
+import {Streamable} from "./components/streamable";
+import {Atomico} from "atomico/types/dom";
 
 export type html<R = any>={(
         strings: TemplateStringsArray,
         ...values: any[]
     ): R;}
 
+export type streamOptions={href: string, htmlStream: Atomico<any,any, any> ; textStream:Atomico<any,any, any>  }
+export type streamFactory= (id?: string) => streamOptions;
+export type stream = streamFactory & streamOptions;
 export type render= {
-    (html: html): VNodeAny;
+    (html: html, stream:stream ): VNodeAny;
+}
+
+export type RenderEvent = {
+    type: "render";
+    node?: VNodeAny;
+    render: render;
 }
 export type renderActor = PromiseActorLogic< void, {render:render}  >;
 // const render:renderActor = fromPromise(({input:{render}})=> {
@@ -21,10 +33,10 @@ export type renderActor = PromiseActorLogic< void, {render:render}  >;
 //     })
 // })
 
-export type renderCallbackActor = CallbackActorLogic< {type: "render", node: VNodeAny }  , {
-    html?:render,
+export type renderCallbackActor = CallbackActorLogic< RenderEvent  , {
+    render?:render,
     slug?:string
-}>;
+} | undefined>;
 
 export type animateCallbackActor = CallbackActorLogic< {type: "animate", lottie: LottiePlayer }  >;
 
