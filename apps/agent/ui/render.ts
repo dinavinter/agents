@@ -21,7 +21,10 @@ export type renderActor = PromiseActorLogic< void, {render:render}  >;
 //     })
 // })
 
-export type renderCallbackActor = CallbackActorLogic< {type: "render", node: VNodeAny }  >;
+export type renderCallbackActor = CallbackActorLogic< {type: "render", node: VNodeAny }  , {
+    html?:render,
+    slug?:string
+}>;
 
 export type animateCallbackActor = CallbackActorLogic< {type: "animate", lottie: LottiePlayer }  >;
 
