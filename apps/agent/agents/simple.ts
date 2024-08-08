@@ -2,7 +2,6 @@ import { z } from 'zod';
 import 'atomico/ssr/load';
 
 import {setup, createActor, assign, sendTo, EventObject, spawnChild, enqueueActions, ActorRefFrom} from 'xstate';
-import {createAgent, fromDecision} from "@statelyai/agent";
 import {openaiGP4o} from "../providers/openai.js";
 import {config} from 'dotenv';
 import {html} from "atomico";
@@ -33,9 +32,11 @@ export const machine = setup({
         render: undefined as unknown as renderActor, renderer: undefined as unknown as renderCallbackActor, 
     },
     types: {
+        input: {} as {basePath:string, streamPath: (stream:string) => string},
         context: {} as {
             thought?: string;
             doodle?: Doodle;
+            basePath:string, streamPath: (stream:string) => string
             stream:  ActorRefFrom< StreamActorLogic>;
         },
     },
@@ -45,67 +46,48 @@ export const machine = setup({
         src: 'renderer',
         id: 'renderer',
         systemId: 'renderer',
-    },
- 
-    context:({self, spawn})=> ({
+    }, 
+    context:({ spawn, input})=> ({
+        ...input,
         stream:  spawn('stream', {
-            id: `${self.id}`,
-            systemId: `${self.id}`,
+            id: `thought`,
+            systemId: `thought`,
             syncSnapshot: false
         })
     }),
     states: {  
         thinking: {
-            entry: enqueueActions(({enqueue, context:{stream}, self}) => {
-                enqueue.sendTo('renderer', () => ({
+            entry: sendTo('renderer',({ context:{streamPath}}) => ({
                     type: 'render',
                     node: html`
                         <host>
                             <span>I'm thinking about a random topic</span>
                             <br/>
-                           <c-text-stream url="${`/stream/text/${stream.id}`}" default="...">
+                            <c-text-stream url="${streamPath('thought')}" default="...">
                                 <span slot="default">...</span>
-                           </c-text-stream> 
+                            </c-text-stream>
                         </host>`
-                }))
-            }),
+                })),
             invoke: {
                 src: 'text',
                 input:'Think about a random topic, and then share that thought.',
-               
                 onSnapshot: {
-                     actions: enqueueActions(({enqueue,self:{sessionId,id},check,event, context:{stream}})=> {
+                     actions: enqueueActions(({enqueue,event})=> {
                         const thoughtDelta = event.snapshot.context; 
-                        if(thoughtDelta !== undefined){
+                        if(thoughtDelta !== undefined){ 
                             enqueue.assign({
                                 thought: ({context:{thought}}) =>  thought? thought + thoughtDelta : thoughtDelta
-                            })
+                            }) 
                             
-                            stream.send({
+                            enqueue.sendTo('thought',{
                                 type: 'event',
                                 data: thoughtDelta
                             })
-                        }
- 
+                        } 
                     })
                 },
                 onDone: { 
-                    target: 'doodle',
-                    actions:enqueueActions(({enqueue,self:{sessionId,id},check,event, context:{stream}})=> {
-                        const thought = event.output;
-                        if(thought !== undefined){
-                            enqueue.assign({
-                                thought:thought
-                            })
-
-                           
-                        }
-                        stream.send({
-                            type: "close"
-                        }) 
-
-                    })
-                 
+                    target: 'doodle' 
                 }
                 
             }
