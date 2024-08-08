@@ -8,8 +8,12 @@ import {html} from "atomico";
  import {Doodle} from "../doodles";
 import {fromGenerateObject, fromToolStream, fromTextStream, fromAiStreamText} from "../utils/toolStream";
 import {findDoodleTool} from "../doodles/embedded";
-import {renderActor, renderCallbackActor, StreamActorLogic} from "../ui/render";
+import {render, renderActor, renderCallbackActor, StreamActorLogic} from "../ui/render";
 import {SVG} from "../ui/components/svg";
+import {VNodeAny} from "atomico/types/vnode";
+import {Streamable} from "../ui/components/streamable";
+import {spawn} from "node:child_process";
+import {TextStream} from "../ui/components/text";
 config();
  
 
@@ -28,49 +32,35 @@ export const machine = setup({
             model: openaiGP4o(),
             temperature: 0.9
         }),
-        stream: undefined as unknown as StreamActorLogic,
-        render: undefined as unknown as renderActor, renderer: undefined as unknown as renderCallbackActor, 
+        renderer: undefined as unknown as renderCallbackActor, 
     },
     types: {
         input: {} as {
             thought?: string;
             doodle?: Doodle;
-            stream:  ActorRefFrom< StreamActorLogic>;
-        },
+         },
         context: {} as {
             thought?: string;
             doodle?: Doodle;
-            stream:  ActorRefFrom< StreamActorLogic>;
-        },
+         }
     }
 }).createMachine({ 
     initial: 'thinking',
-    invoke:{
-        src: 'renderer',
-        id: 'renderer',
-        systemId: 'renderer',
-    }, 
-    context:({ spawn, input:{stream,...input}})=> ({
-        ...input,
-        stream:  stream || spawn('stream', {
-            id: `thought`,
-            systemId: `thought`,
-            syncSnapshot: false
-        })
-    }),
+     context:({ input})=> input,
     states: {  
-        thinking: {
-            entry: sendTo('renderer',() => ({
-                    type: 'render',
-                    node: html`
-                        <host>
-                            <span>I'm thinking about a random topic</span>
-                            <br/>
-                            <c-text-stream url="thought" default="...">
-                                <span slot="default">...</span>
-                            </c-text-stream>
-                        </host>`
-                })),
+        thinking: { 
+            entry: spawnChild('renderer',{
+                id: `thought`,
+                syncSnapshot: false,
+                input: {
+                    slug: '/thought',
+                    html(h) {
+                        return  h`<div> <pre>User:<span>Think about a random topic, and then share that thought.</span></pre>
+                                         Agent: <${TextStream} url="thought" />
+                               </div>`
+                    }
+                }
+            }),  
             invoke: {
                 src: 'text',
                 input:'Think about a random topic, and then share that thought.',
@@ -80,12 +70,11 @@ export const machine = setup({
                         if(thoughtDelta !== undefined){ 
                             enqueue.assign({
                                 thought: ({context:{thought}}) =>  thought? thought + thoughtDelta : thoughtDelta
+                            })   
+                            enqueue.sendTo('thought', {
+                                type: 'render',
+                                node: html`${thoughtDelta}` 
                             }) 
-                            
-                            enqueue.sendTo('thought',{
-                                type: 'event',
-                                data: thoughtDelta
-                            })
                         } 
                     })
                 },
@@ -96,6 +85,16 @@ export const machine = setup({
             }
         },
         doodle: {
+            entry: spawnChild('renderer', {
+                id: `doodle`,
+                syncSnapshot: false,
+                input: {
+                    slug: '/doodle',
+                    html(h) {
+                        return h`<${Streamable} url="doodle" > </${Streamable}>`
+                    }
+                }
+            }),
             invoke: {
                 src: 'doodle',
                 input: {
@@ -111,10 +110,10 @@ export const machine = setup({
                                 enqueue.assign({
                                     doodle: event.snapshot.context
                                 })
-                                enqueue.sendTo('renderer', () => ({
+                                enqueue.sendTo('doodle', {
                                     type: 'render',
                                     node: html`<${SVG} src="${doodle?.src}" alt="${doodle?.alt}"/>`
-                                }))
+                                })
                             }
                            
                         })
@@ -126,6 +125,7 @@ export const machine = setup({
         },
         done: {
             type: 'final',
+            
             output: ({context}) => context
         }
     },

@@ -2,7 +2,7 @@ import {
     AnyActorRef,
     AnyStateMachine,
     CallbackActorLogic,
-    createActor,
+    createActor, enqueueActions,
     fromCallback,
     fromPromise,
     waitFor
@@ -17,7 +17,7 @@ import {
 } from "node:stream/web";
 import {c, html} from "atomico";
 import {FastifyInstance, FastifyReply} from "fastify";
-import {renderActor, renderCallbackActor, StreamActorLogic} from "./render";
+import {render, renderActor, renderCallbackActor, StreamActorLogic} from "./render";
 import {VNodeAny} from "atomico/types/vnode";
 import {Streamable} from "./components/streamable";
 import {EventMessage, FastifySSEPlugin} from "fastify-sse-v2";
@@ -30,9 +30,10 @@ import  {Pushable, pushable} from "it-pushable";
 }
 
 
+type replyHtml = (reply:FastifyReply) => Promise<void>;
 
 const services: Map<string, 
-     AnyActorRef & {stream: Pushable<EventMessage>,streamId:string}
+     AnyActorRef & {html: replyHtml ,streamId:string}
 > = new Map();
 
 
@@ -80,6 +81,7 @@ const Component = c(() => {
 
 const streams = new Map<string, Pushable<EventMessage>>();
 const createStream = (id:string) => {
+    console.log('create stream', id);
     const stream = pushable<EventMessage>({
         objectMode: true
     });
@@ -99,7 +101,7 @@ const getOrCreateStream = (id:string) => {
     return  streams.get(id)!;
 }
 
-function readStream<T extends EventMessage>(id:string) {
+function readStream(id:string) {
     if(!streams.has(id)) {
         createStream(id);
     }
@@ -123,17 +125,45 @@ export function routes(fastify: FastifyInstance) {
 
         async function createWorkflow(agent:string, workflow:string) {
             const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
-            const stream = getOrCreateStream(`${workflow}/workflow`);
-          
-            
-
+           const componentStream = createStream(`${workflow}`);
             const service = create((logic, options) => createActor(
                 logic.provide({
+                    actions:{
+                        render: enqueueActions(({enqueue,system}, params:{html?:render, node?:VNodeAny, stream:string} | {html:render, node?:VNodeAny,stream:string}) => {
+                            const stream = getOrCreateStream(`${workflow}${params.stream}`);
+                            const node = params.node ||(params.html && params.html(html) )
+                            const data =node?.render ? node.render() : node
+
+                            console.log('render to ',`${workflow}${params.stream}`, data);
+
+                            if(system.get(`stream.${params.stream}`) === undefined) {
+                                enqueue.spawnChild('renderer', {
+                                    id: params.stream,
+                                    systemId: `stream.${params.stream}`,
+                                    input: {
+                                        slug: params.stream
+                                    }
+                                })
+                            }
+                            enqueue.sendTo(params.stream, {
+                                type: 'render',
+                                node
+                            })
+                            // stream.push({data: data}); 
+                        })
+                    },
                     actors: {
                         terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
-                        renderer:fromCallback(({receive, self}) => { 
-                            receive(({node}) => {
-                                    node && stream.push({ data: node.render()});
+                        renderer:fromCallback(({receive,input:{html:h,slug}}) => {
+                            console.log('create renderer', slug);
+                            h && componentStream.push({  data: h(html).render() }); 
+                            const stream = getOrCreateStream(`${workflow}${slug}`);
+                            receive(({node, type}) => {
+                                const data =node.render ? node.render() : node
+                                console.log('renderer: render to ',`${workflow}${slug}`, data);
+
+                                node && stream.push({ data: data});
+                                     
                                 })
                             }
                         ) satisfies renderCallbackActor,
@@ -143,29 +173,29 @@ export function routes(fastify: FastifyInstance) {
                                 const stream = getOrCreateStream(`${workflow}/${self.id}`);
                                 receive((event) => {
                                     stream.push(event);
-                                })
-
-
+                                }) 
                             }),
-                            href: `${workflow}/stream/${workflow}`
+                            href: `${workflow}`
                         } satisfies StreamActorLogic
                     }
                 }), {
                     id: workflow,
                     // inspect:loggerInspector,
                     input:{
-                        basePath: `${workflow}/stream`,
+                        basePath: `${workflow}`,
                         streamPath(streamId:string){
-                            return `${workflow}/stream/${streamId}`
+                            return `${workflow}/${streamId}`
                         }
                     },
                     ...options
                 }));
             service.start();
             return {
-                ...service,
-                stream,
-                streamId:`workflow`
+                ...service, 
+                streamId:workflow,
+                async html(reply:FastifyReply){ 
+                    sendHtml(reply, html`<${Streamable} url="${reply.request.originalUrl}" > </${Streamable}>`)
+                }
             };
         }
 
@@ -182,68 +212,54 @@ export function routes(fastify: FastifyInstance) {
     
     fastify.get('/view/:agent/:workflow', async function handler(request, reply:FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow:string };
-        await getOrCreateWorkflow(agent, workflow);
-
+        const {html} = await getOrCreateWorkflow(agent, workflow); 
+        if(request.headers.accept === 'text/event-stream') {
+            reply.sse(readStream(workflow));
+            return reply;
+        }  
+        
         reply.type('text/html');
-        reply.header('Cache-Control', 'no-store');
-        sendHtml(reply, html`
-            <${Streamable} url="${`${workflow}/stream/workflow`}"> 
-            </${Streamable}>`); 
+        reply.header('Cache-Control', 'no-store');  
+        await html(reply);
     })
 
 
-    fastify.get('/view/:agent/:workflow/stream/:stream', async function handler(request, reply:FastifyReply) {
+    fastify.get('/view/:agent/:workflow/:stream', async function handler(request, reply:FastifyReply) {
         const {agent, workflow,stream} = request.params as { agent: string, workflow:string , stream:string};
-        await getOrCreateWorkflow(agent, workflow);
+        // await getOrCreateWorkflow(agent, workflow);
         console.log('streaming', `${workflow}/${stream}`, streams.has(`${workflow}/${stream}`));
         const data = readStream(`${workflow}/${stream}`);
 
         reply.sse(data);
         request.socket.on('close', () => {
             console.log("closing");
-            // data.return();
-        })
-
-        return reply;
-    })
-
-
-    fastify.get('/stream/text/:stream', async function handler(request, reply) {
-        const {stream} = request.params as { stream: string };
-        console.log('streaming', stream, streams.has(stream));
-        const data = readStream(stream);
-        reply.sse(data); 
-            request.socket.on('close', () => {
-                console.log("closing");
-                // data.return();
+            data.return({
+                event: 'close'
             })
+        }) 
         
-        return reply;
- 
-        
-    })
- 
-    
-    fastify.get('/stream/:agent/:workflow/:state/:child', async function handler(request, reply) {
-        const {agent, workflow,child, state} = request.params as { agent: string, workflow:string, child:string , state:string};
-        const service = services.get(workflow);
-        if (service) { 
-            await waitFor(service, s=>s.matches(state), {timeout: 1000});
-            console.log('subscribing to', child,state,"\tcurrent state", service.getSnapshot().value, "\tchild: ", service.system.get(child)?.id, "\tcontext: ",service.getSnapshot().context );
-            service.system.get(child)?.subscribe((state: string | undefined) => {
-                reply.sse({data: state});
-            })
+
+        async function streamLog(){
+            for await (const event of readStream(`${workflow}/${stream}`)) {
+                console.log('streaming', `${workflow}/${stream}`, event);
+                 
+            }
         }
+        streamLog().catch(console.error).then(() => {
+            console.log('streaming done' , `${workflow}/${stream}`);
+        });
         return reply;
-
     })
 
+ 
 }
 export function sendHtml(reply:FastifyReply,  node:VNodeAny )
 {
     // reply.type('text/html')
     reply.send(`<html>
       <head>
+            <base href="${reply.request.protocol}://${reply.request.hostname}${reply.request.originalUrl}/" target="_blank" />
+
 <!--        <link rel="import" href="https://esm.sh/polymate/polymate-view.html"> </link>-->
          <script type="importmap">
         {
