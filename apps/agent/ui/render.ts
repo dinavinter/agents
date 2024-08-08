@@ -25,4 +25,6 @@ export type renderCallbackActor = CallbackActorLogic< {type: "render", node: VNo
 
 export type animateCallbackActor = CallbackActorLogic< {type: "animate", lottie: LottiePlayer }  >;
 
-export type StreamActorLogic=CallbackActorLogic<EventMessage & {type: "event"} >
+export type StreamActorLogic=CallbackActorLogic<EventMessage & {type: "event"} > & {
+    href: string;
+}

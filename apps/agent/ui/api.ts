@@ -114,46 +114,61 @@ export function routes(fastify: FastifyInstance) {
     const noop = (v: any) => v;
     
     
-    async function createWorkflow(agent:string, workflow:string) {
-        const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
-        const stream = createStream(`workflows/${workflow}`);
-
-        const service = create((logic, options) => createActor(
-            logic.provide({
-                actors: {
-                    terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
-                    renderer:fromCallback(({receive, self}) => {
-                        receive(({node}) => {
-                                node && stream.push({ data: node.render()});
-                            })
-                        }
-                    ) satisfies renderCallbackActor,
-                    stream: fromCallback(({receive, self}) => {
-                        console.log('create stream', self.id);
-                        const stream = getOrCreateStream(self.id);
-                        receive((event) => {
-                            stream.push(event);
-                        })
-                    })  satisfies StreamActorLogic
-                }
-            }), {
-                id: workflow,
-                // inspect:loggerInspector,
-                ...options
-            }));
-         service.start();
-         return {
-            ...service,
-            stream,
-             streamId:`workflows/${workflow}`
-         };
-    }
     
     async function getOrCreateWorkflow(agent:string, workflow:string) {
         if(!services.has(workflow)) {
             services.set(workflow, await createWorkflow(agent, workflow));
         }
         return services.get(workflow)!;
+
+        async function createWorkflow(agent:string, workflow:string) {
+            const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
+            const stream = getOrCreateStream(`${workflow}/workflow`);
+          
+            
+
+            const service = create((logic, options) => createActor(
+                logic.provide({
+                    actors: {
+                        terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
+                        renderer:fromCallback(({receive, self}) => { 
+                            receive(({node}) => {
+                                    node && stream.push({ data: node.render()});
+                                })
+                            }
+                        ) satisfies renderCallbackActor,
+                        stream: {
+                            ...fromCallback(({receive, self}) => {
+                                console.log('create stream', self.id);
+                                const stream = getOrCreateStream(`${workflow}/${self.id}`);
+                                receive((event) => {
+                                    stream.push(event);
+                                })
+
+
+                            }),
+                            href: `${workflow}/stream/${workflow}`
+                        } satisfies StreamActorLogic
+                    }
+                }), {
+                    id: workflow,
+                    // inspect:loggerInspector,
+                    input:{
+                        basePath: `${workflow}/stream`,
+                        streamPath(streamId:string){
+                            return `${workflow}/stream/${streamId}`
+                        }
+                    },
+                    ...options
+                }));
+            service.start();
+            return {
+                ...service,
+                stream,
+                streamId:`workflow`
+            };
+        }
+
     }
 
 
@@ -167,16 +182,32 @@ export function routes(fastify: FastifyInstance) {
     
     fastify.get('/view/:agent/:workflow', async function handler(request, reply:FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow:string };
+        await getOrCreateWorkflow(agent, workflow);
+
         reply.type('text/html');
         reply.header('Cache-Control', 'no-store');
         sendHtml(reply, html`
-            <${Streamable} url="/api/${agent}/${workflow}"> 
+            <${Streamable} url="${`${workflow}/stream/workflow`}"> 
             </${Streamable}>`); 
     })
-    
-    
 
-   
+
+    fastify.get('/view/:agent/:workflow/stream/:stream', async function handler(request, reply:FastifyReply) {
+        const {agent, workflow,stream} = request.params as { agent: string, workflow:string , stream:string};
+        await getOrCreateWorkflow(agent, workflow);
+        console.log('streaming', `${workflow}/${stream}`, streams.has(`${workflow}/${stream}`));
+        const data = readStream(`${workflow}/${stream}`);
+
+        reply.sse(data);
+        request.socket.on('close', () => {
+            console.log("closing");
+            // data.return();
+        })
+
+        return reply;
+    })
+
+
     fastify.get('/stream/text/:stream', async function handler(request, reply) {
         const {stream} = request.params as { stream: string };
         console.log('streaming', stream, streams.has(stream));
@@ -191,24 +222,7 @@ export function routes(fastify: FastifyInstance) {
  
         
     })
-    
-    fastify.get('/api/:agent/:workflow', async function handler(request, reply) {
-        const {agent, workflow} = request.params as { agent: string, workflow:string };
-        const {stop, streamId} = await getOrCreateWorkflow(agent, workflow);
-        const stream=readStream(streamId);
-        reply.sse(stream);
-
-        request.socket.on('close', () => {
-            console.log("closing");
-            // stream.return()
-             // stop();
-            // streams.delete(workflow);
-        })
-
-        return reply;
-      
-
-    })
+ 
     
     fastify.get('/stream/:agent/:workflow/:state/:child', async function handler(request, reply) {
         const {agent, workflow,child, state} = request.params as { agent: string, workflow:string, child:string , state:string};

@@ -16,7 +16,7 @@ function component({url}) {
 
     const source= useMemo(()=> {
         console.log("streamable create event source", url)
-        return EventSource && new EventSource(url)
+        return typeof EventSource !== "undefined" && new EventSource(url)
     }, [url]);
 
     useEffect(async () => {
