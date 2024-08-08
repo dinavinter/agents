@@ -25,6 +25,7 @@ import path from "node:path";
 import fastifyStatic from "@fastify/static";
 import  * as ai from 'ai'
 import  {Pushable, pushable} from "it-pushable";
+import {TextStream} from "./components/text";
  function generateActorId() {
     return Math.random().toString(36).substring(2, 8);
 }
@@ -111,6 +112,61 @@ function readStream(id:string) {
     return clonePushable(stream, clone);  
 }
 
+ class Streams<T> implements Record<string, ReturnType<typeof getStreamEl>>{
+ 
+    
+    constructor(private base:string){
+        return new Proxy(this, {
+            get(target, name) { 
+                const href = `${base}/${name.toString()}`;
+
+                const textStream = c(({src}) => html`<host shadowDom>${src} </host>`, {
+                    props: {
+                        src: {type: String, reflect: true, value: href}
+                    },
+                    base: TextStream
+                });
+
+                const htmlStream = c(({src}) => html`<host shadowDom>${src}</host>`, {
+                    props: {
+                        src: {type: String, reflect: true, value: href}
+                    },
+                    base: Streamable
+                });
+                return {href, textStream, htmlStream};
+            },
+            // overrides getting Statuses.name
+            set(target, name, value) {
+                 return true;
+            }       
+        }); 
+        
+    }
+  
+; 
+
+}
+
+
+    function getStreamEl(workflow: string, slug: string | undefined) {
+    const href = `${workflow}${slug && `/${slug}`}`;
+
+    const textStream = c(({src}) => html`<host shadowDom>${src} </host>`, {
+        props: {
+            src: {type: String, reflect: true, value: href}
+        },
+        base: TextStream
+    });
+
+    const htmlStream = c(({src}) => html`<host shadowDom>${src}</host>`, {
+        props: {
+            src: {type: String, reflect: true, value: href}
+        },
+        base: Streamable
+    });
+    return {href, textStream, htmlStream};
+}
+
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin); 
     const noop = (v: any) => v;
@@ -125,45 +181,43 @@ export function routes(fastify: FastifyInstance) {
 
         async function createWorkflow(agent:string, workflow:string) {
             const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
-           const componentStream = createStream(`${workflow}`);
+            const componentStream = createStream(`${workflow}`);
             const service = create((logic, options) => createActor(
-                logic.provide({
-                    actions:{
-                        render: enqueueActions(({enqueue,system}, params:{html?:render, node?:VNodeAny, stream:string} | {html:render, node?:VNodeAny,stream:string}) => {
-                            const stream = getOrCreateStream(`${workflow}${params.stream}`);
-                            const node = params.node ||(params.html && params.html(html) )
-                            const data =node?.render ? node.render() : node
-
-                            console.log('render to ',`${workflow}${params.stream}`, data);
-
-                            if(system.get(`stream.${params.stream}`) === undefined) {
-                                enqueue.spawnChild('renderer', {
-                                    id: params.stream,
-                                    systemId: `stream.${params.stream}`,
-                                    input: {
-                                        slug: params.stream
-                                    }
-                                })
-                            }
-                            enqueue.sendTo(params.stream, {
-                                type: 'render',
-                                node
-                            })
-                            // stream.push({data: data}); 
-                        })
-                    },
+                logic.provide({ 
                     actors: {
                         terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
-                        renderer:fromCallback(({receive,input:{html:h,slug}}) => {
-                            console.log('create renderer', slug);
-                            h && componentStream.push({  data: h(html).render() }); 
-                            const stream = getOrCreateStream(`${workflow}${slug}`);
-                            receive(({node, type}) => {
-                                const data =node.render ? node.render() : node
-                                console.log('renderer: render to ',`${workflow}${slug}`, data);
+                        renderer:fromCallback(({receive,self,input}) => {
+                                const defaultEl: render = (h, {href}) => h`<></>`;
+                                const defaultOptions = {
+                                    slug: self.id,
+                                    render: defaultEl
+                                }
 
-                                node && stream.push({ data: data});
-                                     
+                                const {render: h, slug} = {...defaultOptions, ...input};
+
+                                console.log('create renderer', slug);
+                                const {href, textStream, htmlStream} = getStreamEl(workflow, slug);
+                                // const {textStream} =Streamer[slug]  
+                                const stream = getOrCreateStream(href);
+                                const streamEl = (s?: string) => getStreamEl(workflow, s);
+                                streamEl.textStream = textStream;
+                                streamEl.htmlStream = htmlStream;
+                                streamEl.href = href;
+                                streamEl.stream = stream;
+
+                                const node = h(html, streamEl);
+
+                                console.log('renderer: node to ', {node});
+                                console.log('renderer:render render to ', {rendered: node.render && node.render()});
+                                componentStream.push({
+                                    data: node.render ? node.render() : node
+                                });
+
+                                receive(({node, render}) => {
+                                    node = node || render(html, streamEl)
+                                    const data = node.render ? node.render() : node
+                                    console.log('renderer: render to ', href, data);
+                                    stream.push({data: data});
                                 })
                             }
                         ) satisfies renderCallbackActor,
@@ -258,7 +312,7 @@ export function sendHtml(reply:FastifyReply,  node:VNodeAny )
     // reply.type('text/html')
     reply.send(`<html>
       <head>
-            <base href="${reply.request.protocol}://${reply.request.hostname}${reply.request.originalUrl}/" target="_blank" />
+            <base href="${reply.request.protocol}://${reply.request.hostname}${reply.request.originalUrl}" target="_blank" />
 
 <!--        <link rel="import" href="https://esm.sh/polymate/polymate-view.html"> </link>-->
          <script type="importmap">
@@ -298,6 +352,8 @@ export function sendHtml(reply:FastifyReply,  node:VNodeAny )
     )
 }
 
+
+/*
 async function agentAsStream(agent:string, workflow:string){
     const create = await import(`./agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
 
@@ -337,3 +393,5 @@ async function agentAsStream(agent:string, workflow:string){
         dataStream
     }
 }
+*/
+ 
