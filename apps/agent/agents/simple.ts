@@ -32,14 +32,17 @@ export const machine = setup({
         render: undefined as unknown as renderActor, renderer: undefined as unknown as renderCallbackActor, 
     },
     types: {
-        input: {} as {basePath:string, streamPath: (stream:string) => string},
+        input: {} as {
+            thought?: string;
+            doodle?: Doodle;
+            stream:  ActorRefFrom< StreamActorLogic>;
+        },
         context: {} as {
             thought?: string;
             doodle?: Doodle;
-            basePath:string, streamPath: (stream:string) => string
             stream:  ActorRefFrom< StreamActorLogic>;
         },
-    },
+    }
 }).createMachine({ 
     initial: 'thinking',
     invoke:{
@@ -47,9 +50,9 @@ export const machine = setup({
         id: 'renderer',
         systemId: 'renderer',
     }, 
-    context:({ spawn, input})=> ({
+    context:({ spawn, input:{stream,...input}})=> ({
         ...input,
-        stream:  spawn('stream', {
+        stream:  stream || spawn('stream', {
             id: `thought`,
             systemId: `thought`,
             syncSnapshot: false
@@ -57,13 +60,13 @@ export const machine = setup({
     }),
     states: {  
         thinking: {
-            entry: sendTo('renderer',({ context:{streamPath}}) => ({
+            entry: sendTo('renderer',() => ({
                     type: 'render',
                     node: html`
                         <host>
                             <span>I'm thinking about a random topic</span>
                             <br/>
-                            <c-text-stream url="${streamPath('thought')}" default="...">
+                            <c-text-stream url="thought" default="...">
                                 <span slot="default">...</span>
                             </c-text-stream>
                         </host>`
