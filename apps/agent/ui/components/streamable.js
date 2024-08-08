@@ -1,22 +1,36 @@
-import {c, css, html, useEffect, useHost, useProp, useState} from "atomico";
+import {c, css, html, useCallback, useEffect, useHost, useMemo, useProp, useState} from "atomico";
+import {useRender} from "@atomico/hooks";
    
 
 function component({url}) {
-    const [state, setState] = useState(); 
     const host =useHost();
-    useEffect(async () => {
-        const source = new EventSource(url);
-        source.onmessage = function(event) {
-           if(host.current) {
-               setState(event.data);
-               host.current.innerHTML += `<div >${event.data}</div>`;
-           }
-        };
+    const [state, setState] = useState([]);
+    const callback=useCallback((event) => {
+        console.log("streamable update host callback", {data:event.data})
+        const div = document.createElement("div");
+        div.style.width = "100%";
+        div.style.height = "100%";
+        div.innerHTML = event.data;
+        setState(s=> s.concat(div)); 
+    }, []);
 
+    const source= useMemo(()=> {
+        console.log("streamable create event source", url)
+        return EventSource && new EventSource(url)
     }, [url]);
-        
+
+    useEffect(async () => {
+        console.log("streamable useEffect event source")
+        source.onmessage = callback
+    }, [source, callback]);
+    
+  useRender(() => {
+      console.log("streamable render", state)
+      return state.map((T) => html`<${T} />` )
+    }) 
+   
     return html`<host shadowDom> 
-     <slot/>
+        <slot/>
   </host>`;
 }
 

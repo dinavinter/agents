@@ -4,57 +4,66 @@ import {c, css, html, useEffect, usePromise, useRef, useState} from "atomico";
 export const SVG=c(function ({src}) {
 
      const svgContainer =useRef();
+     const refTemplate = useRef();
+     const [svgElement, setSvgElement] = useState();
      
      const [animation, setAnimation] = useState();
     async function fetchSvg() {
-        const div = document.createElement('div');
         const res = await fetch(src);
         return await res.text(); 
-    }
-
+    } 
     const svg = usePromise( fetchSvg, [src], true);
+    
     useEffect(()=> {
         if (svg.fulfilled) {
             svgContainer.current.innerHTML = svg.result;
-            animate()
-        }
-        async function animate() {
-            const {default: animejs} = await import("animejs");
             const paths = svgContainer.current.querySelectorAll('path');
+            console.log("update paths", paths)
             paths.forEach(path => {
                 const length = path.getTotalLength();
+                // path.classList.remove(path.classList);
                 path.style.stroke = 'black';
                 path.style.strokeDasharray = length;
                 path.style.strokeDashoffset = length;
-                path.style.strokeWidth = 4;
+                path.style.strokeWidth = 7;
                 path.style.fill = 'white';
-            });
-            
-            // const svg = svgContainer.current.querySelector('svg');
-            // svg?.removeAttribute('viewBox');
 
+            });
+            setSvgElement(svgContainer.current);
+
+        }
+    },[svg, svgContainer.current])
+
+    useEffect(() => {
+        svgElement && animate()
+        async function animate() {
+            const {default: animejs} = await import("animejs");
             setAnimation(animejs({
                 targets: 'svg path',
                 strokeDashoffset: [animejs.setDashoffset, 0],
                 easing: 'easeInOutSine',
                 duration: 3000,
-                delay: function(el, i) { return i * 100 },
+                delay: function (el, i) {
+                    return i * 100
+                },
                 direction: 'normal',
                 loop: true
 
 
             }))
         }
-    },[svg, svgContainer.current])
-    
+    }, [svgElement])
+
+
     useEffect(()=>{
        animation?.play()
     }, [animation])
     
-
+    
 
     return html`<host  >
-        <div ref=${svgContainer}></div>
+        <template ref="${refTemplate}"><div ref=${svgContainer}></div></template>
+        ${svgElement && html`<${svgElement}  />`}
     </host>`
 
 },{

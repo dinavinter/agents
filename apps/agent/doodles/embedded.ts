@@ -42,18 +42,18 @@ export const findDoodleTool =tool({
             value: query,
         });
 
-       console.log(
-           `cosine similarity: ${cosineSimilarity(embeddings[0].embedding, embeddings[1].embedding)}`,
-       );
-        console.log('queryEmbedding', queryEmbedding)
+       // console.log(
+       //     `cosine similarity: ${cosineSimilarity(embeddings[0].embedding, embeddings[1].embedding)}`,
+       // );
+       //  console.log('queryEmbedding', queryEmbedding)
        
         const distances = embeddings.map(({ embedding }) => cosineSimilarity(
             queryEmbedding.embedding,
             embedding,
          ));
-        console.log('distances', distances)
+        // console.log('distances', distances)
         const closestIndex = distances.indexOf(Math.max(...distances));
-        console.log('closestIndex', embeddings[closestIndex])
+        // console.log('closestIndex', embeddings[closestIndex])
         return embeddings[closestIndex].content
    }
  })

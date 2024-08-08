@@ -3,6 +3,7 @@ import {CallbackActorLogic, fromPromise, PromiseActorLogic} from "xstate";
 import {LottiePlayer} from "lottie-web";
 import { z } from "zod";
 import {jsonSchemaToZod} from "json-schema-to-zod";
+import {EventMessage} from "fastify-sse-v2";
 
 export type html<R = any>={(
         strings: TemplateStringsArray,
@@ -24,4 +25,4 @@ export type renderCallbackActor = CallbackActorLogic< {type: "render", node: VNo
 
 export type animateCallbackActor = CallbackActorLogic< {type: "animate", lottie: LottiePlayer }  >;
 
-
+export type StreamActorLogic=CallbackActorLogic<EventMessage & {type: "event"} >
