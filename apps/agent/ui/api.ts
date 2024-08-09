@@ -137,6 +137,45 @@ function readStream(id:string) {
       return {href, textStream, htmlStream};
   }
 
+function toStreamEl(service: ActorRefFrom<AnyStateMachine>, slug?: string) {
+    const workflow = service.id;
+
+    const {href, textStream, htmlStream} = getStreamEl(workflow, slug);
+    // const {textStream} =Streamer[slug]  
+
+    const stream = getOrCreateStream(href);
+    const streamEl = (s?: string) => getStreamEl(workflow, s);
+    streamEl.textStream = textStream;
+    streamEl.htmlStream = htmlStream;
+    streamEl.href = href;
+    streamEl.stream = stream;
+    streamEl.service = (id?: string, parse?: (e: any) => string | undefined) => {
+        parse = parse || ((e) => e.context || e);
+        const systemService = id ? service.system.get(id) : service;
+        const stream = getOrCreateStream(`${workflow}/${id}`);
+        systemService.subscribe(
+            (event: any) => {
+                stream.push({
+                    data: parse(event)
+                });
+            }
+        );
+        return getStreamEl(workflow, id);
+    }
+    streamEl.event = (type?: string, parse?: (e: any) => EventMessage) => {
+        // parse = parse || ((e) => e);
+        // const stream = getOrCreateStream(`${workflow}/${type}`);
+        // service.subscribe(
+        //     (event:any) => {
+        //         stream.push(parse(event));
+        //     }
+        // );
+
+        return getStreamEl(workflow, `events/${type}`)
+    }
+    return streamEl;
+}
+
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin); 
     const noop = (v: any) => v;
@@ -151,7 +190,8 @@ export function routes(fastify: FastifyInstance) {
 
         async function createWorkflow(agent:string, workflow:string) {
             const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
-            const componentStream = createStream(`${workflow}`);
+            const componentStream = createStream(`${workflow}/component`);
+            
             const service = create((logic, options) => createActor(
                 logic.provide({ 
                     actors: {
@@ -166,39 +206,9 @@ export function routes(fastify: FastifyInstance) {
                                 const {render: h, slug} = {...defaultOptions, ...input};
 
                                 console.log('create renderer', slug);
-                                const {href, textStream, htmlStream} = getStreamEl(workflow, slug);
-                                // const {textStream} =Streamer[slug]  
-                                const stream = getOrCreateStream(href);
-                                const streamEl = (s?: string) => getStreamEl(workflow, s);
-                                streamEl.textStream = textStream;
-                                streamEl.htmlStream = htmlStream;
-                                streamEl.href = href;
-                                streamEl.stream = stream;
-                                streamEl.service = (id?: string, parse?: (e:any)=> string | undefined) => {
-                                    parse = parse || ((e) => e.context || e);
-                                    const systemService  = id ? service.system.get(id ) : service;
-                                    const  stream = getOrCreateStream(`${workflow}/${id}`);
-                                    systemService.subscribe(
-                                        (event:any) => {
-                                            stream.push({
-                                                data: parse(event)
-                                            });
-                                        }
-                                    );
-                                    return getStreamEl(workflow, id);
-                                }
-                                streamEl.event = (type?: string, parse?: (e:any)=> EventMessage) => {
-                                    parse = parse || ((e) => e);
-                                    const stream = getOrCreateStream(`${workflow}/${type}`);
-                                    service.subscribe(
-                                        (event:any) => {
-                                            stream.push(parse(event));
-                                        }
-                                    );
-                                    return getStreamEl(workflow,`events/${type}`)
-                                }
+                            const streamEl = toStreamEl(service, slug);
 
-                                const node = h(html, streamEl);
+                            const node = h(html, streamEl);
 
                                 console.log('renderer: node to ', {node});
                                 console.log('renderer:render render to ', {rendered: node.render && node.render()});
@@ -209,8 +219,8 @@ export function routes(fastify: FastifyInstance) {
                                 receive(({node, render}) => {
                                     node = node || render(html, streamEl)
                                     const data = node.render ? node.render() : node
-                                    console.log('renderer: render to ', href, data);
-                                    stream.push({data: data});
+                                    console.log('renderer: render to ', streamEl.href, data);
+                                    streamEl.stream.push({data: data});
                                 })
                             }
                         ) satisfies renderCallbackActor,
@@ -229,6 +239,9 @@ export function routes(fastify: FastifyInstance) {
                     id: workflow,
                     // inspect:loggerInspector,
                     input:{
+                        stream: {
+                            event: (type:string)=> getStreamEl(workflow, `events/${type}`)
+                        },
                         basePath: `${workflow}`,
                         streamPath(streamId:string){
                             return `${workflow}/${streamId}`
@@ -236,9 +249,14 @@ export function routes(fastify: FastifyInstance) {
                     },
                     ...options
                 }));
-            service.start();
+
+            const workflowStream = createStream(workflow);
+            service.on('*', workflowStream.push);
+
             return {
                 ...service, 
+                start:service.start.bind(service),
+                subscribe: service.subscribe.bind(service),
                 on: service.on.bind(service),
                 streamId:workflow,
                 async html(reply:FastifyReply){ 
@@ -260,14 +278,27 @@ export function routes(fastify: FastifyInstance) {
     
     fastify.get('/view/:agent/:workflow', async function handler(request, reply:FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow:string };
-        const {html} = await getOrCreateWorkflow(agent, workflow); 
+        const {html, on, start} = await getOrCreateWorkflow(agent, workflow); 
+        on('agent', (event:any ) => {
+            console.log('agent event', event);
+        })
+        on('*', (event:any ) => {
+            console.log('workflow event', event);
+        })
+
         if(request.headers.accept === 'text/event-stream') {
-            reply.sse(readStream(workflow));
+            // reply.sse(readStream(workflow));
+            // reply.sse({data: "hello"});
+            on('render', (event:{node:VNodeAny} ) => {
+                reply.sse({data: event.node.render()});
+            })
+            
+            start();
             return reply;
         }  
         
         reply.type('text/html');
-        reply.header('Cache-Control', 'no-store');  
+        reply.header('Cache-Control', 'no-store');
         await html(reply);
     })
 
@@ -325,7 +356,13 @@ export function routes(fastify: FastifyInstance) {
     fastify.get('/view/:agent/:workflow/events/:type', async function handler(request, reply:FastifyReply) {
         const {agent, workflow,type} = request.params as { agent: string, workflow:string , type:string};
         const actor  =await getOrCreateWorkflow(agent, workflow);
-        actor.on(type, (event:EventMessage) => {
+        console.log('actor events', agent, type,actor.id);
+
+        actor.on(type, (event:EventMessage | {event: "render" , render:render}) => {
+            console.log('actor events:',workflow, agent, type,event);
+            // if(event.event === "render" && "render" in event) {
+            //     reply.sse({data: event.render(html, toStreamEl(actor))});
+            // }
             reply.sse(event);
         })
 

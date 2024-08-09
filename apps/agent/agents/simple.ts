@@ -23,7 +23,14 @@ import {
     fromAIEventStream
 } from "../utils/toolStream";
 import {findDoodleTool} from "../doodles/embedded";
-import {render, renderActor, renderCallbackActor, RenderEvent, StreamActorLogic} from "../ui/render";
+import {
+    render,
+    renderActor,
+    renderCallbackActor,
+    RenderEvent, 
+    StreamActorLogic,
+    streamOptions
+} from "../ui/render";
 import {SVG} from "../ui/components/svg";
 import {VNodeAny} from "atomico/types/vnode";
 import {Streamable} from "../ui/components/streamable";
@@ -35,7 +42,9 @@ import {EventMessage} from "fastify-sse-v2";
 config();
 
 
-// @ts-ignore
+type stream={
+    event: (type: string) => streamOptions;
+}
 export const machine = setup({
  
     actors: {
@@ -49,10 +58,12 @@ export const machine = setup({
     types: {
         events: {} as TextStreamPart<{doodle:typeof findDoodleTool}>,//EventFrom<typeof fromAIEventStream>,
         input: {} as {
+            stream?: stream,
             thought?: string;
             doodle?: Doodle;
         },
         context: {} as {
+            stream?: stream,
             thought?: string;
             doodle?: Doodle;
         }
@@ -60,26 +71,17 @@ export const machine = setup({
 }).createMachine({
     initial: 'thinking',
     context: ({input}) => input,
-    entry:  spawnChild('renderer', {
-        id: 'agent',
-        syncSnapshot: false,
-        input:{
-            render(h,s) {
-                return  h`<div> <${s('agent').htmlStream}  /></div>`
-            } 
-        }
-    }),
-    states: {
+    states: { 
         thinking: {
-            entry: sendTo('agent', {
-                    type: 'render',
-                    render(h,{event}) {
-                        return h`<div> 
-                                    <pre>User: Think about a random topic, and then share that thought.</pre>
-                                    <pre>Agent:</pre> <${event('thought').textStream} /> 
-                                 </div>`
-                    }
-                } satisfies RenderEvent), 
+            entry: emit( ({context: {stream}, self: {id}}) =>({
+                type: 'render',
+                node: html`
+                    <div>
+                        <pre>User: Think about a random topic, and then share that thought.</pre>
+                        <pre>Agent:</pre>
+                        <${stream?.event('thought').textStream} />
+                    </div>`
+            } )), 
             invoke: {
                 src: 'aiStream',
                 input: 'Think about a random topic, and then share that thought.',
@@ -87,7 +89,7 @@ export const machine = setup({
                     target: 'doodle'
                 } 
             },
-            on: { 
+            on: {  
                 'text-delta': {
                     actions: [
                         assign({
@@ -109,25 +111,19 @@ export const machine = setup({
                     tools: {
                         doodle: findDoodleTool
                     }
-                }, 
-                onDone: {
-                    target: 'done'
-                }
+                } 
             },
             on:{
                 'tool-result' :{
-                    actions: sendTo('agent', ({event:{result:{src, alt}}})=> ({
+                    actions: emit( ({event:{result:{src, alt}}})=> ({
                         type: 'render',
-                        render(h) {
-                            return h`<c-svg  src="${src}"  alt="${alt}"  />`
-                        }
-                    }) satisfies RenderEvent)
+                        node: html`<c-svg  src="${src}"  alt="${alt}"  />`
+                    }))
                 }
             }
         },
         done: {
-            type: 'final',
-
+            type: 'final', 
             output: ({context}) => context
         }
     },
