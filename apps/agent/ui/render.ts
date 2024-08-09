@@ -13,9 +13,10 @@ export type html<R = any>={(
         ...values: any[]
     ): R;}
 
-export type streamOptions={href: string, htmlStream: Atomico<any,any, any> ; textStream:Atomico<any,any, any>  }
-export type streamFactory= (id?: string) => streamOptions;
-export type stream = streamFactory & streamOptions;
+export type streamOptions={href: string, htmlStream: Atomico<any,any, any> ; textStream:Atomico<any,any, any> ; }
+export type streamFactory= (id?: string, 
+                            map?: (e:any)=> string | undefined) => streamOptions;
+export type stream = streamFactory & streamOptions & {service:streamFactory;};
 export type render= {
     (html: html, stream:stream ): VNodeAny;
 }

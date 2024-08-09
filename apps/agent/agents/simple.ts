@@ -62,14 +62,13 @@ export const machine = setup({
             entry: [ 
                 sendTo('agent', {
                     type: 'render',
-                    render(h,s) {
+                    render(h,{service}) {
                         return h`<div> 
                                     <pre>User: Think about a random topic, and then share that thought.</pre>
-                                    <pre>Agent:</pre> <${s('services/thought').textStream} /> 
+                                    <pre>Agent:</pre> <${service('thought').textStream} /> 
                                  </div>`
                     }
-                } satisfies RenderEvent),
-
+                } satisfies RenderEvent)
             ],
             invoke: {
                 src: 'text',
