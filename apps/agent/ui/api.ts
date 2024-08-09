@@ -1,8 +1,9 @@
 import {
+    ActorRefFrom,
     AnyActorRef,
     AnyStateMachine,
     CallbackActorLogic,
-    createActor, enqueueActions,
+    createActor, enqueueActions, EventObject,
     fromCallback,
     fromPromise,
     waitFor
@@ -34,7 +35,7 @@ import {TextStream} from "./components/text";
 type replyHtml = (reply:FastifyReply) => Promise<void>;
 
 const services: Map<string, 
-     AnyActorRef & {html: replyHtml ,streamId:string}
+     ActorRefFrom<AnyStateMachine> & {html: replyHtml ,streamId:string}
 > = new Map();
 
 
@@ -175,7 +176,6 @@ export function routes(fastify: FastifyInstance) {
                                 streamEl.stream = stream;
                                 streamEl.service = (id?: string, parse?: (e:any)=> string | undefined) => {
                                     parse = parse || ((e) => e.context || e);
-                                    const el = getStreamEl(workflow, id);
                                     const systemService  = id ? service.system.get(id ) : service;
                                     const  stream = getOrCreateStream(`${workflow}/${id}`);
                                     systemService.subscribe(
@@ -185,7 +185,17 @@ export function routes(fastify: FastifyInstance) {
                                             });
                                         }
                                     );
-                                    return el;
+                                    return getStreamEl(workflow, id);
+                                }
+                                streamEl.event = (type?: string, parse?: (e:any)=> EventMessage) => {
+                                    parse = parse || ((e) => e);
+                                    const stream = getOrCreateStream(`${workflow}/${type}`);
+                                    service.subscribe(
+                                        (event:any) => {
+                                            stream.push(parse(event));
+                                        }
+                                    );
+                                    return getStreamEl(workflow,`events/${type}`)
                                 }
 
                                 const node = h(html, streamEl);
@@ -229,6 +239,7 @@ export function routes(fastify: FastifyInstance) {
             service.start();
             return {
                 ...service, 
+                on: service.on.bind(service),
                 streamId:workflow,
                 async html(reply:FastifyReply){ 
                     sendHtml(reply, html`<${Streamable} url="${reply.request.originalUrl}" > </${Streamable}>`)
@@ -311,6 +322,16 @@ export function routes(fastify: FastifyInstance) {
         
     })
 
+    fastify.get('/view/:agent/:workflow/events/:type', async function handler(request, reply:FastifyReply) {
+        const {agent, workflow,type} = request.params as { agent: string, workflow:string , type:string};
+        const actor  =await getOrCreateWorkflow(agent, workflow);
+        actor.on(type, (event:EventMessage) => {
+            reply.sse(event);
+        })
+
+        return reply;
+
+    })
 
  
 }

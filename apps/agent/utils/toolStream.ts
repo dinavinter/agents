@@ -9,9 +9,19 @@ import {
     toObserver, Values
 } from "xstate";
 import {PromptTemplate} from "@langchain/core/prompts";
-import {CoreTool, generateObject, streamObject, StreamObjectResult, streamText, StreamTextResult, tool} from "ai";
+import {
+    CoreTool,
+    generateObject,
+    streamObject,
+    StreamObjectResult,
+    streamText,
+    StreamTextResult,
+    TextStreamPart,
+    tool
+} from "ai";
 import {z, ZodType} from "zod";
 import {AgentStreamTextOptions, AnyAgent} from "@statelyai/agent";
+import {fromEventAsyncGenerator} from "./async-generator";
 
 
 type InferTOfGenerateObject<T> = T extends StreamObjectResult<infer R> ? R : never;
@@ -60,12 +70,25 @@ async function resolveOptions<TDefaultOptions extends Partial<StreamingWithTempl
 }
 
 
-export function fromAiStreamText<TDefaultOptions extends Partial<StreamingWithTemplate>, TOptions extends FromDefault<StreamingWithTemplate, TDefaultOptions > =FromDefault<StreamingWithTemplate, TDefaultOptions >, TTools extends OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>> =OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>>>( defaultOptions?: TDefaultOptions): PromiseActorLogic<StreamTextResult<TTools >, TOptions>{
+export function fromAiStreamText<TDefaultOptions extends Partial<StreamingWithTemplate>, TOptions extends FromDefault<StreamingWithTemplate, TDefaultOptions > =FromDefault<StreamingWithTemplate, TDefaultOptions >, TTools extends OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>> =OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>>>( defaultOptions?: TDefaultOptions): PromiseActorLogic<StreamTextResult<TTools >, TOptions | string>{
     return fromPromise(async ({input, self}) => {
         const resolvedOptions = await resolveOptions(self._parent?.getSnapshot()?.context, defaultOptions, input);
-        return   await streamText(resolvedOptions);
+        return  await streamText(resolvedOptions);
     })
 }
+
+export function fromAIEventStream<TDefaultOptions extends Partial<StreamingWithTemplate>, TOptions extends FromDefault<StreamingWithTemplate, TDefaultOptions > =FromDefault<StreamingWithTemplate, TDefaultOptions >, TTools extends OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>> =OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>>>( defaultOptions?: TDefaultOptions){
+    return fromEventAsyncGenerator( async function * ({input, self}){
+         const resolvedOptions = await resolveOptions(self._parent?.getSnapshot()?.context, defaultOptions, input);
+         const {fullStream} = await streamText(resolvedOptions);
+         for await (const part of fullStream){
+                yield part;
+         } 
+
+    }) satisfies ObservableActorLogic<TextStreamPart<TTools>, TOptions | string, ToolCallEvent<TTools>>
+    
+}
+
 
 export  function  fromTextStream<TDefaultOptions extends Partial<StreamingWithTemplate>>( defaultOptions?: TDefaultOptions): TextStreamActorLogic<FromDefault<StreamingWithTemplate,TDefaultOptions > >{
      defaultOptions = defaultOptions || {} as TDefaultOptions; 
