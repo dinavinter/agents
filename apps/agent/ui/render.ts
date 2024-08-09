@@ -1,5 +1,13 @@
 import {VNodeAny} from "atomico/types/vnode";
-import {CallbackActorLogic, fromPromise, PromiseActorLogic} from "xstate";
+import {
+    ActionArgs,
+    CallbackActorLogic, emit,
+    EventObject,
+    fromPromise,
+    type MachineContext,
+    type ParameterizedObject,
+    PromiseActorLogic
+} from "xstate";
 import {LottiePlayer} from "lottie-web";
 import { z } from "zod";
 import {jsonSchemaToZod} from "json-schema-to-zod";
@@ -47,4 +55,24 @@ export type animateCallbackActor = CallbackActorLogic< {type: "animate", lottie:
 
 export type StreamActorLogic=CallbackActorLogic<EventMessage & {type: "event"} > & {
     href: string;
+}
+
+
+export type RenderStream={
+    event: (type: string) => streamOptions;
+}
+
+// declare type NodeOrExpression= VNodeAny 
+
+//render action
+export type NodeOrExpression<TContext extends MachineContext & {stream?: RenderStream }, TExpressionEvent extends EventObject, TParams extends ParameterizedObject['params'] | undefined, TEvent extends EventObject>= VNodeAny | NodeExpression<TContext, TExpressionEvent, TParams, TEvent>
+
+export type NodeExpression<TContext extends MachineContext, TExpressionEvent extends EventObject, TParams extends ParameterizedObject['params'] | undefined, TEvent extends EventObject>=
+    (args: ActionArgs<TContext, TExpressionEvent, TEvent> & {stream:RenderStream}, params: TParams)=> VNodeAny
+
+export function render<TContext extends MachineContext & {stream?: RenderStream }, TExpressionEvent extends EventObject, TParams extends ParameterizedObject['params'] | undefined, TEvent extends EventObject >( nodeOrExpr:(args:ActionArgs<TContext, TExpressionEvent, TEvent> & {stream:RenderStream},params:TParams) => VNodeAny) {
+    return  emit(({context, ...args}: ActionArgs<TContext, TExpressionEvent, TEvent>, params:TParams) => ({
+        type: 'render',
+        node: context.stream && nodeOrExpr({stream:context.stream , ...args, context:context}, params)
+    }))
 }
