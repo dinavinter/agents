@@ -59,43 +59,25 @@ export const machine = setup({
     }),
     states: {
         thinking: {
-            entry: [
+            entry: [ 
                 sendTo('agent', {
                     type: 'render',
-                    render(h) {
-                        return h`<pre>User:<span>Think about a random topic, and then share that thought.</span></pre>`
+                    render(h,s) {
+                        return h`<div> 
+                                    <pre>User: Think about a random topic, and then share that thought.</pre>
+                                    <pre>Agent:</pre> <${s('services/thought').textStream} /> 
+                                 </div>`
                     }
                 } satisfies RenderEvent),
-
-                spawnChild('renderer', {
-                    id: `thought`,
-                    syncSnapshot: false
-
-                }),
-                sendTo('agent', {
-                    type: 'render',
-                    render(h, s) {
-                        return h`<div>Agent: <${s('thought').textStream}  /></div>`
-                    }
-                } satisfies RenderEvent),
-
 
             ],
             invoke: {
                 src: 'text',
+                systemId: 'thought',
                 input: 'Think about a random topic, and then share that thought.',
                 onSnapshot: {
-                    actions: enqueueActions(({enqueue, event}) => {
-                        const thoughtDelta = event.snapshot.context;
-                        if (thoughtDelta !== undefined) {
-                            enqueue.assign({
-                                thought: ({context: {thought}}) => thought ? thought + thoughtDelta : thoughtDelta
-                            })
-                            enqueue.sendTo('thought', {
-                                type: 'render',
-                                node: html`${thoughtDelta}`
-                            })
-                        }
+                    actions: assign({
+                        thought: ({context: {thought}, event:{snapshot: {context:delta}}}) => thought ? thought + delta : delta
                     })
                 },
                 onDone: {
