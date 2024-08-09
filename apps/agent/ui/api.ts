@@ -305,6 +305,28 @@ export function routes(fastify: FastifyInstance) {
         return reply;
     })
 
+    fastify.get('/view/:agent/:workflow/services/:service', async function handler(request, reply:FastifyReply) {
+        const {agent, workflow,service} = request.params as { agent: string, workflow:string , service:string};
+        const {system}  =await getOrCreateWorkflow(agent, workflow);
+        const systemService = system.get(service);
+        if(!systemService) {
+            reply.code(404).send(`Service ${service} not found`);
+            return;
+        }
+        
+        systemService.subscribe(
+            (event) => {
+                reply.sse({
+                    data:  event.context || JSON.stringify( event)
+                });
+            }
+        );
+        
+        return reply;
+        
+    })
+
+
  
 }
 export function sendHtml(reply:FastifyReply,  node:VNodeAny )
