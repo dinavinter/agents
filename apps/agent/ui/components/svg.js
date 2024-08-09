@@ -1,27 +1,24 @@
 import {c, css, html, useEffect, usePromise, useRef, useState} from "atomico";
+import {useRender} from "@atomico/hooks";
 
 
 export const SVG=c(function ({src}) {
+    const [svgElement, setSvgElement] = useState(document.createElement('div')); 
+    const [animation, setAnimation] = useState();
+    const svg = usePromise(fetchSvg, [src], true);
 
-     const svgContainer =useRef();
-     const refTemplate = useRef();
-     const [svgElement, setSvgElement] = useState();
-     
-     const [animation, setAnimation] = useState();
     async function fetchSvg() {
         const res = await fetch(src);
         return await res.text(); 
     } 
-    const svg = usePromise( fetchSvg, [src], true);
     
     useEffect(()=> {
         if (svg.fulfilled) {
-            svgContainer.current.innerHTML = svg.result;
-            const paths = svgContainer.current.querySelectorAll('path');
-            console.log("update paths", paths)
+            const doc = new DOMParser();
+            const dom=doc.parseFromString(svg.result, 'image/svg+xml');
+            const paths = dom.querySelectorAll('path');
             paths.forEach(path => {
                 const length = path.getTotalLength();
-                // path.classList.remove(path.classList);
                 path.style.stroke = 'black';
                 path.style.strokeDasharray = length;
                 path.style.strokeDashoffset = length;
@@ -29,10 +26,10 @@ export const SVG=c(function ({src}) {
                 path.style.fill = 'white';
 
             });
-            setSvgElement(svgContainer.current);
+            setSvgElement(dom.firstChild);
 
         }
-    },[svg, svgContainer.current])
+    },[svg?.fulfilled])
 
     useEffect(() => {
         svgElement && animate()
@@ -58,37 +55,24 @@ export const SVG=c(function ({src}) {
     useEffect(()=>{
        animation?.play()
     }, [animation])
-    
-    
 
-    return html`<host  >
-        <template ref="${refTemplate}"><div ref=${svgContainer}></div></template>
-        ${svgElement && html`<${svgElement}  />`}
+    useRender(() => {
+        console.debug("svg:useRender", svgElement)
+        return html`<${svgElement}  />` 
+    }, [svgElement])
+
+    return html`<host shadowDom >
+         <slot></slot>    
     </host>`
 
 },{
     props:{
         anime: { type: Object, value: {} },
-        src: { type: String},
-        alt: { type: String},
+        src: { type: String, reflect: true},
+        alt: { type: String, reflect: false },
     },
     styles:css`
-        :host {
-            display: inline-block;
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-	    div {
-		    width: 100%;
-		    height: 100%;
-	    }
-	    svg {
-		    width: 100%;
-		    height: 100%;
-		    display: block;
-		    object-fit: contain;
-	    }
+        
 
 
     `

@@ -60,6 +60,7 @@ export type StreamActorLogic=CallbackActorLogic<EventMessage & {type: "event"} >
 
 export type RenderStream={
     event: (type: string) => streamOptions;
+    html: streamOptions['htmlStream'];
 }
 
 // declare type NodeOrExpression= VNodeAny 

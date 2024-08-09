@@ -7,16 +7,9 @@ import {
     fromCallback,
     fromPromise,
     waitFor
-} from "xstate";
-import {logger, loggerInspector} from "../utils/logger";
-import {
-    ReadableStream,
-    ReadableStreamDefaultReader,
-    TransformStream,
-    WritableStream,
-    WritableStreamDefaultWriter
-} from "node:stream/web";
-import {c, html} from "atomico";
+} from "xstate"; 
+import {c, html,AtomicoElement} from "atomico";
+
 import {FastifyInstance, FastifyReply} from "fastify";
 import {render, renderActor, renderCallbackActor, StreamActorLogic} from "./render";
 import {VNodeAny} from "atomico/types/vnode";
@@ -116,8 +109,8 @@ function readStream(id:string) {
  
 
 
-  function getStreamEl(workflow: string, slug: string | undefined) {
-      const href = `${workflow}${slug && `/${slug}`}`;
+  function getStreamEl(workflow: string, slug?: string | undefined) {
+      const href = `${workflow}${slug ? `/${slug}` : ''}`;
 
       const textStream = c(({src}) => html`
           <host shadowDom>${src}</host>`, {
@@ -174,6 +167,11 @@ function toStreamEl(service: ActorRefFrom<AnyStateMachine>, slug?: string) {
         return getStreamEl(workflow, `events/${type}`)
     }
     return streamEl;
+}
+
+function atomicoSerializer(payload:any) {
+    return  payload.render  ? payload.render() : payload.toString();
+     
 }
 
 export function routes(fastify: FastifyInstance) {
@@ -240,8 +238,10 @@ export function routes(fastify: FastifyInstance) {
                     // inspect:loggerInspector,
                     input:{
                         stream: {
-                            event: (type:string)=> getStreamEl(workflow, `events/${type}`)
+                            event: (type:string)=> getStreamEl(workflow, `events/${type}`),
+                            html: getStreamEl(workflow).htmlStream,
                         },
+                        
                         basePath: `${workflow}`,
                         streamPath(streamId:string){
                             return `${workflow}/${streamId}`
@@ -260,6 +260,7 @@ export function routes(fastify: FastifyInstance) {
                 on: service.on.bind(service),
                 streamId:workflow,
                 async html(reply:FastifyReply){ 
+                    // await waitFor(service, 'done');
                     sendHtml(reply, html`<${Streamable} url="${reply.request.originalUrl}" > </${Streamable}>`)
                 }
             };
@@ -289,8 +290,24 @@ export function routes(fastify: FastifyInstance) {
         if(request.headers.accept === 'text/event-stream') {
             // reply.sse(readStream(workflow));
             // reply.sse({data: "hello"});
-            on('render', (event:{node:VNodeAny} ) => {
-                reply.sse({data: event.node.render()});
+            reply.serializer(noop);
+            on('render', ({node}:{node:VNodeAny} ) => {
+                console.log('render', node);
+                const rendered = node.render();
+                console.log('rendered', {
+                    type:rendered.type,
+                    name: rendered.name,
+                    nodeName: rendered.nodeName,
+                    
+                    rendered: rendered
+                });
+                reply.sse({
+                    data: JSON.stringify({
+                        type: rendered.type,
+                        props: rendered.attributes,
+                        innerHTML: rendered.innerHTML
+                    })
+                })
             })
             
             start();
