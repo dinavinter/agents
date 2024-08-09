@@ -112,60 +112,29 @@ function readStream(id:string) {
     return clonePushable(stream, clone);  
 }
 
- class Streams<T> implements Record<string, ReturnType<typeof getStreamEl>>{
  
-    
-    constructor(private base:string){
-        return new Proxy(this, {
-            get(target, name) { 
-                const href = `${base}/${name.toString()}`;
-
-                const textStream = c(({src}) => html`<host shadowDom>${src} </host>`, {
-                    props: {
-                        src: {type: String, reflect: true, value: href}
-                    },
-                    base: TextStream
-                });
-
-                const htmlStream = c(({src}) => html`<host shadowDom>${src}</host>`, {
-                    props: {
-                        src: {type: String, reflect: true, value: href}
-                    },
-                    base: Streamable
-                });
-                return {href, textStream, htmlStream};
-            },
-            // overrides getting Statuses.name
-            set(target, name, value) {
-                 return true;
-            }       
-        }); 
-        
-    }
-  
-; 
-
-}
 
 
-    function getStreamEl(workflow: string, slug: string | undefined) {
-    const href = `${workflow}${slug && `/${slug}`}`;
+  function getStreamEl(workflow: string, slug: string | undefined) {
+      const href = `${workflow}${slug && `/${slug}`}`;
 
-    const textStream = c(({src}) => html`<host shadowDom>${src} </host>`, {
-        props: {
-            src: {type: String, reflect: true, value: href}
-        },
-        base: TextStream
-    });
+      const textStream = c(({src}) => html`
+          <host shadowDom>${src}</host>`, {
+          props: {
+              src: {type: String, reflect: true, value: href}
+          },
+          base: TextStream
+      });
 
-    const htmlStream = c(({src}) => html`<host shadowDom>${src}</host>`, {
-        props: {
-            src: {type: String, reflect: true, value: href}
-        },
-        base: Streamable
-    });
-    return {href, textStream, htmlStream};
-}
+      const htmlStream = c(({src}) => html`
+          <host shadowDom>${src}</host>`, {
+          props: {
+              src: {type: String, reflect: true, value: href}
+          },
+          base: Streamable
+      });
+      return {href, textStream, htmlStream};
+  }
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin); 
@@ -204,6 +173,20 @@ export function routes(fastify: FastifyInstance) {
                                 streamEl.htmlStream = htmlStream;
                                 streamEl.href = href;
                                 streamEl.stream = stream;
+                                streamEl.service = (id?: string, parse?: (e:any)=> string | undefined) => {
+                                    parse = parse || ((e) => e.context || e);
+                                    const el = getStreamEl(workflow, id);
+                                    const systemService  = id ? service.system.get(id ) : service;
+                                    const  stream = getOrCreateStream(`${workflow}/${id}`);
+                                    systemService.subscribe(
+                                        (event:any) => {
+                                            stream.push({
+                                                data: parse(event)
+                                            });
+                                        }
+                                    );
+                                    return el;
+                                }
 
                                 const node = h(html, streamEl);
 
@@ -313,9 +296,11 @@ export function routes(fastify: FastifyInstance) {
             reply.code(404).send(`Service ${service} not found`);
             return;
         }
+
+        reply.sse({data:systemService.getSnapshot().context})
         
         systemService.subscribe(
-            (event) => {
+            (event:any) => {
                 reply.sse({
                     data:  event.context || JSON.stringify( event)
                 });
