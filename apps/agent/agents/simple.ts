@@ -4,12 +4,10 @@ import {
     setup,
     createActor,
     assign,
-    sendTo,
     EventObject,
-    spawnChild,
     enqueueActions,
-    ActorRefFrom,
-    ObservableActorLogic, PromiseActorLogic, fromObservable, fromCallback, EventFromLogic, EventFrom, emit
+    emit,
+    AnyEventObject, ActionArgs, Action
 } from 'xstate';
 import {openaiGP4o} from "../providers/openai.js";
 import {config} from 'dotenv';
@@ -17,34 +15,21 @@ import {html} from "atomico";
 import {Doodle} from "../doodles";
 import {
     fromGenerateObject,
-    fromToolStream,
-    fromTextStream,
-    fromAiStreamText,
     fromAIEventStream
 } from "../utils/toolStream";
 import {findDoodleTool} from "../doodles/embedded";
 import {
     render,
-    renderActor,
-    renderCallbackActor,
-    RenderEvent, 
-    StreamActorLogic,
+    renderCallbackActor, RenderStream,
     streamOptions
 } from "../ui/render";
-import {SVG} from "../ui/components/svg";
-import {VNodeAny} from "atomico/types/vnode";
-import {Streamable} from "../ui/components/streamable";
-import {spawn} from "node:child_process";
-import {TextStream} from "../ui/components/text";
-import {TextStreamPart, Tool, ToolResultPart} from "ai";
-import {EventMessage} from "fastify-sse-v2";
+import {TextStreamPart} from "ai";
 
 config();
 
 
-type stream={
-    event: (type: string) => streamOptions;
-}
+
+
 export const machine = setup({
  
     actors: {
@@ -58,12 +43,12 @@ export const machine = setup({
     types: {
         events: {} as TextStreamPart<{doodle:typeof findDoodleTool}>,//EventFrom<typeof fromAIEventStream>,
         input: {} as {
-            stream?: stream,
+            stream?: RenderStream,
             thought?: string;
             doodle?: Doodle;
         },
         context: {} as {
-            stream?: stream,
+            stream?: RenderStream,
             thought?: string;
             doodle?: Doodle;
         }
@@ -73,15 +58,13 @@ export const machine = setup({
     context: ({input}) => input,
     states: { 
         thinking: {
-            entry: emit( ({context: {stream}, self: {id}}) =>({
-                type: 'render',
-                node: html`
+            entry: render( ({stream}) => html`
                     <div>
                         <pre>User: Think about a random topic, and then share that thought.</pre>
                         <pre>Agent:</pre>
                         <${stream?.event('thought').textStream} />
                     </div>`
-            } )), 
+            ),
             invoke: {
                 src: 'aiStream',
                 input: 'Think about a random topic, and then share that thought.',
@@ -115,11 +98,11 @@ export const machine = setup({
             },
             on:{
                 'tool-result' :{
-                    actions: emit( ({event:{result:{src, alt}}})=> ({
-                        type: 'render',
-                        node: html`<c-svg  src="${src}"  alt="${alt}"  />`
-                    }))
-                }
+                    actions:  render(({event: {result:{src,alt}}}) => {
+                        return html`
+                            <c-svg src="${src}" alt="${alt}"/>`
+                    })
+                 }
             }
         },
         done: {
