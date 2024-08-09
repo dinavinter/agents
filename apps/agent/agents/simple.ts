@@ -24,24 +24,21 @@ import {
     streamOptions
 } from "../ui/render";
 import {TextStreamPart} from "ai";
+import {SVG} from "../ui/components/svg";
 
 config();
 
 
-
-
 export const machine = setup({
- 
+
     actors: {
-        agent: fromGenerateObject(),
         aiStream: fromAIEventStream({
             model: openaiGP4o(),
             temperature: 0.9
-        }), 
-        renderer: undefined as unknown as renderCallbackActor,
-    },
+        })
+     },
     types: {
-        events: {} as TextStreamPart<{doodle:typeof findDoodleTool}>,//EventFrom<typeof fromAIEventStream>,
+        events: {} as TextStreamPart<{ doodle: typeof findDoodleTool }>,//EventFrom<typeof fromAIEventStream>,
         input: {} as {
             stream?: RenderStream,
             thought?: string;
@@ -56,37 +53,40 @@ export const machine = setup({
 }).createMachine({
     initial: 'thinking',
     context: ({input}) => input,
-    states: { 
+    entry: render(({stream}) => html`
+        <div slot="template">
+            <pre>User: Think about a random topic, and then share that thought.</pre>
+            <pre>Agent:</pre>
+            <div><slot></slot></div>
+        </div>`
+    ),
+    states: {
         thinking: {
-            entry: render( ({stream}) => html`
-                    <div>
-                        <pre>User: Think about a random topic, and then share that thought.</pre>
-                        <pre>Agent:</pre>
-                        <${stream?.event('thought').textStream} />
-                    </div>`
-            ),
+            entry: render(({stream}) => html`
+                <${stream?.event('thought').textStream }  />
+            `),
             invoke: {
                 src: 'aiStream',
                 input: 'Think about a random topic, and then share that thought.',
                 onDone: {
                     target: 'doodle'
-                } 
+                }
             },
-            on: {  
+            on: {
                 'text-delta': {
                     actions: [
                         assign({
                             thought: ({context: {thought}, event: {textDelta}}) => thought + textDelta
                         }),
-                        emit(  ({event: {textDelta}}) => ({
-                            type:'thought',
+                        emit(({event: {textDelta}}) => ({
+                            type: 'thought',
                             data: textDelta
                         }))
                     ]
                 }
-            } 
+            }
         },
-        doodle: { 
+        doodle: {
             invoke: {
                 src: 'aiStream',
                 input: {
@@ -94,19 +94,19 @@ export const machine = setup({
                     tools: {
                         doodle: findDoodleTool
                     }
-                } 
+                }
             },
-            on:{
-                'tool-result' :{
-                    actions:  render(({event: {result:{src,alt}}}) => {
+            on: {
+                'tool-result': {
+                    actions: render(({event: {result: {src, alt}}}) => {
                         return html`
-                            <c-svg src="${src}" alt="${alt}"/>`
+                            <${SVG} src="${src}" alt="${alt}" style="height: 50%; width: 50%; inset: -20%"/>`
                     })
-                 }
+                }
             }
         },
         done: {
-            type: 'final', 
+            type: 'final',
             output: ({context}) => context
         }
     },
