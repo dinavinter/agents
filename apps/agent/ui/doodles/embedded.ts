@@ -1,16 +1,10 @@
 import {cosineSimilarity, embed, embedMany, tool} from 'ai';
-import { openai } from '@ai-sdk/openai';
-import {embedding} from "../providers/openai";
+import {embedding} from "../../providers/openai";
 import { z } from 'zod';
 
 import doodles from "./index.json";
 
-const generateChunks = (input: string): string[] => {
-    return input
-        .trim()
-        .split('.')
-        .filter(i => i !== '');
-};
+ 
 
 export const generateEmbeddings = async (): Promise<Array<{ embedding: number[]; content: {
     src: string;
@@ -42,18 +36,12 @@ export const findDoodleTool =tool({
             value: query,
         });
 
-       // console.log(
-       //     `cosine similarity: ${cosineSimilarity(embeddings[0].embedding, embeddings[1].embedding)}`,
-       // );
-       //  console.log('queryEmbedding', queryEmbedding)
        
         const distances = embeddings.map(({ embedding }) => cosineSimilarity(
             queryEmbedding.embedding,
             embedding,
          ));
-        // console.log('distances', distances)
         const closestIndex = distances.indexOf(Math.max(...distances));
-        // console.log('closestIndex', embeddings[closestIndex])
         return embeddings[closestIndex].content
    }
  })
