@@ -8,6 +8,9 @@
   "module": "NodeNext",
   "moduleDetection": "force",
   "lib": [
+    "DOM",
+    "DOM.Iterable",
+    "ESNext",
     "ESNext.Symbol",
     "es2023"
   ],
@@ -17,7 +20,7 @@
   "jsonModule": true,
   "resolveJsonModule":true,
     "moduleResolution": "node",
-  
+   
 
 }
 }  

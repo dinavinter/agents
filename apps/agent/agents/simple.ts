@@ -2,29 +2,15 @@ import 'atomico/ssr/load';
 
 import {
     setup,
-    createActor,
-    assign,
-    EventObject,
-    enqueueActions,
-    emit,
-    AnyEventObject, ActionArgs, Action
+    createActor, enqueueActions,
 } from 'xstate';
 import {openaiGP4o} from "../providers/openai.js";
 import {config} from 'dotenv';
-import {html} from "atomico";
-import {Doodle} from "../doodles";
-import {
-    fromGenerateObject,
-    fromAIEventStream
-} from "../utils/toolStream";
-import {findDoodleTool} from "../doodles/embedded";
-import {
-    render,
-    renderCallbackActor, RenderStream,
-    streamOptions
-} from "../ui/render";
-import {TextStreamPart} from "ai";
+import {Doodle,findDoodleTool} from "../ui/doodles";
+ import {TextStreamPart} from "ai";
 import {SVG} from "../ui/components/svg";
+import {render, RenderEvent, RenderStream} from "../ui/stream";
+import {fromAIEventStream} from "../utils/ai-stream";
 
 config();
 
@@ -39,6 +25,7 @@ export const machine = setup({
      },
     types: {
         events: {} as TextStreamPart<{ doodle: typeof findDoodleTool }>,//EventFrom<typeof fromAIEventStream>,
+        emitted: {} as {type: 'thought', data: string} | RenderEvent,
         input: {} as {
             stream?: RenderStream,
             thought?: string;
@@ -53,17 +40,17 @@ export const machine = setup({
 }).createMachine({
     initial: 'thinking',
     context: ({input}) => input,
-    entry: render(({stream}) => html`
+    entry: render(({html}) => html`
         <div slot="template">
-            <pre>User: Think about a random topic, and then share that thought.</pre>
-            <pre>Agent:</pre>
+            <pre ><h2>The task:</h2> Think about a random topic, and then share that thought.</pre>
+            <pre ><h2>Agent:</h2></pre>
             <div><slot></slot></div>
         </div>`
     ),
     states: {
         thinking: {
-            entry: render(({stream}) => html`
-                <${stream?.event('thought').textStream }  />
+            entry: render(({stream, html}) => html`
+                <${stream?.event('thought').text}/>
             `),
             invoke: {
                 src: 'aiStream',
@@ -74,15 +61,15 @@ export const machine = setup({
             },
             on: {
                 'text-delta': {
-                    actions: [
-                        assign({
-                            thought: ({context: {thought}, event: {textDelta}}) => thought + textDelta
-                        }),
-                        emit(({event: {textDelta}}) => ({
+                    actions: enqueueActions(({context: {thought}, event: {textDelta}, enqueue}) => {
+                        enqueue.assign({
+                            thought: thought + textDelta
+                        })
+                        enqueue.emit({
                             type: 'thought',
                             data: textDelta
-                        }))
-                    ]
+                        })
+                    })
                 }
             }
         },
@@ -98,7 +85,7 @@ export const machine = setup({
             },
             on: {
                 'tool-result': {
-                    actions: render(({event: {result: {src, alt}}}) => {
+                    actions: render(({event: {result: {src, alt}}, html}) => {
                         return html`
                             <${SVG} src="${src}" alt="${alt}" style="height: 50%; width: 50%; inset: -20%"/>`
                     })
@@ -115,15 +102,10 @@ export const machine = setup({
 export function create(create?: typeof createActor<typeof machine>) {
     const actor = (create || createActor)(machine);
     console.log('create actor', actor.id)
-    //log stack trace
-    console.log(new Error().stack)
     return actor;
 
 }
 
 export default create
 
-// keep the process alive by invoking a promise that never resolves
-
-
-//<!--        <dotlottie-wc src="https://lottie.host/4db68bbd-31f6-4cd8-84eb-189de081159a/IGmMCqhzpt.lottie" autoplay loop></dotlottie-wc>-->
+ 

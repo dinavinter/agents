@@ -39,10 +39,10 @@ function component() {
       'support',
       'tictac',
       'raffle',
-        "github"
+      "github"
     ]
     return html`<host shadowDom>
-    <h1>Atomico webcomponent</h1>
+    <h1>AI AGents</h1>
         ${agents.map(agent => 
             html`<button onclick=${() => streamableStatus(agent)}>
                 ${agent}
