@@ -1,18 +1,18 @@
 import 'atomico/ssr/load';
 
-import {
-    setup,
-    createActor, enqueueActions,
-} from 'xstate';
+import {assign, createActor, emit, fromPromise, setup,} from 'xstate';
 import {openaiGP4o} from "../providers/openai.js";
 import {config} from 'dotenv';
-import {Doodle,findDoodleTool} from "../ui/doodles";
- import {TextStreamPart} from "ai";
+import {Doodle, findDoodleTool} from "../ui/doodles";
+import {streamText, TextStreamPart} from "ai";
 import {SVG} from "../ui/components/svg";
 import {render, RenderEvent, RenderStream} from "../ui/stream";
 import {fromAIEventStream} from "../utils/ai-stream";
-
+ 
 config();
+
+ 
+    
 
 
 export const machine = setup({
@@ -28,12 +28,12 @@ export const machine = setup({
         emitted: {} as {type: 'thought', data: string} | RenderEvent,
         input: {} as {
             stream?: RenderStream,
-            thought?: string;
+            thought?: string ;
             doodle?: Doodle;
         },
         context: {} as {
             stream?: RenderStream,
-            thought?: string;
+            thought?:  string;
             doodle?: Doodle;
         }
     }
@@ -43,37 +43,43 @@ export const machine = setup({
     entry: render(({html}) => html`
         <div slot="template">
             <pre ><h2>The task:</h2> Think about a random topic, and then share that thought.</pre>
-            <pre ><h2>Agent:</h2></pre>
             <div><slot></slot></div>
         </div>`
     ),
     states: {
         thinking: {
             entry: render(({stream, html}) => html`
-                <${stream?.event('thought').text}/>
+               <div>
+                   <pre ><h2>Thinker:</h2></pre>
+                   <${stream?.event('thought').text}/>
+               </div> 
             `),
             invoke: {
                 src: 'aiStream',
-                input: 'Think about a random topic, and then share that thought.',
-                onDone: {
-                    target: 'doodle'
-                }
+                input: 'Think about a random topic, and then share that thought.'
             },
-            on: {
-                'text-delta': {
-                    actions: enqueueActions(({context: {thought}, event: {textDelta}, enqueue}) => {
-                        enqueue.assign({
-                            thought: thought + textDelta
-                        })
-                        enqueue.emit({
-                            type: 'thought',
-                            data: textDelta
-                        })
+            on:{
+                'text-delta':{
+                    actions:  emit(({event: {textDelta}}) =>({
+                        type: 'thought',
+                        data:  textDelta
+                    }))
+                 },
+                'done':{
+                    target: 'doodle',
+                    actions: assign( {
+                        thought: ({  event: {output}}) => output
                     })
                 }
-            }
-        },
-        doodle: {
+            } 
+        } , 
+        doodle: { 
+            entry: render(({html}) => html`
+                <div>
+                    <pre > <h2>Doodler:</h2></pre>
+                    <p>Here is a doodle that describes the thought.</p>
+                </div>`
+            ),
             invoke: {
                 src: 'aiStream',
                 input: {
@@ -81,7 +87,8 @@ export const machine = setup({
                     tools: {
                         doodle: findDoodleTool
                     }
-                }
+                },
+                onDone:'done'
             },
             on: {
                 'tool-result': {
