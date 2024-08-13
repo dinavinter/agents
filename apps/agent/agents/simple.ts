@@ -49,22 +49,20 @@ export const machine = setup({
     states: {
         thinking: {
             entry: render(({stream, html}) => html`
-               <div slot="template">
-                   <pre><h2>Thinker:</h2></pre>
-                   <slot name="thought"></slot>
-               </div> 
-            `),
+                <div >
+                    <pre ><h2>Thinker:</h2></pre>
+                    <${stream.service("thinker").event("text-delta").text}  /> 
+                    <slot </slot>
+                </div>
+                `
+            ), 
             invoke: {
                 src: 'aiStream',
                 id: 'thinker',
-                input: 'Think about a random topic, and then share that thought.'
+                input: 'Think about a random topic, and then share that thought.' 
             },
+      
             on:{
-                'text-delta':{
-                    actions:  render(({html,event: {textDelta}}) => html`
-                        <soan slot="thought">${textDelta}</soan>
-                    `)
-                },
                 'done':{
                     target: 'doodle',
                     actions: assign( {
@@ -74,6 +72,7 @@ export const machine = setup({
             } 
         } , 
         doodle: { 
+            
             entry: render(({html}) => html`
                 <div slot="template">
                     <pre ><h2>Doodler:</h2></pre>

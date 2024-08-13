@@ -8,7 +8,7 @@ import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject}
 
 export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; }
 export type RenderStream = StreamOptions & {
-    service:(id?: string) => StreamOptions;
+    service:(id?: string) => RenderStream;
     event:(type:string)=>StreamOptions
 
 };
@@ -16,7 +16,7 @@ export type RenderStream = StreamOptions & {
 export function workflowStream(workflow: string ):RenderStream {
     return {
         event: (type: string) => streamElements(workflow, `events/${type}`),
-        service: (id?: string) => streamElements(workflow, id),
+        service: (id?: string) => workflowStream(`${workflow}/${id}` ),
         html: streamElements(workflow).html,
         text: streamElements(workflow).text
     }
