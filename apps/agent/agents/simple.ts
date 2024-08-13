@@ -49,22 +49,22 @@ export const machine = setup({
     states: {
         thinking: {
             entry: render(({stream, html}) => html`
-               <div>
-                   <pre ><h2>Thinker:</h2></pre>
-                   <${stream?.event('thought').text}/>
+               <div slot="template">
+                   <pre><h2>Thinker:</h2></pre>
+                   <slot name="thought"></slot>
                </div> 
             `),
             invoke: {
                 src: 'aiStream',
+                id: 'thinker',
                 input: 'Think about a random topic, and then share that thought.'
             },
             on:{
                 'text-delta':{
-                    actions:  emit(({event: {textDelta}}) =>({
-                        type: 'thought',
-                        data:  textDelta
-                    }))
-                 },
+                    actions:  render(({html,event: {textDelta}}) => html`
+                        <soan slot="thought">${textDelta}</soan>
+                    `)
+                },
                 'done':{
                     target: 'doodle',
                     actions: assign( {
@@ -75,9 +75,10 @@ export const machine = setup({
         } , 
         doodle: { 
             entry: render(({html}) => html`
-                <div>
-                    <pre > <h2>Doodler:</h2></pre>
+                <div slot="template">
+                    <pre ><h2>Doodler:</h2></pre>
                     <p>Here is a doodle that describes the thought.</p>
+                    <slot name="doodle"></slot>
                 </div>`
             ),
             invoke: {
@@ -94,7 +95,7 @@ export const machine = setup({
                 'tool-result': {
                     actions: render(({event: {result: {src, alt}}, html}) => {
                         return html`
-                            <${SVG} src="${src}" alt="${alt}" style="height: 50%; width: 50%; inset: -20%"/>`
+                            <${SVG} slot="doodle" src="${src}" alt="${alt}" style="height: 50%; width: 50%; inset: -20%"/>`
                     })
                 }
             }
