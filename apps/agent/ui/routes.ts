@@ -40,6 +40,7 @@ export function routes(fastify: FastifyInstance) {
 
             return {
                 ...service,
+                getSnapshot: service.getSnapshot.bind(service),
                 start:service.start.bind(service),
                 subscribe: service.subscribe.bind(service),
                 on: service.on.bind(service),
@@ -72,7 +73,6 @@ export function routes(fastify: FastifyInstance) {
             reply.serializer(noop);
             on('render', ({node}:{node:VNodeAny} ) => {
                 const rendered = node.render() as unknown as {type:string, name:string, nodeName:string, attributes: any, innerHTML:string};
-                console.debug('rendering node', node, rendered);
 
                 reply.sse({
                     data: JSON.stringify({
@@ -91,12 +91,26 @@ export function routes(fastify: FastifyInstance) {
     })
 
 
-    fastify.get('/agents/:agent/:workflow/events/:type', async function handler(request, reply:FastifyReply) {
-        const {agent, workflow,type} = request.params as { agent: string, workflow:string , type:string};
+    fastify.get('/agents/:agent/:workflow/events/:event', async function handler(request, reply:FastifyReply) {
+        const {agent, workflow,event} = request.params as { agent: string, workflow:string , event:string};
         const actor  =await getOrCreateWorkflow(agent, workflow);
-        actor.on(type, (event:EventMessage ) => {
+        actor.on(event, (event:EventMessage ) => {
             reply.sse(event);
         })
+        return reply;
+
+    })
+
+    fastify.get('/agents/:agent/:workflow/:service/events/:event', async function handler(request, reply:FastifyReply) {
+        const {agent, workflow,service, event} = request.params as { agent: string, workflow:string , event:string, service:string};
+        const actor  =await getOrCreateWorkflow(agent, workflow);
+        const serviceActor = actor.getSnapshot().children[service];
+        if(serviceActor) {
+            serviceActor.on(event, (event:unknown) => {
+                reply.sse( event as EventMessage);
+            })
+        }
+ 
         return reply;
 
     })
