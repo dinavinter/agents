@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import {createActor, log, PromiseActorLogic, setup} from 'xstate';
+import {createActor, emit, log, PromiseActorLogic, setup} from 'xstate';
 import { createAgent, fromDecision} from "@statelyai/agent";
 import {openaiGP4o} from "../providers/openai.js";
-import {renderActor} from "../render";
+ import {render} from "../ui/stream";
+import {SVG} from "../ui/components/svg";
  
 const agent = createAgent({
     name: 'support-agent',
@@ -37,21 +38,35 @@ const agent = createAgent({
 
 const machine = setup({
     types: {
-        events: agent.eventTypes,
+        events: agent.types.events,
         input: {} as string,
         context: {} as {
             customerIssue: string;
         },
     },
-        actors: { agent: fromDecision(agent) , render: undefined as unknown as renderActor},
+        actors: { agent: fromDecision(agent)  },
 }).createMachine({
     initial: 'frontline',
     context: ({ input }) => ({
         customerIssue: input,
     }),
+    entry: render(({html,context:{customerIssue}}) => html`
+        <header slot="template" style="float: left; position: fixed; top: 0; left: 0; ">
+                <h1 >Customer Support:</h1>
+                <pre style="word-wrap: normal;"><p>${customerIssue}</p></pre>
+        </header>`
+    ),
+
     states: {
         frontline: {  
-            invoke: [{
+            entry:render(({html,stream}) => html`
+                <div  slot="template">
+                    <h2>Frontline</h2>
+x                   <pre><${stream.event("classify").text} /></pre>
+                </div>
+                `
+            ),
+            invoke: {
                 src: 'agent',
                 input: ({ context }) => ({
                     context,
@@ -64,90 +79,83 @@ const machine = setup({
                     goal: `The previous conversation is an interaction between a customer support representative and a user.
           Classify whether the representative is routing the user to a billing or technical team, or whether they are just responding conversationally.`, 
                 })  
-            },{
-                src:'render',
-                input:({context})=>({
-                    render: (html) => html`<div>
-                        <h1>Frontline Support</h1>
-                        <p>How can I help you today?</p>
-                        <p>${context.customerIssue}</p>
-                    </div>
-                    `
-                })
-               } 
-           ],
-            on: {
+            } 
+           ,
+            on: { 
                 'agent.frontline.classify': [
                     {
-                        actions: log(({ event }) => event),
+                        actions: emit( {type: 'classify', data: 'direct customer to billing'}),
                         guard: ({ event }) => event.category === 'billing',
                         target: 'billing',
                     },
                     {
-                        actions: log(({ event }) => event),
+                        actions:  emit( {type: 'classify', data: 'direct customer to technical support.'}),
                         guard: ({ event }) => event.category === 'technical',
                         target: 'technical',
                     },
                     {
-                        actions: log(({ event }) => event),
+                        actions:  emit( {type: 'classify', data: 'respond conversationally'}),
                         target: 'conversational',
                     },
                 ],
             },
         },
         billing: {
-            invoke: [{
+            entry: render(({html,stream}) => html`
+                <div slot="template">
+                        <h2>Billing</h2>
+                         <pre><${stream.event("refund").text} /></pre>
+                         <slot name="refunding"></slot>
+                    </div>
+                `
+            ),
+            invoke: {
                 src: 'agent',
                 input: {
                     system:
                         'Your job is to detect whether a billing support representative wants to refund the user.',
                     goal: `The following text is a response from a customer support representative. Extract whether they want to refund the user or not.`,
                 },
-            }, {
-                src:'render',
-                input:({context})=>({
-                    render: (html) => html`<div>
-                        <h1>Billing Support</h1>
-                        <p>How can I help you today?</p>
-                        <p>${context.customerIssue}</p>
-                    </div>
-                    `
-                })
-               }],
+            }, 
              on: {
                 'agent.refund': {
-                    actions: log(({ event }) => event),
+                    actions: emit(({event:{response}})=> ({type: 'refund', data: response})),
                     target: 'refund',
                 },
             },
         },
         technical: {
-            invoke: [{
+            entry: render(({html }) => html`
+                <div slot="template">
+                        <h2>Technical</h2>
+                        <p>Let's solve the technical issue.</p>
+                        <slot name="technical.solve"></slot>
+                    </div>
+                `
+            ),
+            invoke: {
                 src: 'agent',
                 input: {
                     context: true,
                     system: `You are an expert at diagnosing technical computer issues. You work for a company called LangCorp that sells computers. Help the user to the best of your ability, but be concise in your responses.`,
                     goal: 'Solve the customer issue.',
                 },
-            }, {
-                src:'render',
-                input:({context})=>({
-                    render: (html) => html`<div>
-                        <h1>Technical Support</h1>
-                        <p>How can I help you today?</p>
-                        <p>${context.customerIssue}</p>
-                    </div>
-                    `
-                })
-            }],
+            } ,
             on: {
                 'agent.technical.solve': {
-                    actions: log(({ event }) => event),
+                    actions: render(({html, event}) => html`<pre slot="technical.solve">${event.solution}</pre>`),
                     target: 'conversational',
                 },
             },
         },
         conversational: {
+            entry: render(({html,stream }) => html`
+                <div slot="template">
+                        <h2>Conversational</h2>
+                         <slot name="response"></slot>
+                    </div>
+                `
+            ),
             invoke: {
                 src: 'agent',
                 input: {
@@ -155,30 +163,28 @@ const machine = setup({
                 },
             },
             on: {
-                'agent.endConversation': {
-                    actions: log((x) => x.event),
+                 'agent.endConversation': {
+                    actions: render(({html, event}) => html`<pre slot="response">${event.response}</pre>`),
                     target: 'end',
                 },
             },
         },
         refund: {
-            entry: () => console.log('Refunding...'),
+            entry: render(({html }) => html`
+                <div slot="refunding" style="height: 5rem; display: flex; flex-wrap: wrap;">
+                    <h2>Refund</h2>
+                    <${SVG} style="height: 3rem;width: 3rem; display: inline; object-fit: contain" src="https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-106.svg"/>
+                </div>
+                `
+            ),
             after: {
                 1000: { target: 'conversational' },
             },
         },
         end: {
-            invoke: {
-                src: 'render',
-                input: ({context}) => ({
-                    render: (html) => html`
-                        <div>
-                            <h1>End of Conversation</h1>
-                            <p>Thank you for chatting with us today!</p>
-                        </div>
-                    `
-                })
-            },
+            entry: render(({html}) => html`
+                <h1 slot="template" >The End</h1>
+            `), 
             
             type: 'final',
             

@@ -62,8 +62,8 @@ export type NodeExpression<TContext extends MachineContext, TExpressionEvent ext
 
 export function render<TContext extends MachineContext & {stream?: RenderStream }, TExpressionEvent extends EventObject, TParams extends ParameterizedObject['params'] | undefined, TEvent extends EventObject >( nodeOrExpr:NodeExpression<TContext, TExpressionEvent, TParams, TEvent>  | VNodeAny) {
     const expr = typeof nodeOrExpr === 'function' ? nodeOrExpr : () => nodeOrExpr;
-    return  emit(({context, ...args}: ActionArgs<TContext, TExpressionEvent, TEvent>, params:TParams) => ({
+    return  emit(({context, self,...args}: ActionArgs<TContext, TExpressionEvent, TEvent>, params:TParams) => ({
         type: 'render',
-        node: context.stream && expr({stream:context.stream , html, ...args, context:context}, params)
+        node:  expr({stream:context?.stream || workflowStream(self.id) ,self, html, ...args, context:context}, params)
     }) satisfies RenderEvent)
 }  
