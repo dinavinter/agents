@@ -12,7 +12,9 @@ import {sendHtml} from "./ui/html";
 tokenService.credentialsFromEnv();
  
 const fastify = Fastify({
-    logger: true
+    logger: {
+        level: 'warn',
+    }
 })
 
 // @ts-ignore

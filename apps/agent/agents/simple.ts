@@ -63,7 +63,7 @@ export const machine = setup({
             },
       
             on:{
-                'done':{
+                'output':{
                     target: 'doodle',
                     actions: assign( {
                         thought: ({  event: {output}}) => output

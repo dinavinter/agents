@@ -6,6 +6,7 @@ import {type replyWithHtml, sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
 import {VNodeAny} from "atomico/types/vnode";
+import {string} from "zod";
 
 
 
@@ -67,23 +68,25 @@ export function routes(fastify: FastifyInstance) {
     fastify.get('/agents/:agent/:workflow', async function handler(request, reply:FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow:string };
         const {html, on, start} = await getOrCreateWorkflow(agent, workflow);
-        const noop = (v: any) => v;
 
         if(request.headers.accept === 'text/event-stream') {
-            reply.serializer(noop);
-            on('render', ({node}:{node:VNodeAny} ) => {
-                const rendered = node.render() as unknown as {type:string, name:string, nodeName:string, attributes: any, innerHTML:string};
+            on('render', ({node}:{node:VNodeAny } ) => {
+                if(node.render){
+                    const rendered = node.render() as unknown as {type:string, name:string, nodeName:string, attributes: any, innerHTML:string};
 
-                reply.sse({
-                    data: JSON.stringify({
-                        type: rendered.type,
-                        props: rendered.attributes,
-                        innerHTML: rendered.innerHTML
+                    reply.sse({
+                        data: JSON.stringify({
+                            type: rendered.type,
+                            props: rendered.attributes,
+                            innerHTML: rendered.innerHTML
+                        })
                     })
-                })
+                }
+               
             })
 
-            start();
+            start(); 
+            reply.serializer((v: any) => v);
             return reply;
         }
 
