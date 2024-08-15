@@ -1,6 +1,6 @@
 import { assign, setup, assertEvent, createActor } from 'xstate';
 import { z } from 'zod';
-import {openaiGP4o} from "../providers/openai";
+import {openaiGP4o} from "../ai";
 import {createAgent, fromDecision, fromTextStream} from "@statelyai/agent";
  
 const agent = createAgent({

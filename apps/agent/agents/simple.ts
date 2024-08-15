@@ -1,14 +1,12 @@
 import 'atomico/ssr/load';
 
-import {assign, createActor, emit, fromPromise, setup,} from 'xstate';
-import {openaiGP4o} from "../providers/openai.js";
-import {config} from 'dotenv';
+import {assign, createActor, setup,} from 'xstate';
+ import {config} from 'dotenv';
 import {Doodle, findDoodleTool} from "../ui/doodles";
-import {streamText, TextStreamPart} from "ai";
 import {SVG} from "../ui/components/svg";
-import {render, RenderEvent, RenderStream} from "../ui/stream";
-import {fromAIEventStream} from "../utils/ai-stream";
- 
+import {fromAIEventStream, openaiGP4o} from "../ai";
+import {render, RenderStream} from "../ui/render";
+   
 config();
 
  
@@ -24,8 +22,6 @@ export const machine = setup({
         })
      },
     types: {
-        events: {} as TextStreamPart<{ doodle: typeof findDoodleTool }>,//EventFrom<typeof fromAIEventStream>,
-        emitted: {} as {type: 'thought', data: string} | RenderEvent,
         input: {} as {
             stream?: RenderStream,
             thought?: string ;
@@ -71,19 +67,18 @@ export const machine = setup({
                 }
             } 
         } , 
-        doodle: { 
-            
+        doodle: {  
             entry: render(({html}) => html`
                 <div slot="template">
                     <pre ><h2>Doodler:</h2></pre>
                     <p>Here is a doodle that describes the thought.</p>
                     <slot name="doodle"></slot>
-                </div>`
-            ),
+                </div>
+            `),
             invoke: {
                 src: 'aiStream',
                 input: {
-                    template: `search for a doodle that describes the thought {thought}`,
+                    template: `search for a doodle that describes the thought {{thought}}`,
                     tools: {
                         doodle: findDoodleTool
                     }
@@ -92,10 +87,9 @@ export const machine = setup({
             },
             on: {
                 'tool-result': {
-                    actions: render(({event: {result: {src, alt}}, html}) => {
-                        return html`
-                            <${SVG} slot="doodle" src="${src}" alt="${alt}" style="height: 50%; width: 50%; inset: -20%"/>`
-                    })
+                    actions: render(({event: {result: {src, alt}}, html}) => html`
+                        <${SVG} slot="doodle" src="${src}" alt="${alt}" style="height: 50%; width: 50%; inset: -20%"/>
+                    `)
                 }
             }
         },

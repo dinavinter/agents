@@ -1,5 +1,6 @@
 import {ActorRefFrom, ActorSystem, AnyEventObject, ObservableActorLogic} from "xstate";
-import { fromEventAsyncGenerator, mapAsync} from "./async-generator";
+import { fromEventAsyncGenerator} from "./generator";
+import {batchAsync, BatchAsyncParams, mapAsync} from "./monads";
 
 
 type MergeEvents<TIn , TOut > = {
@@ -50,13 +51,3 @@ export const asyncBatchEvents = fromAsyncBatchEventGenerator( async function* ({
 })
 
 
-export type BatchAsyncParams<T>={stream: AsyncIterable<T>, split?:(i:T)=> boolean}
-export async function * batchAsync< T extends  any,TIterable extends AsyncIterable<T>=AsyncIterable<T>>(stream: TIterable, split?:(i:T)=> boolean ): AsyncGenerator<T[]> {
-    const buffer:T[] = [];
-    for await (const event of stream) {
-        buffer.push(event);
-        if (typeof split == "undefined" || split(event)) {
-            yield buffer.splice(0, buffer.length - 1)
-        }
-    }
-}

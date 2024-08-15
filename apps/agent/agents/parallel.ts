@@ -6,17 +6,14 @@ import {
     setup,
     spawnChild,
 } from 'xstate';
-import {openaiGP4o} from "../providers/openai.js";
+import {openaiGP4o,fromAIEventCallback} from "../ai";
 import {config} from 'dotenv';
 import {Doodle, findDoodleTool} from "../ui/doodles";
 import {streamText, StreamTextResult, TextStreamPart} from "ai";
 import {SVG} from "../ui/components/svg";
-import {render, RenderStream} from "../ui/stream";
-import {asyncEventGenerator, filterEventAsync} from "../utils/async-generator";
-  import {asyncBatchEvents} from "../utils/batch";
-import {Clonable, cloneable} from "../utils/stream";
-import {fromAIEventCallback} from "../utils/ai-stream";
-
+import {render, RenderStream} from "../ui/render";
+import {asyncEventGenerator,asyncBatchEvents,type Clonable, cloneable,filterEventAsync} from "../stream";
+  
 config();
  
 
@@ -124,8 +121,7 @@ export const machine = setup({
                             <${SVG} src="${src}" alt="${alt}" slot="doodle"  style="height: 2rem; width: 1.5rem; display: inline;"/>
                         `),
                     ],
-                    guard: (e) => e.event.toolName === 'doodle'
-                },
+                 },
                 "batch": {
                     actions: forwardTo("doodle")
                 }

@@ -1,6 +1,6 @@
-import {teeAsync} from "./async-generator";
+import {teeAsync} from "./monads";
 
-export type   Clonable<T> =  T &{
+export type Clonable<T> =  T &{
     source: T
     clone(this:Clonable<T>): T;
 }
