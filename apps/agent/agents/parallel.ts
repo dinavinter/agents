@@ -101,7 +101,9 @@ export const machine = setup({
                 id: 'doodle',
                 src: 'aiCallback', 
                 input: {
-                    template: `search for a doodle that describes the following thought, be creative and find a new doodle every time, history: {{doodle}}, the thought is """{{#batch}}{{textDelta}}{{/batch}}"""`,
+                    template: `search for a doodle that describes the following thought, make sure to find different doodles then the ones in history.
+                                history:"""{{#history}}"{{tools.doodle.args.query}}",{{/history}}"""
+                                thought: """{{#batch}}{{textDelta}}{{/batch}}"""`,
                     type: 'batch',
                     tools: {
                         doodle: findDoodleTool
@@ -113,14 +115,9 @@ export const machine = setup({
                     actions: emit(({event: {textDelta}}) => ({type: 'thought', data: textDelta})),
                 },
                 'tool-result': {
-                    actions: [
-                        assign({
-                            doodle: ({context: {doodle}, event: {result}}) => [...doodle, result]
-                        }),
-                        render(({event: {result: {src, alt}}, html}) => html`
-                            <${SVG} src="${src}" alt="${alt}" slot="doodle"  style="height: 2rem; width: 1.5rem; display: inline;"/>
-                        `),
-                    ],
+                    actions: render(({event: {result: {src, alt}}, html}) => html`
+                            <${SVG} src="${src}" alt="${alt}" slot="doodle"  style="height: 4rem; width: 4rem; display: inline;"/>
+                        `)
                  },
                 "batch": {
                     actions: forwardTo("doodle")
