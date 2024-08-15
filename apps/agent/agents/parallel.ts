@@ -11,8 +11,9 @@ import {config} from 'dotenv';
 import {Doodle, findDoodleTool} from "../ui/doodles";
 import {streamText, StreamTextResult, TextStreamPart} from "ai";
 import {SVG} from "../ui/components/svg";
-import {render, RenderStream} from "../ui/render";
+import {render, renderTo, RenderStream} from "../ui/render";
 import {asyncEventGenerator,asyncBatchEvents,type Clonable, cloneable,filterEventAsync} from "../stream";
+import {html} from "atomico";
   
 config();
  
@@ -49,15 +50,16 @@ export const machine = setup({
     }, 
     entry: render(({html,stream}) => html`
         <div slot="template">
-            <pre><h2>The task:</h2> Think about a random topic, and then share that thought.</pre>
-            <div>
-                <${stream.event("thought").text} /> 
-                <slot></slot>
-                <div  style="height: 10rem; display: flex; flex-wrap: wrap;"> 
-                    <slot name="doodle"></slot>
-                </div>
-            </div> 
-        </div>`
+            <pre>Think about a random topic, and then share that thought.</pre>
+               <div>  
+                   <${stream.event("thought").text} />
+                   <${stream.event("doodle").html} >
+                       <div slot="template" style="height: 15rem; display: flex; flex-wrap: wrap; gap: 4px; vector-effect: non-scaling-stroke; object-fit: contain" >
+                           <slot />
+                       </div>
+                   </${stream.event("doodle").html} >
+               </div> 
+         </div>`
     ), 
 
     states: {
@@ -112,13 +114,16 @@ export const machine = setup({
             }, 
             on: {
                 'text-delta': {
-                    actions: emit(({event: {textDelta}}) => ({type: 'thought', data: textDelta})),
+                    actions: emit(({event: {textDelta}}) => ({
+                        type: 'thought',
+                        data: textDelta
+                    }))
                 },
                 'tool-result': {
-                    actions: render(({event: {result: {src, alt}}, html}) => html`
-                            <${SVG} src="${src}" alt="${alt}" slot="doodle"  style="height: 4rem; width: 4rem; display: inline;"/>
-                        `)
-                 },
+                    actions: renderTo('doodle', ({event: {result: {src, alt}}}) => html`
+                        <${SVG} src="${src}" alt="${alt}" style="height: 4rem; width: 4rem; display: inline;"/>
+                    `)
+                },
                 "batch": {
                     actions: forwardTo("doodle")
                 }
