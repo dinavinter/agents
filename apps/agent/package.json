@@ -7,7 +7,6 @@
   "packageManager": "pnpm@9.6.0",
   "scripts": {
     "dev": "pnpm tsx-env ./api.ts --watch",
-
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "pnpm tsx-env ./index.ts",
     "news": "pnpm tsx-env  ./examples/newspaper.ts",
@@ -39,6 +38,7 @@
     "json-schema-to-zod": "^2.3.1",
     "lottie-web": "^5.12.2",
     "morphdom": "^2.7.4",
+    "mustache": "^4.2.0",
     "object-hash": "^3.0.0",
     "parse5": "^7.1.2",
     "polymate": "^0.1.7",
@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
+    "@types/mustache": "^4.2.5",
     "@types/node": "^22.0.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
