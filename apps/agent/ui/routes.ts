@@ -6,7 +6,6 @@ import {type replyWithHtml, sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
 import {VNodeAny} from "atomico/types/vnode";
-import {string} from "zod";
 
 
 
@@ -71,7 +70,7 @@ export function routes(fastify: FastifyInstance) {
 
         if(request.headers.accept === 'text/event-stream') {
             on('render', ({node}:{node:VNodeAny } ) => {
-                if(node.render){
+                if(node?.render){
                     const rendered = node.render() as unknown as {type:string, name:string, nodeName:string, attributes: any, innerHTML:string};
 
                     reply.sse({
