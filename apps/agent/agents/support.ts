@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import {createActor, emit, log, PromiseActorLogic, setup} from 'xstate';
+import {createActor, emit, setup} from 'xstate';
 import { createAgent, fromDecision} from "@statelyai/agent";
-import {openaiGP4o} from "../providers/openai.js";
- import {render} from "../ui/stream";
+ import {openaiGP4o} from "../ai";
+import {render} from "../ui/render";
 import {SVG} from "../ui/components/svg";
  
 const agent = createAgent({
@@ -104,7 +104,7 @@ x                   <pre><${stream.event("classify").text} /></pre>
             entry: render(({html,stream}) => html`
                 <div slot="template">
                         <h2>Billing</h2>
-                         <pre><${stream.event("refund").text} /></pre>
+                         <pre><${stream.event("billing").text} /></pre>
                          <slot name="refunding"></slot>
                     </div>
                 `
@@ -119,7 +119,7 @@ x                   <pre><${stream.event("classify").text} /></pre>
             }, 
              on: {
                 'agent.refund': {
-                    actions: emit(({event:{response}})=> ({type: 'refund', data: response})),
+                    actions: emit(({event:{response}})=> ({type: 'billing', data: response})),
                     target: 'refund',
                 },
             },

@@ -5,8 +5,8 @@ import {
 } from "xstate";
 import type {PromiseActorLogic
     } from "xstate";
-import {getRepoFiles, GithubContentFile, GithubLoaderParams} from "../git";
-import {openaiGP4o} from "../providers/openai";
+import {getRepoFiles, GithubContentFile, GithubLoaderParams} from "../utils/git";
+import {openaiGP4o} from "../ai";
 import {  streamText} from "ai";
 import {env} from "node:process";
 import fs from "node:fs";

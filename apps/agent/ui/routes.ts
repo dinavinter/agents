@@ -1,7 +1,6 @@
 import {FastifyInstance, FastifyReply} from "fastify";
 import {EventMessage, FastifySSEPlugin} from "fastify-sse-v2";
 import {ActorRefFrom, AnyActorRef, AnyStateMachine, createActor, fromPromise} from "xstate";
-import {workflowStream} from "./stream";
 import {type replyWithHtml, sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
@@ -31,10 +30,7 @@ export function routes(fastify: FastifyInstance) {
                         terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
                     }
                 }), {
-                    id: workflow,
-                    input:{
-                        stream: workflowStream(workflow)
-                    },
+                    id: workflow, 
                     ...options
                 }));
 

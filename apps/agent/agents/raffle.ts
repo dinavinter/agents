@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {assign, createActor, fromPromise, log, PromiseActorLogic, setup} from 'xstate';
- import {openaiGP4o} from "../providers/openai";
+ import {openaiGP4o} from "../ai";
 import {createAgent, fromDecision} from "@statelyai/agent";
  
 const agent = createAgent({

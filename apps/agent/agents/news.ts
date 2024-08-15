@@ -7,7 +7,7 @@ config();
 import { TavilySearchAPIRetriever } from '@langchain/community/retrievers/tavily_search_api';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import {assign, createActor, fromPromise, log, setup} from 'xstate';
-import {langchain} from "../providers/langchain.js";
+import {langchain} from "../ai";
 
 interface AgentState {
     topic: string;
