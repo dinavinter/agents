@@ -45,7 +45,7 @@ export const SVG = c(function ({ src }) {
         const loadSvg = async () => {
             for await (const { path, svgElement: elm } of fetchSvgInBatches(src)) {
 
-                if(svgElement.current.getAttribute("viewBox") !== elm.getAttribute("viewBox")) {
+                if(elm.getAttribute("viewBox") && svgElement.current.getAttribute("viewBox") !== elm.getAttribute("viewBox") ) {
                     svgElement.current.setAttribute("viewBox", elm.getAttribute("viewBox"));
                 }
 

@@ -1,23 +1,31 @@
 import {FastifyReply} from "fastify";
 import {VNodeAny} from "atomico/types/vnode";
+import {UserFetch} from "./components/stream-template";
+import {html} from "atomico";
 
 
 export type replyWithHtml = (reply:FastifyReply) => Promise<void>;
 
-export function sendHtml(reply:FastifyReply,  node:VNodeAny )
-{
+export function sendHtml(reply:FastifyReply,  node:VNodeAny ) {
     reply.header('Cache-Control', 'no-store'); 
     reply.type('text/html')
-    reply.send(`<html>
+    reply.send(layout(node));
+}
+
+
+export const layout = (node:VNodeAny) => `
+<html>
       <head>
-        <base href="${reply.request.protocol}://${reply.request.hostname}${reply.request.originalUrl}" target="_blank" />
         <title>Agent AI</title>
          <script type="importmap">
         {
           "imports": {
             "atomico": "https://unpkg.com/atomico",
             "animejs":"https://cdn.jsdelivr.net/npm/animejs@3.2.2/+esm",
-            "@atomico/hooks":"https://esm.sh/@atomico/hooks@4.4.1"
+            "@atomico/hooks":"https://esm.sh/@atomico/hooks",
+            "@atomico/hooks/use-slot":"https://esm.sh/@atomico/hooks@4.4.1/use-slot",
+            "it-pushable":"https://esm.sh/it-pushable",
+            "@atomico/store":"https://esm.sh/@atomico/store"
             
           }
         }
@@ -26,25 +34,17 @@ export function sendHtml(reply:FastifyReply,  node:VNodeAny )
        <script src="/ui/components/streamable.js" type="module"></script>
        <script  src="/ui/components/svg.js" type="module"> </script>
        <script  src="/ui/components/text.js" type="module"> </script>
+       <script  src="/ui/components/json.js" type="module"> </script>
+       <script  src="/ui/components/snapshot.js" type="module"> </script>
+
+       <script  src="/ui/components/stream-template.js" type="module"> </script>
+
+        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
 
        </head>
-       <body>
-           <style>
-                body {
-                     font-family: sans-serif;
-                }
-                #app {
-                    display: block;
-                    margin: 0 auto;
-                    max-width: 800px;
-                    padding: 20px;
-                }
-              </style>
-           <div id="app">
-                 ${node.render() } 
-           </div>
+       <body> 
+             ${node?.render() }  
          </body>
-         </html>
+ </html>
 `
-    )
-}
+ 
