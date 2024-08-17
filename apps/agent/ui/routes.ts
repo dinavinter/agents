@@ -2,31 +2,25 @@ import {FastifyInstance, FastifyReply} from "fastify";
 import {EventMessage, FastifySSEPlugin} from "fastify-sse-v2";
 import {
     ActorRefFrom,
-    AnyActorLogic,
     AnyActorRef,
     AnyMachineSnapshot,
     AnyStateMachine,
     createActor,
-    fromPromise
+    fromPromise,
+    InspectionEvent, Observer
 } from "xstate";
-import {type replyWithHtml, sendHtml} from "./html";
+import {sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
 import {VNodeAny} from "atomico/types/vnode";
 import {agentStream} from "./render";
 import {SnapshotReader} from "./components/snapshot";
 import {mapAsync} from "../stream";
-import {
-    ReadableStream,
-} from 'node:stream/web';
+import {ReadableStream,} from 'node:stream/web';
+import createLogger, {asInspector, asLogger} from "../agents/logger";
 
 
-
-
-
-
-
-function snapshotStream(actor: AnyActorRef  ) {
+function snapshotStream(actor: AnyActorRef) {
     return new ReadableStream<AnyMachineSnapshot>({
         start(controller) {
             const snapshot = actor.getSnapshot();
@@ -49,7 +43,7 @@ function snapshotStream(actor: AnyActorRef  ) {
             if (actor.getSnapshot().status !== "active") {
                 actor.start();
             }
-             
+
         }
 
     });
@@ -57,42 +51,16 @@ function snapshotStream(actor: AnyActorRef  ) {
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
-    
+
     const services: Map<string,
-        ActorRefFrom<AnyStateMachine> & {html: replyWithHtml }
+        ActorRefFrom<AnyStateMachine>
     > = new Map();
 
-    async function getLogger(agent:string, workflow: string) {
-        if(agent !== 'logger') {
-            const logger = await getOrCreateWorkflow('logger', `${workflow}-logger`)
-            return {
-                html: agentStream('logger', logger.id).html,
-                log(...args: any[]) {
-                    for (const arg of args) {
-                        logger.send(typeof arg === 'object' ? {
-                            type: 'json',
-                            json: arg
-                        } : {
-                            type: 'message',
-                            message: arg
-                        })
-                    }
+    const logger = createLogger();
+    logger.start();
+    services.set('root', logger);
 
-                }
-            }
-        }
-        
-        return {
-            html:html`<div>Logger</div>`,
-            log(...args: any[]) {
-                console.log(...args);
-            }
-        }
-        
-    }
-
-
-    async function getOrCreateWorkflow(agent:string, workflow:string) {
+    async function getOrCreateWorkflow(agent: string, workflow: string) {
         if (!services.has(workflow)) {
             services.set(workflow, await createWorkflow(agent, workflow));
         }
@@ -100,7 +68,6 @@ export function routes(fastify: FastifyInstance) {
 
         async function createWorkflow(agent: string, workflow: string) {
             const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
-            const {log, html:Logger} =await getLogger(agent, workflow);
 
 
             const service = create((logic, options) => createActor(
@@ -109,21 +76,23 @@ export function routes(fastify: FastifyInstance) {
                         terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
                     }
                 }), {
-                    id: workflow, 
-                    logger:log,
+                    id: workflow,
+                    inspect: asInspector(logger),
+                    logger: asLogger(logger),
                     ...options
                 }));
 
             return {
                 ...service,
                 getSnapshot: service.getSnapshot.bind(service),
-                start:service.start.bind(service),
+                start: service.start.bind(service),
                 subscribe: service.subscribe.bind(service),
                 on: service.on.bind(service),
-                async html(reply:FastifyReply){
-                    sendHtml(reply, html`<${Streamable} src="${reply.request.originalUrl}" >
-                         
-                    </Streamable>
+                async html(reply: FastifyReply) {
+                    sendHtml(reply, html`
+                        <${Streamable} src="${reply.request.originalUrl}">
+
+                        </Streamable>
                     `)
                 }
             };
@@ -132,9 +101,9 @@ export function routes(fastify: FastifyInstance) {
     }
 
 
-    fastify.get('/agents/:agent', async function handler(request, reply:FastifyReply) {
+    fastify.get('/agents/:agent', async function handler(request, reply: FastifyReply) {
         const {agent} = request.params as { agent: string };
-        reply.redirect( `/agents/${agent}/${generateActorId()}`);
+        reply.redirect(`/agents/${agent}/${generateActorId()}`);
 
         function generateActorId() {
             return Math.random().toString(36).substring(2, 8);
@@ -143,14 +112,20 @@ export function routes(fastify: FastifyInstance) {
 
     })
 
-    fastify.get('/agents/:agent/:workflow', async function handler(request, reply:FastifyReply) {
-        const {agent, workflow} = request.params as { agent: string, workflow:string };
-        const {html, on, start} = await getOrCreateWorkflow(agent, workflow);
+    fastify.get('/agents/:agent/:workflow', async function handler(request, reply: FastifyReply) {
+        const {agent, workflow} = request.params as { agent: string, workflow: string };
+        const {on, start} = await getOrCreateWorkflow(agent, workflow);
 
-        if(request.headers.accept === 'text/event-stream') {
-            on('render', ({node}:{node:VNodeAny } ) => {
-                if(node?.render){
-                    const rendered = node.render() as unknown as {type:string, name:string, nodeName:string, attributes: any, innerHTML:string};
+        if (request.headers.accept === 'text/event-stream') {
+            on('render', ({node}: { node: VNodeAny }) => {
+                if (node?.render) {
+                    const rendered = node.render() as unknown as {
+                        type: string,
+                        name: string,
+                        nodeName: string,
+                        attributes: any,
+                        innerHTML: string
+                    };
 
                     reply.sse({
                         data: JSON.stringify({
@@ -160,18 +135,21 @@ export function routes(fastify: FastifyInstance) {
                         })
                     })
                 }
-               
+
             })
 
-            start(); 
+            start();
             reply.serializer((v: any) => v);
             return reply;
         }
+        sendHtml(reply, html`
+            <${Streamable} src="${reply.request.originalUrl}">
 
-        await html(reply);
+            </Streamable>
+        `);
     })
 
-    fastify.get('/agents/:agent/:workflow/snapshot', async function handler(request, reply:FastifyReply) {
+    fastify.get('/agents/:agent/:workflow/snapshot', async function handler(request, reply: FastifyReply) {
             const {agent, workflow} = request.params as { agent: string, workflow: string };
             const actor = await getOrCreateWorkflow(agent, workflow);
             return reply.sse(mapAsync(snapshotStream(actor), (snapshot) => ({
@@ -181,39 +159,53 @@ export function routes(fastify: FastifyInstance) {
                     context: snapshot.context,
                     tags: snapshot.tags
                 })
-            }))); 
+            })));
+        }
+    )
+    fastify.get('/agents/:agent/:workflow/logger', async function handler(request, reply: FastifyReply) {
+            const {agent, workflow} = request.params as { agent: string, workflow: string };
+            const service = await getOrCreateWorkflow(agent, workflow);
+            return reply.sse(mapAsync(logger.getSnapshot().context.services.get(service.id) || [service.id], (e) => ({
+                data: JSON.stringify(e)
+            })));
         }
     )
 
-    fastify.get('/agents/:agent/:workflow/logs', async function handler(request, reply:FastifyReply) {
+
+    fastify.get('/agents/:agent/:workflow/logs', async function handler(request, reply: FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow: string };
 
         reply.type('text/html');
         sendHtml(reply, html`
-            <${SnapshotReader} src="/agents/${agent}/${workflow}/snapshot"/>`); 
+            <${SnapshotReader} src="/agents/${agent}/${workflow}/snapshot"/>`);
 
     })
-    
-    fastify.get('/agents/:agent/:workflow/events/:event', async function handler(request, reply:FastifyReply) {
-        const {agent, workflow,event} = request.params as { agent: string, workflow:string , event:string};
-        const actor  =await getOrCreateWorkflow(agent, workflow);
-        actor.on(event, (event:EventMessage ) => {
+
+    fastify.get('/agents/:agent/:workflow/events/:event', async function handler(request, reply: FastifyReply) {
+        const {agent, workflow, event} = request.params as { agent: string, workflow: string, event: string };
+        const actor = await getOrCreateWorkflow(agent, workflow);
+        actor.on(event, (event: EventMessage) => {
             reply.sse(event);
         })
         return reply;
 
     })
 
-    fastify.get('/agents/:agent/:workflow/:service/events/:event', async function handler(request, reply:FastifyReply) {
-        const {agent, workflow,service, event} = request.params as { agent: string, workflow:string , event:string, service:string};
-        const actor  =await getOrCreateWorkflow(agent, workflow);
+    fastify.get('/agents/:agent/:workflow/:service/events/:event', async function handler(request, reply: FastifyReply) {
+        const {agent, workflow, service, event} = request.params as {
+            agent: string,
+            workflow: string,
+            event: string,
+            service: string
+        };
+        const actor = await getOrCreateWorkflow(agent, workflow);
         const serviceActor = actor.getSnapshot().children[service];
-        if(serviceActor) {
-            serviceActor.on(event, (event:unknown) => {
-                reply.sse( event as EventMessage);
+        if (serviceActor) {
+            serviceActor.on(event, (event: unknown) => {
+                reply.sse(event as EventMessage);
             })
         }
- 
+
         return reply;
 
     })

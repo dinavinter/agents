@@ -1,4 +1,4 @@
-import { assign, setup, assertEvent, createActor } from 'xstate';
+import {assign, setup, assertEvent, createActor, log} from 'xstate';
 import { z } from 'zod';
 import {openaiGP4o} from "../ai";
 import {createAgent, fromDecision, fromTextStream} from "@statelyai/agent";
@@ -88,7 +88,7 @@ export const ticTacToeMachine = setup({
             player: ({ context }) => (context.player === 'x' ? 'o' : 'x'),
         }),
         resetGame: assign(initialContext),
-        printBoard: ({ context }) => {
+        printBoard: log(({ context }) => {
             // Print the context.board in a 3 x 3 grid format
             let boardString = '';
             for (let i = 0; i < context.board.length; i++) {
@@ -103,7 +103,8 @@ export const ticTacToeMachine = setup({
             }
 
             console.log(boardString);
-        },
+            return boardString;
+        }),
     },
     guards: {
         checkWin: ({ context }) => {
@@ -175,7 +176,7 @@ export const ticTacToeMachine = setup({
                     prompt: 'Provide a short game report analyzing the game.',
                 }),
                 onSnapshot: {
-                    actions: assign({
+                    actions: [assign({
                         gameReport: ({ context, event }) => {
                             console.log(
                                 context.gameReport + (event.snapshot.context?.textDelta ?? '')
@@ -184,7 +185,7 @@ export const ticTacToeMachine = setup({
                                 context.gameReport + (event.snapshot.context?.textDelta ?? '')
                             );
                         },
-                    }),
+                    }), log(({ context, event }) => event.snapshot.context?.textDelta)],
                 },
             },
             states: {
