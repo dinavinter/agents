@@ -1,23 +1,14 @@
 import {FastifyInstance, FastifyReply} from "fastify";
 import {EventMessage, FastifySSEPlugin} from "fastify-sse-v2";
-import {
-    ActorRefFrom,
-    AnyActorRef,
-    AnyMachineSnapshot,
-    AnyStateMachine,
-    createActor,
-    fromPromise,
-    InspectionEvent, Observer
-} from "xstate";
+import {ActorRefFrom, AnyActorRef, AnyMachineSnapshot, AnyStateMachine, createActor} from "xstate";
 import {sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
 import {VNodeAny} from "atomico/types/vnode";
-import {agentStream} from "./render";
 import {SnapshotReader} from "./components/snapshot";
-import {mapAsync} from "../stream";
+import {filterAsync, filterEventAsync, mapAsync} from "../stream";
 import {ReadableStream,} from 'node:stream/web';
-import createLogger, {asInspector, asLogger} from "../agents/logger";
+import {serviceMachine} from "./services";
 
 
 function snapshotStream(actor: AnyActorRef) {
@@ -53,13 +44,10 @@ export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
 
     const services: Map<string,
-        ActorRefFrom<AnyStateMachine>
+        ActorRefFrom<typeof serviceMachine>
     > = new Map();
 
-    const logger = createLogger();
-    logger.start();
-    services.set('root', logger);
-
+ 
     async function getOrCreateWorkflow(agent: string, workflow: string) {
         if (!services.has(workflow)) {
             services.set(workflow, await createWorkflow(agent, workflow));
@@ -67,36 +55,14 @@ export function routes(fastify: FastifyInstance) {
         return services.get(workflow)!;
 
         async function createWorkflow(agent: string, workflow: string) {
-            const create = await import(`../agents/${agent}.ts`).then((m) => m.default) as (create: typeof createActor<AnyStateMachine>) => AnyActorRef;
-
-
-            const service = create((logic, options) => createActor(
-                logic.provide({
-                    actors: {
-                        terminal: fromPromise(({input}: { input: string }) => Promise.resolve("something")),
-                    }
-                }), {
-                    id: workflow,
-                    inspect: asInspector(logger),
-                    logger: asLogger(logger),
-                    ...options
-                }));
-
-            return {
-                ...service,
-                getSnapshot: service.getSnapshot.bind(service),
-                start: service.start.bind(service),
-                subscribe: service.subscribe.bind(service),
-                on: service.on.bind(service),
-                async html(reply: FastifyReply) {
-                    sendHtml(reply, html`
-                        <${Streamable} src="${reply.request.originalUrl}">
-
-                        </Streamable>
-                    `)
+            const {machine} = await import(`../agents/${agent}.ts`) as { machine: AnyStateMachine };
+            return createActor(serviceMachine, {
+                id: workflow,
+                input: {
+                    name: agent,
+                    logic: machine
                 }
-            };
-
+            })
         }
     }
 
@@ -114,10 +80,10 @@ export function routes(fastify: FastifyInstance) {
 
     fastify.get('/agents/:agent/:workflow', async function handler(request, reply: FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow: string };
-        const {on, start} = await getOrCreateWorkflow(agent, workflow);
-
+        const actor = await getOrCreateWorkflow(agent, workflow);
+        const service= actor.getSnapshot().context.service as AnyActorRef;
         if (request.headers.accept === 'text/event-stream') {
-            on('render', ({node}: { node: VNodeAny }) => {
+            service.on('render', ({node}: { node: VNodeAny }) => {
                 if (node?.render) {
                     const rendered = node.render() as unknown as {
                         type: string,
@@ -138,7 +104,7 @@ export function routes(fastify: FastifyInstance) {
 
             })
 
-            start();
+            service.start();
             reply.serializer((v: any) => v);
             return reply;
         }
@@ -163,11 +129,21 @@ export function routes(fastify: FastifyInstance) {
         }
     )
     fastify.get('/agents/:agent/:workflow/logger', async function handler(request, reply: FastifyReply) {
+          
             const {agent, workflow} = request.params as { agent: string, workflow: string };
             const service = await getOrCreateWorkflow(agent, workflow);
-            return reply.sse(mapAsync(logger.getSnapshot().context.services.get(service.id) || [service.id], (e) => ({
+            const {logStream} = service.getSnapshot().context;
+            return reply.sse(mapAsync(logStream, (e) => ({
                 data: JSON.stringify(e)
             })));
+             
+            // service.on("*", (event) => {
+            //     reply.sse({
+            //         data: JSON.stringify(event)
+            //     });
+            // })
+            // return reply;
+             
         }
     )
 
@@ -184,7 +160,7 @@ export function routes(fastify: FastifyInstance) {
     fastify.get('/agents/:agent/:workflow/events/:event', async function handler(request, reply: FastifyReply) {
         const {agent, workflow, event} = request.params as { agent: string, workflow: string, event: string };
         const actor = await getOrCreateWorkflow(agent, workflow);
-        actor.on(event, (event: EventMessage) => {
+        actor.getSnapshot().context.service.on(event, (event: EventMessage) => {
             reply.sse(event);
         })
         return reply;
@@ -199,12 +175,18 @@ export function routes(fastify: FastifyInstance) {
             service: string
         };
         const actor = await getOrCreateWorkflow(agent, workflow);
-        const serviceActor = actor.getSnapshot().children[service];
-        if (serviceActor) {
-            serviceActor.on(event, (event: unknown) => {
-                reply.sse(event as EventMessage);
+         const serviceActor = (actor.getSnapshot().context.service as AnyActorRef)?.getSnapshot().children?.get(service);
+            
+        if(serviceActor){
+            serviceActor.on(event, (event: EventMessage) => {
+                reply.sse(event);
             })
         }
+        
+        // actor.on(`@${service}.${event}`, (event: unknown) => {
+        //         reply.sse(event as EventMessage);
+        //  })
+        
 
         return reply;
 
