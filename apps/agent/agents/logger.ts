@@ -53,7 +53,7 @@ const LogMessage = c(({message}) => {
 
 
 customElements.define('log-message', LogMessage)
-const loggerMachine = createMachine({
+export const loggerMachine = createMachine({
     id: 'loggerMachine',
     initial: 'logging',
     types: {
@@ -66,9 +66,9 @@ const loggerMachine = createMachine({
         services: new Map()
     },
     entry:render(({html,stream}) => html`
-        <${stream.event("message").text} >
-        <${stream.event("json").text} > 
-    
+        <div slot="template" class="flex flex-col gap-y-4 max-h-[90vh] overflow-y-scroll" >
+         <${stream.event("message").text} />
+        </div>
     `),
     states: {
         idle: {
