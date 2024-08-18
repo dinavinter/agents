@@ -30,6 +30,7 @@ export const serviceMachine = setup({
         const service =createActor(withInspector(logic,hub), {
             id: self.id,
             ...options,
+            logger:console.log,
             inspect: {
                 next:(e) => {
                     e.type === '@xstate.event' && hub.inspected.push(e)
@@ -67,7 +68,6 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
     const transition = actorLogic.transition;
     actorLogic.transition = (state, event, actorCtx) => {
         // hub.inspected.push(event);
-        console.log('Transition:', state.value, event.type, {id: actorCtx.id, sessionId: actorCtx.sessionId});
         const newState= transition(state, event, actorCtx);
         hub.snapshot.push(actorCtx.self.getSnapshot());
         Object.entries(newState.children)?.forEach(([service, ref]) => {
@@ -77,7 +77,6 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
 
                 if (ref instanceof Actor) {
                     ref.on("*", (event) => {
-                        console.log('Emit Service Event:', `${service}: ${event.type}`);
                         //todo: decide either to push to the service hub or the main hub
                         serviceHub.emitted.push({
                             ...event,
