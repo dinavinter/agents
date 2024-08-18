@@ -1,6 +1,6 @@
 import 'atomico/ssr/load';
 
-import {assign, createActor, setup,} from 'xstate';
+import {assign, createActor, log, setup,} from 'xstate';
  import {config} from 'dotenv';
 import {Doodle, findDoodleTool} from "../ui/doodles";
 import {SVG} from "../ui/components/svg";
@@ -55,6 +55,7 @@ export const machine = setup({
             invoke: {
                 src: 'aiStream',
                 id: 'thinker',
+                systemId: 'thinker',
                 input: 'Think about a random topic, and then share that thought.' 
             },
       
@@ -100,13 +101,6 @@ export const machine = setup({
     },
 });
 
-export function create(create?: typeof createActor<typeof machine>) {
-    const actor = (create || createActor)(machine);
-    console.log('create actor', actor.id)
-    return actor;
-
-}
-
-export default create
+ 
 
  

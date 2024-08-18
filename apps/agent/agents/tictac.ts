@@ -67,7 +67,7 @@ function getWinner(board: typeof initialContext.board): Player | null {
     return null;
 }
 
-export const ticTacToeMachine = setup({
+export const machine = setup({
     types: {
         context: agent.types.context,
         events: agent.types.events,
@@ -207,9 +207,9 @@ export const ticTacToeMachine = setup({
     },
 });
 
-export function create( create?: typeof createActor<typeof ticTacToeMachine>) {
+export function create( create?: typeof createActor<typeof machine>) {
 
-    const actor = (create ?? createActor)(ticTacToeMachine) 
+    const actor = (create ?? createActor)(machine) 
 
     agent.interact(actor, (observed) => {
         if (observed.state.matches('playing')) {

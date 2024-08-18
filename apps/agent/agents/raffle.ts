@@ -20,7 +20,7 @@ const agent = createAgent({
     },
 });
 
-const machine = setup({
+export const machine = setup({
     types: {
         context: {} as {
             lastInput: string | null;
@@ -56,6 +56,7 @@ const machine = setup({
             },
         },
         determining: {
+            entry: log(({ context }) => context.lastInput),
             invoke: {
                 src: 'agent',
                 input: {
@@ -102,8 +103,4 @@ const machine = setup({
     },
 });
 
-export function create( create?: typeof createActor<typeof machine>) { 
-    return (create ?? createActor)(machine)
-}
-
-export default create
+ 

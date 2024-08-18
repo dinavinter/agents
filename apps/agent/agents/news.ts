@@ -151,7 +151,7 @@ async function revise(
     return content;
 }
 
-const machine = setup({
+export const machine = setup({
     types: {
         context: {} as AgentState,
     },
@@ -284,8 +284,4 @@ const machine = setup({
 });
  
 
-export function create( create?: typeof createActor<typeof machine>) {
-    return (create ?? createActor)(machine)
-}
-
-export default create
+ 

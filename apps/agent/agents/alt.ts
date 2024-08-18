@@ -105,7 +105,7 @@ export const config =   createMachine({
 
  
 
-const machine= config.provide({
+export const machine= config.provide({
     actors: {
         puller: fromPromise(async function read({input:options}) {
             const files=  await getRepoFiles(options)  
@@ -148,7 +148,7 @@ const machine= config.provide({
     }
 })
 
-export function create( create?: typeof createActor<typeof config>) {
+export function service( create?: typeof createActor<typeof config>) {
     const actor= (create ?? createActor)(machine, {
         input: {
             source: {
@@ -169,5 +169,4 @@ export function create( create?: typeof createActor<typeof config>) {
     return actor;
 }
 
-export default create
  
