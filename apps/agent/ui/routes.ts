@@ -1,52 +1,21 @@
 import {FastifyInstance, FastifyReply} from "fastify";
-import {EventMessage, FastifySSEPlugin} from "fastify-sse-v2";
+import {  FastifySSEPlugin} from "fastify-sse-v2";
 import {
     ActorRefFrom,
     AnyActorRef,
     AnyMachineSnapshot,
     AnyStateMachine,
-    createActor,
-    fromCallback,
-    InspectionEvent
+    createActor, StateValue
 } from "xstate";
 import {sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
 import {VNodeAny} from "atomico/types/vnode";
 import {SnapshotReader} from "./components/snapshot";
-import { filterEventAsync, mapAsync} from "../stream";
+import {castAsync, filterEventAsync, mapAsync} from "../stream";
 import {ReadableStream,} from 'node:stream/web';
 import { serviceMachine} from "./inspector";
-
-
-function snapshotStream(actor: AnyActorRef) {
-    return new ReadableStream<AnyMachineSnapshot>({
-        start(controller) {
-            const snapshot = actor.getSnapshot();
-            controller.enqueue(snapshot);
-            actor.subscribe({
-                next: (state) => {
-                    controller.enqueue(state);
-                },
-                error: (error) => {
-                    console.error('error', error);
-                    controller.error(error);
-                },
-                complete: () => {
-                    // if (actor.getSnapshot().output) {
-                    //     controller.enqueue(actor.getSnapshot().output);
-                    // }
-                    // controller.close();
-                }
-            })
-            if (actor.getSnapshot().status !== "active") {
-                actor.start();
-            }
-
-        }
-
-    });
-}
+ 
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
@@ -97,6 +66,7 @@ export function routes(fastify: FastifyInstance) {
         if (request.headers.accept === 'text/event-stream') {
             service.start();
             return reply.sse(filterEventAsync(hub.emitted, "render"));   
+            
         }
         sendHtml(reply, html`
             <${Streamable} src="${reply.request.originalUrl}" /> 
@@ -106,38 +76,58 @@ export function routes(fastify: FastifyInstance) {
     fastify.get('/agents/:agent/:workflow/snapshot', async function handler(request, reply: FastifyReply) {
             const {agent, workflow} = request.params as { agent: string, workflow: string };
             const actor = await getOrCreateWorkflow(agent, workflow);
-            return reply.sse(mapAsync(snapshotStream(actor), (snapshot) => ({
-                data: JSON.stringify({
-                    value: snapshot.value,
-                    status: snapshot.status,
-                    context: snapshot.context,
-                    tags: snapshot.tags
-                })
-            })));
+            const {hub} = actor.getSnapshot().context; 
+           
+
+            if (request.headers.accept === 'text/event-stream') {
+                function* stateValue(state: StateValue | undefined): Iterable<string> {
+                    if (typeof state === "string") {
+                        yield state;
+                    } else if (typeof state === "object" && state !== null) {
+                        for (const [key, value] of Object.entries(state)) {
+                            yield key;
+                            yield* stateValue(value);
+                        }
+                    }
+                }
+                
+                return reply.sse(mapAsync(castAsync<AnyMachineSnapshot>(hub.snapshot), (snapshot) => ({
+                    data: JSON.stringify({
+                        value: Array.from(stateValue(snapshot.value)).join("."),
+                        status: snapshot.status,
+                        context: snapshot.context,
+                        tags: snapshot.tags
+                    })
+                })));
+            }
+
+            reply.type('text/html');
+            sendHtml(reply, html`
+                <${SnapshotReader} src="snapshot"/>
+            `);
+
         }
     )
-    fastify.get('/agents/:agent/:workflow/logger', async function handler(request, reply: FastifyReply) {
-          
+    fastify.get('/agents/:agent/:workflow/logs', async function handler(request, reply: FastifyReply) {
+
             const {agent, workflow} = request.params as { agent: string, workflow: string };
             const service = await getOrCreateWorkflow(agent, workflow);
             const { hub} = service.getSnapshot().context;
-             
+
             return reply.sse(mapAsync(hub.inspected, (e) => ({
                 data: JSON.stringify(e)
             })));
-            
+
         }
     )
-
-
-    fastify.get('/agents/:agent/:workflow/logs', async function handler(request, reply: FastifyReply) {
+    
+    fastify.get('/agents/:agent/:workflow/events', async function handler(request, reply: FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow: string };
-
-        reply.type('text/html');
-        sendHtml(reply, html`
-            <${SnapshotReader} src="/agents/${agent}/${workflow}/snapshot"/>`);
-
+        const service = await getOrCreateWorkflow(agent, workflow);
+        const { hub} = service.getSnapshot().context;
+        return reply.sse((hub.emitted))
     })
+
 
     fastify.get('/agents/:agent/:workflow/events/:event', async function handler(request, reply: FastifyReply) {
         const {agent, workflow, event} = request.params as { agent: string, workflow: string, event: string };

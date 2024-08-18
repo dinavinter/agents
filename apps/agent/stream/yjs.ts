@@ -1,7 +1,7 @@
 import {Subscribable, toObserver} from "xstate";
 import * as Y from "yjs";
 
-export type YIterator<T> = AsyncIterable<T> & Subscribable<T> &{push(e:T): any}
+export type YIterator<T> = AsyncIterable<T> & Subscribable<T> &{push(e:T): any, raw:Y.Array<T>};
 export function yArrayIterator<T>(array:Y.Array<T>):YIterator<T> {
     async function * newItems() {
         while (true) {
@@ -30,6 +30,7 @@ export function yArrayIterator<T>(array:Y.Array<T>):YIterator<T> {
 
     }
     return {
+        raw: array,
         push: (e:T) => array.push([e]),
         [Symbol.asyncIterator]:  iterator,
         subscribe: (observerOrCallback) => {

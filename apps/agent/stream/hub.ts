@@ -8,6 +8,7 @@ import {EventMessage} from "fastify-sse-v2";
 export function createYjsHub(doc?:Y.Doc) {
     doc = doc || new Y.Doc();
     return {
+        doc: doc,
         inspected: yArrayIterator(doc.getArray<InspectedEventEvent>('inspection')),
         emitted: yArrayIterator(doc.getArray<EventMessage & EventObject>('emitted')),
         snapshot: yArrayIterator(doc.getArray<Snapshot<any>>('snapshot')),
