@@ -10,5 +10,5 @@ export function fromAsyncEventEmitter <TInput extends AsyncIterable<TEmitted>, T
     ) satisfies PromiseActorLogic<void, TInput, TEmitted>
 }
 
-const asyncEventEmitter = fromAsyncEventEmitter<AsyncGenerator<EventObject>>();
+export const asyncEventEmitter = fromAsyncEventEmitter<AsyncGenerator<EventObject>>();
 

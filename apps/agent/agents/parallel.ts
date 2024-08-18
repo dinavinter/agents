@@ -134,13 +134,6 @@ export const machine = setup({
     }
 });
 
-export function create(create?: typeof createActor<typeof machine>) {
-    const actor = (create || createActor)(machine);
-    console.debug('create actor', actor.id)
-    return actor;
 
-}
-
-export default create
 
  

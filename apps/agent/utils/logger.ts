@@ -1,5 +1,21 @@
-import {AnyActorRef, InspectionEvent} from "xstate";
+import {AnyActorLogic, AnyActorRef, InspectionEvent} from "xstate";
 import fs from "node:fs";
+
+
+export function withLogging<T extends AnyActorLogic>(actorLogic: T) {
+    return {
+        ...actorLogic,
+        transition: (state, event, actorCtx) => {
+            console.log('Event:', state.value, event.type, {
+                id: actorCtx.id,
+                sessionId: actorCtx.sessionId,
+                selfID: actorCtx.self?.id
+            });
+            const transitioned = actorLogic.transition(state, event, actorCtx);
+            return transitioned;
+        },
+    } satisfies T;
+}
 
 export const loggerFsInspector= {
     next: (s: InspectionEvent) => { 

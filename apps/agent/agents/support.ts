@@ -36,7 +36,7 @@ const agent = createAgent({
 });
 
 
-const machine = setup({
+export const machine = setup({
     types: {
         events: agent.types.events,
         input: {} as string,
@@ -48,7 +48,7 @@ const machine = setup({
 }).createMachine({
     initial: 'frontline',
     context: ({ input }) => ({
-        customerIssue: input,
+        customerIssue: input ??  `I've changed my mind and I want a refund for order #182818!`,
     }),
     entry: render(({html,context:{customerIssue}}) => html`
         <header slot="template" style="float: left; position: fixed; top: 0; left: 0; ">
@@ -193,10 +193,4 @@ x                   <pre><${stream.event("classify").text} /></pre>
 });
 
  
-export function create( create?: typeof createActor<typeof machine>) {
-    return (create ?? createActor)(machine,{
-        input: `I've changed my mind and I want a refund for order #182818!`,
-    })
-}
-export default create
- 
+  

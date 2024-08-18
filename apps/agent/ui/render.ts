@@ -3,7 +3,7 @@ import {TextStream} from "./components/text";
 import {Streamable} from "./components/streamable";
 import {Atomico} from "atomico/types/dom";
 import {VNodeAny} from "atomico/types/vnode";
-import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject} from "xstate";
+import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject, sendTo} from "xstate";
 import {EventMessage} from "fastify-sse-v2";
 
 
@@ -53,31 +53,29 @@ export type Html<R = any>={(
     ): R;}
 
 
-
-export type RenderEvent = {
-    type: "render";
-    node?: VNodeAny;
-}
-
 export type NodeExpression<TContext extends MachineContext, TExpressionEvent extends EventObject, TParams extends ParameterizedObject['params'] | undefined, TEvent extends EventObject>=(args:ActionArgs<TContext, TExpressionEvent, TEvent> & {stream:RenderStream , html:Html},params:TParams) => VNodeAny;
 
 export function render<TContext extends MachineContext & {stream?: RenderStream }, TExpressionEvent extends EventObject, TParams extends ParameterizedObject['params'] | undefined, TEvent extends EventObject >( nodeOrExpr:NodeExpression<TContext, TExpressionEvent, TParams, TEvent>  | VNodeAny, ) {
-    const expr = typeof nodeOrExpr === 'function' ? nodeOrExpr : () => nodeOrExpr;
-    return  emit(({context, self,...args}: ActionArgs<TContext, TExpressionEvent, TEvent>, params:TParams) => ({
-             type: 'render',
-            node: expr({stream:context?.stream || workflowStream(self.id) ,self, html, ...args, context:context}, params)
-    }) satisfies RenderEvent)
+    return renderTo('render', nodeOrExpr)
 }
+
+
+
 
 export function renderTo<TContext extends MachineContext & {stream?: RenderStream }, TExpressionEvent extends EventObject, TParams extends ParameterizedObject['params'] | undefined, TEvent extends EventObject >(type:string, nodeOrExpr:NodeExpression<TContext, TExpressionEvent, TParams, TEvent>  | VNodeAny, ) {
     const expr = typeof nodeOrExpr === 'function' ? nodeOrExpr : () => nodeOrExpr;
     return emit(({context, self, ...args}: ActionArgs<TContext, TExpressionEvent, TEvent>, params: TParams) => {
+        const selfId = self.id;
         const node = expr({
-            stream: context?.stream || workflowStream(self.id),
+            stream: context?.stream || workflowStream(selfId),
             self,
             html, ...args,
             context: context
         }, params);
+        return renderEvent(type,node);
+    })
+
+    function renderEvent(type:string, node:VNodeAny) {
         const rendered = node.render() as unknown as {
             type: string,
             name: string,
@@ -94,5 +92,7 @@ export function renderTo<TContext extends MachineContext & {stream?: RenderStrea
                 innerHTML: rendered.innerHTML
             })
         } satisfies EventMessage & { type: typeof type, event: "message" }
-    })
+    }
+
+
 }

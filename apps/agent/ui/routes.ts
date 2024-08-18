@@ -1,14 +1,22 @@
 import {FastifyInstance, FastifyReply} from "fastify";
 import {EventMessage, FastifySSEPlugin} from "fastify-sse-v2";
-import {ActorRefFrom, AnyActorRef, AnyMachineSnapshot, AnyStateMachine, createActor} from "xstate";
+import {
+    ActorRefFrom,
+    AnyActorRef,
+    AnyMachineSnapshot,
+    AnyStateMachine,
+    createActor,
+    fromCallback,
+    InspectionEvent
+} from "xstate";
 import {sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
 import {VNodeAny} from "atomico/types/vnode";
 import {SnapshotReader} from "./components/snapshot";
-import {filterAsync, filterEventAsync, mapAsync} from "../stream";
+import { filterEventAsync, mapAsync} from "../stream";
 import {ReadableStream,} from 'node:stream/web';
-import {serviceMachine} from "./services";
+import { serviceMachine} from "./inspector";
 
 
 function snapshotStream(actor: AnyActorRef) {
@@ -56,13 +64,17 @@ export function routes(fastify: FastifyInstance) {
 
         async function createWorkflow(agent: string, workflow: string) {
             const {machine} = await import(`../agents/${agent}.ts`) as { machine: AnyStateMachine };
-            return createActor(serviceMachine, {
+            const service= createActor(serviceMachine, {
                 id: workflow,
                 input: {
                     name: agent,
                     logic: machine
                 }
             })
+            service.on("*", (event) => {
+                console.log(`${agent} Event:`, event);
+            })
+            return service;
         }
     }
 
@@ -81,38 +93,14 @@ export function routes(fastify: FastifyInstance) {
     fastify.get('/agents/:agent/:workflow', async function handler(request, reply: FastifyReply) {
         const {agent, workflow} = request.params as { agent: string, workflow: string };
         const actor = await getOrCreateWorkflow(agent, workflow);
-        const service= actor.getSnapshot().context.service as AnyActorRef;
+        const {service, hub} = actor.getSnapshot().context;
         if (request.headers.accept === 'text/event-stream') {
-            service.on('render', ({node}: { node: VNodeAny }) => {
-                if (node?.render) {
-                    const rendered = node.render() as unknown as {
-                        type: string,
-                        name: string,
-                        nodeName: string,
-                        attributes: any,
-                        innerHTML: string
-                    };
-
-                    reply.sse({
-                        data: JSON.stringify({
-                            type: rendered.type,
-                            props: rendered.attributes,
-                            innerHTML: rendered.innerHTML
-                        })
-                    })
-                }
-
-            })
-
             service.start();
-            reply.serializer((v: any) => v);
-            return reply;
+            return reply.sse(filterEventAsync(hub.emitted, "render"));   
         }
         sendHtml(reply, html`
-            <${Streamable} src="${reply.request.originalUrl}">
-
-            </Streamable>
-        `);
+            <${Streamable} src="${reply.request.originalUrl}" /> 
+         `);
     })
 
     fastify.get('/agents/:agent/:workflow/snapshot', async function handler(request, reply: FastifyReply) {
@@ -132,18 +120,12 @@ export function routes(fastify: FastifyInstance) {
           
             const {agent, workflow} = request.params as { agent: string, workflow: string };
             const service = await getOrCreateWorkflow(agent, workflow);
-            const {logStream} = service.getSnapshot().context;
-            return reply.sse(mapAsync(logStream, (e) => ({
+            const { hub} = service.getSnapshot().context;
+             
+            return reply.sse(mapAsync(hub.inspected, (e) => ({
                 data: JSON.stringify(e)
             })));
-             
-            // service.on("*", (event) => {
-            //     reply.sse({
-            //         data: JSON.stringify(event)
-            //     });
-            // })
-            // return reply;
-             
+            
         }
     )
 
@@ -159,12 +141,9 @@ export function routes(fastify: FastifyInstance) {
 
     fastify.get('/agents/:agent/:workflow/events/:event', async function handler(request, reply: FastifyReply) {
         const {agent, workflow, event} = request.params as { agent: string, workflow: string, event: string };
-        const actor = await getOrCreateWorkflow(agent, workflow);
-        actor.getSnapshot().context.service.on(event, (event: EventMessage) => {
-            reply.sse(event);
-        })
-        return reply;
-
+        const service = await getOrCreateWorkflow(agent, workflow);
+        const { hub} = service.getSnapshot().context; 
+        return reply.sse(filterEventAsync((hub.emitted), event))  
     })
 
     fastify.get('/agents/:agent/:workflow/:service/events/:event', async function handler(request, reply: FastifyReply) {
@@ -175,46 +154,10 @@ export function routes(fastify: FastifyInstance) {
             service: string
         };
         const actor = await getOrCreateWorkflow(agent, workflow);
-         const serviceActor = (actor.getSnapshot().context.service as AnyActorRef)?.getSnapshot().children?.get(service);
-            
-        if(serviceActor){
-            serviceActor.on(event, (event: EventMessage) => {
-                reply.sse(event);
-            })
-        }
-        
-        // actor.on(`@${service}.${event}`, (event: unknown) => {
-        //         reply.sse(event as EventMessage);
-        //  })
-        
-
-        return reply;
-
+        const hub=actor.getSnapshot().context.hub;
+        return reply.sse(filterEventAsync((hub.emitted), `@${service}.${event}`)) 
     })
 
 
 }
-
-
-/*
-<html><head>
-                            <title>Agent AI</title>
-                             <script type="importmap">
-                            {
-                              "imports": {
-                                "atomico": "https://unpkg.com/atomico",
-                                "animejs":"https://cdn.jsdelivr.net/npm/animejs@3.2.2/+esm",
-                                "@atomico/hooks":"https://esm.sh/@atomico/hooks",
-                                "@atomico/hooks/use-slot":"https://esm.sh/@atomico/hooks@4.4.1/use-slot"
-                               
-                                
-                              }
-                            }
-                            </script>
-           
-                            </head>
-                            <body>
-                                <div id="app">
-                                ${agent} ${workflow}
-                                </div>
- */
+ 
