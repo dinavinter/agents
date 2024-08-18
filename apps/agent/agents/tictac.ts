@@ -1,8 +1,9 @@
-import {assign, setup, assertEvent, createActor, log} from 'xstate';
-import { z } from 'zod';
-import {openaiGP4o} from "../ai";
-import {createAgent, fromDecision, fromTextStream} from "@statelyai/agent";
- 
+import {assign, setup, assertEvent, log} from 'xstate';
+import {z} from 'zod';
+import {fromAIEventStream, openaiGP4o} from "../ai";
+import {createAgent, fromDecision} from "@statelyai/agent";
+import {TextStreamPart} from "ai";
+
 const agent = createAgent({
     name: 'tic-tac-toe-bot',
     model: openaiGP4o(),
@@ -36,6 +37,7 @@ const agent = createAgent({
             .union([z.literal('x'), z.literal('o')])
             .describe('The current player (x or o)'),
         gameReport: z.string(),
+        resetTimes: z.number().default(0),
     },
 });
 
@@ -46,6 +48,7 @@ const initialContext = {
     moves: 0,
     player: 'x' as Player,
     gameReport: '',
+    resetTimes: 0
 } satisfies typeof agent.types.context;
 
 function getWinner(board: typeof initialContext.board): Player | null {
@@ -70,32 +73,35 @@ function getWinner(board: typeof initialContext.board): Player | null {
 export const machine = setup({
     types: {
         context: agent.types.context,
-        events: agent.types.events,
+        events: agent.types.events as typeof agent.types.events | TextStreamPart<any>
     },
     actors: {
         agent: fromDecision(agent),
-        gameReporter: fromTextStream(agent),
+        gameReporter: fromAIEventStream({
+            model: openaiGP4o(),
+            temperature: 0.5
+        })
     },
     actions: {
         updateBoard: assign({
-            board: ({ context, event }) => {
+            board: ({context, event}) => {
                 assertEvent(event, ['agent.x.play', 'agent.o.play']);
                 const updatedBoard = [...context.board];
                 updatedBoard[event.index] = context.player;
                 return updatedBoard;
             },
-            moves: ({ context }) => context.moves + 1,
-            player: ({ context }) => (context.player === 'x' ? 'o' : 'x'),
+            moves: ({context}) => context.moves + 1,
+            player: ({context}) => (context.player === 'x' ? 'o' : 'x'),
         }),
         resetGame: assign(initialContext),
-        printBoard: log(({ context }) => {
+        printBoard: log(({context: {board}}) => {
             // Print the context.board in a 3 x 3 grid format
             let boardString = '';
-            for (let i = 0; i < context.board.length; i++) {
+            for (let i = 0; i < board.length; i++) {
                 if ([0, 3, 6].includes(i)) {
-                    boardString += context.board[i] ?? ' ';
+                    boardString += board[i] ?? ' ';
                 } else {
-                    boardString += ' | ' + (context.board[i] ?? ' ');
+                    boardString += ' | ' + (board[i] ?? ' ');
                     if ([2, 5].includes(i)) {
                         boardString += '\n--+---+--\n';
                     }
@@ -107,15 +113,15 @@ export const machine = setup({
         }),
     },
     guards: {
-        checkWin: ({ context }) => {
+        checkWin: ({context}) => {
             const winner = getWinner(context.board);
 
             return !!winner;
         },
-        checkDraw: ({ context }) => {
+        checkDraw: ({context}) => {
             return context.moves === 9;
         },
-        isValidMove: ({ context, event }) => {
+        isValidMove: ({context, event}) => {
             try {
                 assertEvent(event, ['agent.o.play', 'agent.x.play']);
             } catch {
@@ -130,9 +136,21 @@ export const machine = setup({
     context: initialContext,
     states: {
         playing: {
+            entry: ({self}) => agent.interact(self, (observed) => {
+                if (observed.state.matches('playing')){
+                    return {
+                        goal: `You are playing a game of tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array.
+                        The first element is the top-left cell, the second element is the top-middle cell, the third element is the top-right cell,
+                         the fourth element is the middle-left cell, and so on. The value of each cell is either null, x, or o. 
+                        The value of null means that the cell is empty. The value of x means that the cell is occupied by an x. The value of o means that the cell is occupied by an o.
+                         ${JSON.stringify(observed.state.context, null, 2)} 
+                         Execute the single best next move to try to win the game. Do not play on an existing cell.`,
+                    }
+                }
+            }), 
             always: [
-                { target: 'gameOver.winner', guard: 'checkWin' },
-                { target: 'gameOver.draw', guard: 'checkDraw' },
+                {target: 'gameOver.winner', guard: 'checkWin'},
+                {target: 'gameOver.draw', guard: 'checkDraw'},
             ],
             initial: 'x',
             states: {
@@ -145,9 +163,9 @@ export const machine = setup({
                                 guard: 'isValidMove',
                                 actions: 'updateBoard',
                             },
-                            { target: 'x', reenter: true },
+                            {target: 'x', reenter: true},
                         ],
-                    },
+                    }
                 },
                 o: {
                     entry: 'printBoard',
@@ -158,35 +176,39 @@ export const machine = setup({
                                 guard: 'isValidMove',
                                 actions: 'updateBoard',
                             },
-                            { target: 'o', reenter: true },
+                            {target: 'o', reenter: true},
                         ],
-                    },
-                },
-            },
+                    }
+                }
+            }
         },
         gameOver: {
             initial: 'winner',
             invoke: {
                 src: 'gameReporter',
-                input: ({ context }) => ({
+                input: ({context}) => ({
                     context: {
                         events: agent.getObservations().map((o) => o.event),
                         board: context.board,
                     },
                     prompt: 'Provide a short game report analyzing the game.',
-                }),
-                onSnapshot: {
+                })
+
+            },
+            on: {
+                'text-delta': {
                     actions: [assign({
-                        gameReport: ({ context, event }) => {
-                            console.log(
-                                context.gameReport + (event.snapshot.context?.textDelta ?? '')
-                            );
+                        gameReport: ({context, event: {textDelta}}) => {
+                            console.log(textDelta);
                             return (
-                                context.gameReport + (event.snapshot.context?.textDelta ?? '')
+                                context.gameReport + (textDelta ?? '')
                             );
                         },
-                    }), log(({ context, event }) => event.snapshot.context?.textDelta)],
+                    }), log(({context, event: {textDelta}}) => textDelta)],
                 },
+                reset: {
+                    target: 'reset'
+                }
             },
             states: {
                 winner: {
@@ -195,35 +217,38 @@ export const machine = setup({
                 draw: {
                     tags: 'draw',
                 },
-            },
-            on: {
-                reset: {
-                    target: 'playing',
-                    actions: 'resetGame',
-                },
-            },
-            
+            }
+
+
         },
+        reset: {
+            tags: 'reset',
+            entry: assign({
+                resetTimes: ({context: {resetTimes}}) => resetTimes + 1
+            }),
+            always: [
+                {
+                    target: 'playing',
+                    actions: assign(({context}) => ({
+                        ...initialContext,
+                        resetTimes: context.resetTimes
+                    })),
+                    guard: ({context}) => context.resetTimes < 1
+                },
+                {
+                    target: 'cancel',
+                    guard: ({context}) => context.resetTimes >= 0
+                }
+            ]
+        },
+        cancel: {
+            tags: 'cancel',
+            entry: log('Cancelling the game'),
+            type: 'final'
+        }
     },
 });
 
-export function create( create?: typeof createActor<typeof machine>) {
 
-    const actor = (create ?? createActor)(machine) 
 
-    agent.interact(actor, (observed) => {
-        if (observed.state.matches('playing')) {
-            return {
-                goal: `You are playing a game of tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array. The first element is the top-left cell, the second element is the top-middle cell, the third element is the top-right cell, the fourth element is the middle-left cell, and so on. The value of each cell is either null, x, or o. The value of null means that the cell is empty. The value of x means that the cell is occupied by an x. The value of o means that the cell is occupied by an o.
-
-${JSON.stringify(observed.state.context, null, 2)}
-
-Execute the single best next move to try to win the game. Do not play on an existing cell.`,
-            };
-        }
-
-        return ;
-    });
-    return actor;
-}
-export default create;
+ 

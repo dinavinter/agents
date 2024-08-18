@@ -48,6 +48,11 @@ export async function * filterAsync<T, TFiltered extends T>(stream: AsyncIterabl
     }
 }
 
+export async function* castAsync<T>(e: AsyncIterable<any>) {
+    for await (const value of e) {
+        yield value as T;
+    }
+}
 
 export async function * filterEventAsync<T extends EventObject, TType extends T["type"], TFiltered extends  T & {type:TType}>(stream: AsyncIterable<T>, ...type: TType[]): AsyncGenerator<TFiltered> {
     function isType(event: T): event is TFiltered {

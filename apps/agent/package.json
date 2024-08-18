@@ -45,6 +45,7 @@
     "polymate": "^0.1.7",
     "sap-ai-token": "workspace:*",
     "xstate": "^5.16.0"
+    "yjs": "^13.6.18"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",

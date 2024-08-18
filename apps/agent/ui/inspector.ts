@@ -77,23 +77,17 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
 
                 if (ref instanceof Actor) {
                     ref.on("*", (event) => {
-                        console.log('Emit Service Event:', `@${service}.${event.type}`);
+                        console.log('Emit Service Event:', `${service}: ${event.type}`);
                         //todo: decide either to push to the service hub or the main hub
                         serviceHub.emitted.push({
                             ...event,
-                            type: `@${service}.${event.type}`
-                        });
-
-                        hub.emitted.push({
-                            ...event,
-                            type: `@${service}.${event.type}`
-                        });
+                            type: event.type
+                        }); 
+                    }) 
+                    ref.subscribe((snapshot) => {
+                        console.log('Service Snapshot:', snapshot);
+                        serviceHub.snapshot.push(snapshot);
                     })
-
-                    // ref.subscribe((snapshot) => {
-                    //     console.log('Service Snapshot:', snapshot);
-                    //     serviceHub.snapshot.push(snapshot);
-                    // })
                 }
             }
         })
