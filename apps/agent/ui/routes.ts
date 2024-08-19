@@ -1,8 +1,7 @@
 import {FastifyInstance, FastifyReply} from "fastify";
 import {  FastifySSEPlugin} from "fastify-sse-v2";
 import {
-    ActorRefFrom,
-    AnyActorRef,
+    ActorRefFrom, 
     AnyMachineSnapshot,
     AnyStateMachine,
     createActor, StateValue
@@ -10,12 +9,10 @@ import {
 import {sendHtml} from "./html";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
-import {VNodeAny} from "atomico/types/vnode";
-import {SnapshotReader} from "./components/snapshot";
 import {castAsync, filterEventAsync, mapAsync} from "../stream";
-import {ReadableStream,} from 'node:stream/web';
 import { serviceMachine} from "./inspector";
- 
+import {JsonStream} from "./components/json";
+import {Snapshot} from "./components/snapshot"; 
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
@@ -103,7 +100,9 @@ export function routes(fastify: FastifyInstance) {
 
             reply.type('text/html');
             sendHtml(reply, html`
-                <${SnapshotReader} src="snapshot"/>
+                <${JsonStream} src="snapshot" >
+                    <${Snapshot} slot="template" />
+                </${JsonStream}>
             `);
 
         }
