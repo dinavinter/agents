@@ -73,7 +73,7 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
         Object.entries(newState.children)?.forEach(([service, ref]) => {
             const {isNew, hub: serviceHub} = hub.child(service)
             if (isNew) {
-                console.log('New Service:', service, ref);
+                console.log('New Service:', service);
 
                 if (ref instanceof Actor) {
                     ref.on("*", (event) => {
@@ -82,6 +82,10 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
                             ...event,
                             type: event.type
                         }); 
+                        hub.emitted.push({
+                            ...event,
+                            type: `@${service}.${event.type}`
+                        });
                     }) 
                     ref.subscribe((snapshot) => {
                         console.log('Service Snapshot:', snapshot);

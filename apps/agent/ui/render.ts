@@ -5,21 +5,33 @@ import {Atomico} from "atomico/types/dom";
 import {VNodeAny} from "atomico/types/vnode";
 import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject, sendTo} from "xstate";
 import {EventMessage} from "fastify-sse-v2";
+import {JsonStream, JsonStreamLog} from "./components/json";
 
 
-export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; }
+export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; json:Atomico<any,any, any> ;};
 export type RenderStream = StreamOptions & {
     service:(id?: string) => RenderStream;
     event:(type:string)=>StreamOptions
 
 };
 
+export function agentStream(agent:string, workflow: string ):RenderStream {
+    const href = `/agents/${agent}/${workflow}`;
+    return {
+        event: (type: string) => streamElements(workflow, `${href}/events/${type}`),
+        service: (id?: string) => workflowStream(`${href}/${id}` ),
+        html: streamElements(href).html,
+        text: streamElements(href).text,
+        json: streamElements(href).json
+    }
+}
 export function workflowStream(workflow: string ):RenderStream {
     return {
         event: (type: string) => streamElements(workflow, `events/${type}`),
         service: (id?: string) => workflowStream(`${workflow}/${id}` ),
         html: streamElements(workflow).html,
-        text: streamElements(workflow).text
+        text: streamElements(workflow).text,
+        json: streamElements(workflow).json
     }
 }
 export function streamElements(workflow: string, slug?: string | undefined):StreamOptions {
@@ -39,7 +51,14 @@ export function streamElements(workflow: string, slug?: string | undefined):Stre
                 src: {type: String, reflect: true, value: href}
             },
             base: Streamable
-        })
+        }),
+         json:c(({src}) => html`
+          <host shadowDom>${src}</host>`, {
+             props: {
+                 src: {type: String, reflect: true, value: href}
+             },
+             base: JsonStream
+         }),
     }
 }
 

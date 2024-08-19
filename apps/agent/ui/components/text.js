@@ -1,16 +1,10 @@
-import {c, css, html, useCallback, useEffect, useMemo, useRef, useState} from "atomico";
+import {c, css, html, useCallback, useEffect, useMemo, useProp, useRef, useState} from "atomico";
+import {usePropProxy, useRender} from "@atomico/hooks";
     
 
-function component({src, default: defaultValue}) {
+function component({src}) {
     const [state, setState] = useState([]); 
-    const span = useRef();
-    // const callback=useCallback((event) => {
-    //     if(span.current){
-    //         setState(s=> s.concat(event.data));
-    //         // span.current.textContent += event.data
-    //     }
-    //  });
-    
+    const refSpan = useRef();
     const source= useMemo(()=> {
         console.log("create event source", src)
         return  new EventSource(src)
@@ -22,17 +16,27 @@ function component({src, default: defaultValue}) {
             setState(s=> s.concat(event.data))
         }
     }, [source]);
+     
+     // usePropProxy("empty", {
+     //     get: () => refSpan.current.empty
+     // })
     
+     useRender(() => html`<pre class="text-pretty border-2 shadow-md" ref="${refSpan}">${state}</pre>`)
+         
+
+    return html`<host shadowDom>
+        <slot></slot>
+    </host>`;
+      
+   
   
-    return html`<host shadowDom> 
-        <span ref="${span}" />
-        <span>${state}</span>
-     </host>`;
+    
 }
 
 component.props = {
-    src: { type: String, value: "" },
+    src: { type: String, value: "" , reflect: true },
     default: { type: String, value: "" },
+     hasValue: { type: Boolean, value: false, reflect: true, attribute: "has-value" }
 };
 
 component.styles = css`

@@ -1,13 +1,27 @@
-import {assign, setup,  log} from 'xstate';
+import {assign, setup, log, enqueueActions, emit} from 'xstate';
 import {z} from 'zod';
 import { fromAIEventStream, openaiGP4o} from "../ai";
 import {TextStreamPart, tool} from "ai";
+import {Html, RenderStream, StreamOptions} from "../ui/render";
+import {c, html} from "atomico";
+import { Board } from '../ui/components/board';
  
 
 type Player = 'x' | 'o';
 type Cell = Player | 'empty';
 type Board = Array<Cell>;
 
+
+/*thoughts
+ <div>
+    <h2>AI X</h2>
+    <${stream.service('x').event("thought").text}/>
+</div>
+<div>
+    <h2>AI O</h2>
+    <${stream.service('o').event("thought").text}/>
+</div>
+ */
 function isCellEmpty(cell: Cell): cell is "empty" {
     return cell === "empty";
 }
@@ -45,9 +59,13 @@ function playTool() {
 function changePlayer(player: Player): Player {
     return player === 'x' ? 'o' : 'x';
 }
+ 
+
+ 
 export const machine = setup({
     types: {
         context: {} as {
+            printedBoard: string,
             board: Board,
             moves:  number,
             history: {player: Player, index: number}[],
@@ -69,12 +87,21 @@ export const machine = setup({
             player: changePlayer(player),
             history: [...context.history, {player, index}]
         })),
-        printBoard: log(({context: {board}}) => { 
-           return [0,1,2]
+        printBoard: enqueueActions(({context: {board, player}, enqueue}) => {
+            const printed= [0,1,2]
                 .map((i)=>board.slice(i*3,i*3+3))
                 .map((row)=>row.map((cell)=>isCellEmpty(cell) ? ' ' : cell).join(' | '))
                 .join('\n--+---+--\n')
+           
+            enqueue.assign({printedBoard: printed});
+            enqueue.emit({data:JSON.stringify(board.reduce( (acc, cell,i)=>{
+                  acc[`c${i}`] = isCellEmpty(cell) ? ' ' : cell;
+                  return acc;
+                }, {} as Record<string, string>)), type:"board"});
+            log(()=>printed); 
+
         })
+            
     },
     guards: {
         checkWin: ({context}) => {
@@ -91,13 +118,36 @@ export const machine = setup({
 }).createMachine({
     initial: 'playing',
     context: {
+        printedBoard: "",
         board: Array(9).fill("empty") ,
         moves: 0,
         player: 'x' as Player,
         gameReport: '',
         history: []
     },
- 
+    meta: {
+        name: 'TicTacToe',
+        description: 'A simple tic tac toe game',
+        render: ({ stream}:{stream: RenderStream, html:Html })=> html`
+            <main class="mx-auto  bg-slate-50" id="canvas">
+                <!-- Header -->
+                <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
+                    Tic Tac Toe
+                </header>
+                <div class="mt-4 has-[pre:empty]:hidden block shadow-md mb-4">
+                    <h2 class="text-xl font-semibold">Game Report</h2>
+                    <${stream.service('report').event("text-delta").text} class="text-gray-700"/>
+                </div>
+                <${stream.event("board").json} >
+                    <${Board} slot="template" class="shadow-2xl"></${Board}>
+                </${stream.event("board").json}> 
+               
+            </main>
+        `
+
+    },
+  
+
     states: {
         playing: {  
             always: [
@@ -110,12 +160,11 @@ export const machine = setup({
                     entry: 'printBoard', 
                     invoke:{
                         src: 'ai',
-                        id: 'ai.x',
+                        id: 'x',
                         syncSnapshot:true,
                         input: {
                             template: `You are playing as x in a game of tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array.
-                             you are playing as {{player}}. board state is "{{board}}", The value of 'x' means that the cell is occupied by an x. The value of 'o' means that the cell is occupied by an o.
-                             empty cells are represented by 'empty'.
+                             you are playing as {{player}}. board state is "{{board}}", you can only play on empty cells which are represented by 'empty'.
                              play the best move to win the game.`,
                             tools: {
                                 'play': playTool()
@@ -130,18 +179,25 @@ export const machine = setup({
                                 actions: {type: 'updateBoard', params: ({event:{args: {index}}}) => ({index, player: 'x'})},
                             },
                             {target: 'x', reenter: true},
-                        ]
+                        ],
+                        // 'text-delta': {
+                        //     actions:emit( ({event:{textDelta}}) => ({
+                        //         type: '@x.thought',
+                        //          data: textDelta
+                        //     }))
+                        // }
                     }
                 },
                 o: {
                     entry: 'printBoard',
                     invoke: {
                         src: 'ai',
-                        id: 'ai.o',
+                        id: 'o',
                         syncSnapshot:true,
                         input: {
                             template: `You are playing as x in a game of tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array.
-                             you are playing as {{player}}. board state is "{{board}}", play the best move to win the game.`,
+                             you are playing as {{player}}. board state is "{{board}}", you can only play on empty cells which are represented by 'empty'.
+                             play the best move to win the game.`,
                             tools: {
                                 'play': playTool()
                             }
@@ -156,6 +212,12 @@ export const machine = setup({
                             },
                             {target: 'o', reenter: true},
                         ],
+                        // 'text-delta': {
+                        //     actions:emit( ({event:{textDelta}}) => ({
+                        //         type: '@o.thought',
+                        //         data: textDelta
+                        //     }))
+                        // }
                     }
                 }
             }
@@ -164,6 +226,7 @@ export const machine = setup({
             initial: 'winner',
             invoke: {
                 src: 'ai',
+                id: 'report',
                 syncSnapshot:true,
                 input: {
                     template: `Provide a short game report analyzing the game. board: """{{board}}""". history:"""{{#history}}{{player}}=>{{index}},{{/history}}"""`,
