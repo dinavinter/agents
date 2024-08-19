@@ -36,6 +36,7 @@ export const layout = (node:VNodeAny) => `
        <script  src="/ui/components/text.js" type="module"> </script>
        <script  src="/ui/components/json.js" type="module"> </script>
        <script  src="/ui/components/snapshot.js" type="module"> </script>
+       <script  src="/ui/components/board.js" type="module"> </script>
 
        <script  src="/ui/components/stream-template.js" type="module"> </script>
 

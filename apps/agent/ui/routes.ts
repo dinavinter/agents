@@ -12,7 +12,8 @@ import {Streamable} from "./components/streamable";
 import {castAsync, filterEventAsync, mapAsync} from "../stream";
 import { serviceMachine} from "./inspector";
 import {JsonStream} from "./components/json";
-import {Snapshot} from "./components/snapshot"; 
+import {Snapshot} from "./components/snapshot";
+import { workflowStream} from "./render"; 
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
@@ -41,6 +42,7 @@ export function routes(fastify: FastifyInstance) {
                 console.log(`${agent} Event:`, event);
             })
             return service;
+            
         }
     }
 
@@ -65,6 +67,14 @@ export function routes(fastify: FastifyInstance) {
             return reply.sse(filterEventAsync(hub.emitted, "render"));   
             
         }
+        const meta = (service as unknown as {logic: AnyStateMachine})?.logic?.config?.meta;
+        if( meta?.render) {
+             sendHtml(reply,  meta.render({stream: workflowStream(workflow), html}));
+             service.start();
+            return reply;
+        }
+            
+        
         sendHtml(reply, html`
             <${Streamable} src="${reply.request.originalUrl}" /> 
          `);

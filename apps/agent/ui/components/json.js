@@ -14,41 +14,45 @@ export async function* toJsonAsync (stream){
 
 export const JsonStream= c(({src} )=>{
     const refSlotTemplate = useRef();
-    const templates = useSlot(refSlotTemplate);
+    const [Template] = useSlot(refSlotTemplate);
     const [state, setState] = useState([]);
     const [props, setProps]= useState({});
     const {stream}= getOrCreate(useStore(EventSourceStore),src);
-
-    useEffect(() => {
-        if (templates.length){
-            setState(templates.map((Template) => html`
-                <${Template} slot="" ...${props}  cloneNode />`.render()
-              ))
-        }
-    }, [templates]);
+     const [Element, setElement]= useState();
+    // useEffect(() => {
+    //     if (templates.length){
+    //         setState(templates.map((Template) => html`
+    //             <${Template} slot="" ...${props}  cloneNode />`.render()
+    //           ))
+    //     }
+    // }, [templates]);
     
     useEffect(async () => {
         for await (const props of toJsonAsync(stream)) { 
+            console.debug("json:props", props, Template)
              setProps(props);
-             for (const node of state){
-                Object.assign(node, props);
-             }
+             // for (const node of state){
+             //    Object.assign(node, props);
+             // }
+            
+            
+            // setState((s)=>[...s, ...templates.map((Template) => {
+            //     return html`<${Template} slot="" ...${props} cloneNode />`.render();
+            // })])
         } 
     })
+
     
     useRender(() => {
-        console.debug("streamable:render", state)
-        return  state.map((T) => html`<${T}  />` ) 
+        console.debug("json:render", Template, props)
+        return  Template && html`<${Template}   ...${props} />`
     }); 
-    return html`<host shadowDom> 
-        <template >
-            <slot ref=${refSlotTemplate} name="template"/>
-        </template>
-        <slot></slot>
+    return html`<host shadowDom>
+        <slot ref=${refSlotTemplate} name="template"/>  
    </host>`;
 },{
     props: {
-        src: { type: String, value: "" },
+        src: { type: String , reflect: true },
     },
 })
 
@@ -95,7 +99,7 @@ function component({ src}) {
    </host>`;
 }
 component.props = {
-    src: { type: String, value: "" },
+    src: { type: String, value: "", reflect: true },
 };
 
 component.styles = css`
@@ -112,4 +116,6 @@ export  const JsonStreamLog = c(component);
 
 customElements.define('c-json-stream', JsonStreamLog);
 
- 
+
+
+
