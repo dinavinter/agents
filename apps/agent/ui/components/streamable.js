@@ -29,7 +29,7 @@ function component({ src}) {
     
    useRender(() => {
       console.debug("streamable:render", state)
-      return state.map((T) => html`<${T} staticNode />` )
+      return state.map((T) => html`<${T}  />` )
     })  
    
     return html`<host shadowDom> 
@@ -42,6 +42,15 @@ function component({ src}) {
 component.props = {
     src: { type: String, value: "" },
 };
+
+component.styles = css`
+	@tailwind base;
+	@tailwind components;
+	@tailwind utilities;
+	@tailwind screens;
+
+
+`;
 
 
 export  const Streamable = c(component);
