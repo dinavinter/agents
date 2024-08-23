@@ -2,13 +2,13 @@ import {c, html} from "atomico";
 import {TextStream} from "./components/text";
 import {Streamable} from "./components/streamable";
 import {Atomico} from "atomico/types/dom";
-import {VNodeAny} from "atomico/types/vnode";
+import {VNode, VNodeAny} from "atomico/types/vnode";
 import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject, sendTo} from "xstate";
 import {EventMessage} from "fastify-sse-v2";
 import {JsonStream, JsonStreamLog} from "./components/json";
 
 
-export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; json:Atomico<any,any, any> ;};
+export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; json:Atomico<any,any, any> ; href:string};
 export type RenderStream = StreamOptions & {
     service:(id?: string) => RenderStream;
     event:(type:string)=>StreamOptions
@@ -18,6 +18,7 @@ export type RenderStream = StreamOptions & {
 export function agentStream(agent:string, workflow: string ):RenderStream {
     const href = `/agents/${agent}/${workflow}`;
     return {
+        href,
         event: (type: string) => streamElements(workflow, `${href}/events/${type}`),
         service: (id?: string) => workflowStream(`${href}/${id}` ),
         html: streamElements(href).html,
@@ -27,6 +28,7 @@ export function agentStream(agent:string, workflow: string ):RenderStream {
 }
 export function workflowStream(workflow: string ):RenderStream {
     return {
+        href: workflow,
         event: (type: string) => streamElements(workflow, `events/${type}`),
         service: (id?: string) => workflowStream(`${workflow}/${id}` ),
         html: streamElements(workflow).html,
@@ -37,7 +39,8 @@ export function workflowStream(workflow: string ):RenderStream {
 export function streamElements(workflow: string, slug?: string | undefined):StreamOptions {
     const href = `${workflow}${slug ? `/${slug}` : ''}`;
 
-     return { 
+     return {
+         href,
          text:c(({src}) => html`
           <host shadowDom>${src}</host>`, {
             props: {
@@ -94,23 +97,22 @@ export function renderTo<TContext extends MachineContext & {stream?: RenderStrea
         return renderEvent(type,node);
     })
 
-    function renderEvent(type:string, node:VNodeAny) {
+    function renderEvent(type:string, node:VNode<Element>) {
         const rendered = node.render() as unknown as {
             type: string,
             name: string,
             nodeName: string,
             attributes: any,
-            innerHTML: string
+            innerHTML: string,
+            outerHTML: string,
         };
-        return {
+        const event = {
             type: type,
-            event: "message",
-            data: JSON.stringify({
-                type: rendered.type,
-                props: rendered.attributes,
-                innerHTML: rendered.innerHTML
-            })
-        } satisfies EventMessage & { type: typeof type, event: "message" }
+            event: type,
+            data: rendered.toString(),
+        } satisfies EventMessage & { type: typeof type, event: string}
+        console.log(event);
+        return event 
     }
 
 

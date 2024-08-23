@@ -5,7 +5,7 @@ import {assign, createActor, log, setup,} from 'xstate';
 import {Doodle, findDoodleTool} from "../ui/doodles";
 import {SVG} from "../ui/components/svg";
 import {fromAIEventStream, openaiGP4o} from "../ai";
-import {render, RenderStream} from "../ui/render";
+import {render, RenderStream, renderTo} from "../ui/render";
    
 config();
 
@@ -36,19 +36,22 @@ export const machine = setup({
 }).createMachine({
     initial: 'thinking',
     context: ({input}) => input,
-    entry: render(({html}) => html`
-        <div slot="template">
-            <pre ><h2>The task:</h2> Think about a random topic, and then share that thought.</pre>
-            <div><slot></slot></div>
-        </div>`
+    entry: render(({html, stream}) => html`
+        <main class="mx-auto  bg-slate-50" >
+        <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
+                The Wiser
+         </header>
+           <div class="flex flex-col items-center justify-center *:w-2/3 *:justify-center" hx-ext="sse" sse-connect="${stream.href}/events" sse-swap="content" hx-swap="beforeend">
+           </div>
+                   
+        </main>`
     ),
     states: {
         thinking: {
-            entry: render(({stream, html}) => html`
-                <div >
-                    <pre ><h2>Thinker:</h2></pre>
-                    <${stream.service("thinker").event("text-delta").text}  /> 
-                    <slot </slot>
+            entry: renderTo('content',({stream, html}) => html`
+                <div class="mt-4 shadow-md mb-4 ">
+                    <h2 class="text-xl font-semibold">Thinker</h2>
+                    <${stream.service("thinker").event("text-delta").text}  />  
                 </div>
                 `
             ), 
@@ -69,11 +72,17 @@ export const machine = setup({
             } 
         } , 
         doodle: {  
-            entry: render(({html}) => html`
-                <div slot="template">
-                    <pre ><h2>Doodler:</h2></pre>
-                    <p>Here is a doodle that describes the thought.</p>
-                    <slot name="doodle"></slot>
+            entry: renderTo('content', ({html,stream}) => html`
+                <div class="mt-4  shadow-md mb-4 ">
+                    <h2 class="text-xl font-semibold">Doodler:</h2>
+                    <div class="mt-1  shadow-md  "> 
+                        <pre>Searching for a doodle to describe my thought</pre>
+                        <div class="max-h-[90vh] shadow-sm" hx-ext="sse" sse-connect="${stream.href}/events" sse-swap="doodle"
+                             hx-swap="beforeend">
+                        </div>
+                    </div>
+
+
                 </div>
             `),
             invoke: {
@@ -88,8 +97,11 @@ export const machine = setup({
             },
             on: {
                 'tool-result': {
-                    actions: render(({event: {result: {src, alt}}, html}) => html`
-                        <${SVG} slot="doodle" src="${src}" alt="${alt}" style="height: 50%; width: 50%; inset: -20%"/>
+                    actions: renderTo('doodle',({event: {result: {src, alt}}, html}) => html`
+                        <div class="mt-2 flex flex-col justify-items-center max-h-full justify-center shadow-md">
+                            <pre class="float-left">Here is one.</pre>
+                            <${SVG} slot="doodle" src="${src}" alt="${alt}" class="" style="height: 50%; width: 50%; inset: -20%"/>
+                        </div>
                     `)
                 }
             }

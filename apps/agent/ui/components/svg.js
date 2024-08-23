@@ -1,13 +1,13 @@
-import {c, css, html, useEffect, useRef, useState} from "atomico";
+import {c, css, html, useEffect, useHost, useRef, useState} from "atomico";
 
 function styleSvgPath(path) {
     const length = path.getTotalLength();
     path.style.stroke = '#FF0000'; // Red stroke for high visibility
     path.style.strokeWidth = 2;
-    path.style.fill = 'none'; // No fill initially to ensure stroke visibility
+    path.style.fill = 'black'; // No fill initially to ensure stroke visibility
     // Set the stroke-dasharray and dashoffset to create the drawing effect
-    path.style.strokeDasharray = length;
-    path.style.strokeDashoffset = length;
+    // path.style.strokeDasharray = length;
+    // path.style.strokeDashoffset = length;
 
     // Add the animation class to animate the stroke
     path.classList.add('draw-path');
@@ -57,7 +57,14 @@ export const SVG = c(function ({ src }) {
         loadSvg();
     }, [src]);
 
-    return html`<host shadowDom>
+    const host = useHost();
+    useEffect(()=> {
+        if(host.current?.shadowRoot) {
+            console.log("svg:host.current.shadowRoot", host.current.shadowRoot)
+            htmx.process(host.current.shadowRoot)
+        }
+    }, [host.current?.shadowRoot])
+    return html`<host shadowDom > 
         <svg ref="${svgElement}" viewBox="0 0 100 100">
             ${svgPaths.map(path => html`<${path} />`) }
         </svg>
@@ -71,12 +78,14 @@ export const SVG = c(function ({ src }) {
 		svg {
 			width: 100%;
 			height: 100%;
-			display: inline;
+			display: block;
+            z-index: 100;
 		},
 	:host {
 		display: inline-block;
 		width: 100%;
 		height: 100%;
+        background-color: blue;
 	}
 
 		/* CSS Animation for Handwriting Effect */

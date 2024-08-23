@@ -6,7 +6,7 @@ import {
     AnyStateMachine,
     createActor, StateValue
 } from "xstate";
-import {sendHtml} from "./html";
+import {sendHtml} from "./htmx";
 import {html} from "atomico";
 import {Streamable} from "./components/streamable";
 import {castAsync, filterEventAsync, mapAsync} from "../stream";
@@ -64,20 +64,22 @@ export function routes(fastify: FastifyInstance) {
         const {service, hub} = actor.getSnapshot().context;
         if (request.headers.accept === 'text/event-stream') {
             service.start();
-            return reply.sse(filterEventAsync(hub.emitted, "render"));   
+            return reply.sse(mapAsync(filterEventAsync(hub.emitted, "render"), ({data,event}) => ({
+                data: data,
+                event: event
+            })));
+                ;   
             
         }
         const meta = (service as unknown as {logic: AnyStateMachine})?.logic?.config?.meta;
         if( meta?.render) {
-             sendHtml(reply,  meta.render({stream: workflowStream(workflow), html}));
+             sendHtml(reply,agent,  meta.render({stream: workflowStream(workflow), html}));
              service.start();
             return reply;
         }
             
         
-        sendHtml(reply, html`
-            <${Streamable} src="${reply.request.originalUrl}" /> 
-         `);
+        sendHtml(reply, agent,workflow);
     })
 
     fastify.get('/agents/:agent/:workflow/snapshot', async function handler(request, reply: FastifyReply) {
@@ -109,7 +111,7 @@ export function routes(fastify: FastifyInstance) {
             }
 
             reply.type('text/html');
-            sendHtml(reply, html`
+            sendHtml(reply,agent, html`
                 <${JsonStream} src="snapshot" >
                     <${Snapshot} slot="template" />
                 </${JsonStream}>
