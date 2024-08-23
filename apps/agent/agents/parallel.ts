@@ -48,43 +48,22 @@ export const machine = setup({
             ...input
         }
     }, 
-    meta: {
-        render: ({stream,html}:{stream:RenderStream, html:Html}) => html`
-            <main class="mx-auto  bg-slate-50 h-screen w-full flex flex-row">
-                <div class="mt-4 shadow-md flex flex-col">
-                    <header class="bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
-                        <pre class="text-pretty shadow-sm  text-slate-400">Think about a random topic, and then share that thought.</pre>
-                    </header>
-                    <${stream.event("thought").text} class="flex-grow"/>
-                </div>
-
-                <div class="mt-4 has-[svg]:block  shadow-md flex flex-col">
-                    <header class="bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
-                        <pre class="text-pretty shadow-sm  text-slate-400">Doodle it</pre>
-                    </header>
-                    <${stream.event("doodle").html} >
-                        <div class="doodle" slot="template"
-                             style="height: 15rem; display: flex; flex-wrap: wrap; gap: 4px; vector-effect: non-scaling-stroke; object-fit: contain">
-                            <slot/>
-                        </div>
-                    </${stream.event("doodle").html} class="flex-grow">
-                </div>
-            </main>
-        `},
+ 
             
-    // entry: render(({html,stream}) => html`
-    //     <div slot="template">
-    //         <pre>Think about a random topic, and then share that thought.</pre>
-    //            <div>  
-    //                <${stream.event("thought").text} />
-    //                <${stream.event("doodle").html} >
-    //                    <div slot="template" style="height: 15rem; display: flex; flex-wrap: wrap; gap: 4px; vector-effect: non-scaling-stroke; object-fit: contain" >
-    //                        <slot />
-    //                    </div>
-    //                </${stream.event("doodle").html} >
-    //            </div> 
-    //      </div>`
-    // ), 
+    entry: render(({html,stream}) => html`
+                <main class="mx-auto  bg-slate-50 h-screen w-full">
+                    <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
+                        The Wiser
+                    </header>
+                    <pre class="text-pretty shadow-sm  text-slate-400">Think about a random topic, and then share that thought.</pre>
+
+                    <div class="flex flex-col-reverse items-center justify-center *:w-2/3 *:justify-center"> 
+                        <div ...${stream.connect({event:"doodle", swap:"afterbegin transition:true settle:1s"})} style="height: 15rem; display: flex; flex-wrap: wrap; gap: 4px; vector-effect: non-scaling-stroke; object-fit: contain" />
+                        <pre ...${stream.connect({event:"message", swap:"beforeend  settle:2s"})} class="flex-grow text-pretty   "/>  
+                    </div> 
+                </main>
+        `
+    ), 
 
     states: {
         thinking: { 
@@ -145,7 +124,7 @@ export const machine = setup({
                 },
                 'tool-result': {
                     actions: renderTo('doodle', ({event: {result: {src, alt}}}) => html`
-                        <${SVG} src="${src}" alt="${alt}" style="height: 4rem; width: 4rem; display: inline;"/>
+                        <${SVG} src="${src}" alt="${alt}" style="height: 8rem; width: 8rem; display: inline;"/>
                     `)
                 },
                 "batch": {

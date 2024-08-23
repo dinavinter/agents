@@ -46,7 +46,7 @@ export const serviceMachine = setup({
 
     entry: enqueueActions(({context: {service, hub}, enqueue}) => {
         service.on("*", (event: EventMessage & EventObject) => {
-            console.log('* Service Event:', event?.type,event.data, {id:service.id, sessionId: service.sessionId});
+            // console.log('* Service Event:', event?.type,event.data, {id:service.id, sessionId: service.sessionId});
             hub.emitted.push(event);
             
         })  
