@@ -8,7 +8,9 @@ import {EventMessage} from "fastify-sse-v2";
 import {JsonStream, JsonStreamLog} from "./components/json";
 
 
-export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; json:Atomico<any,any, any> ; href:string};
+export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; json:Atomico<any,any, any> ; href:string
+   connect: (options?:{event?:string, swap?:string}) => Record<string,any>
+};
 export type RenderStream = StreamOptions & {
     service:(id?: string) => RenderStream;
     event:(type:string)=>StreamOptions
@@ -23,21 +25,23 @@ export function agentStream(agent:string, workflow: string ):RenderStream {
         service: (id?: string) => workflowStream(`${href}/${id}` ),
         html: streamElements(href).html,
         text: streamElements(href).text,
-        json: streamElements(href).json
+        json: streamElements(href).json,
+        connect: streamElements(href).connect
     }
 }
 export function workflowStream(workflow: string ):RenderStream {
     return {
         href: workflow,
-        event: (type: string) => streamElements(workflow, `events/${type}`),
+        event: (type: string) => streamElements(workflow, type),
         service: (id?: string) => workflowStream(`${workflow}/${id}` ),
         html: streamElements(workflow).html,
         text: streamElements(workflow).text,
-        json: streamElements(workflow).json
+        json: streamElements(workflow).json,
+        connect: streamElements(workflow).connect
     }
 }
-export function streamElements(workflow: string, slug?: string | undefined):StreamOptions {
-    const href = `${workflow}${slug ? `/${slug}` : ''}`;
+export function streamElements(workflow: string, type?: string | undefined):StreamOptions {
+    const href = `${workflow}${type ? `/events/${type}` : ''}`;
 
      return {
          href,
@@ -48,12 +52,21 @@ export function streamElements(workflow: string, slug?: string | undefined):Stre
             },
             base: TextStream
         }), 
-         html:c(({src}) => html`
-          <host shadowDom>${src}</host>`, {
+         connect(options)  {
+             const {event, swap}= options ||{ }
+             return {
+                 'hx-swap': swap || 'beforeend' ,
+                 'sse-swap':event || type,
+                 'sse-connect': `${workflow}/events`,
+                 'ext':'sse'
+             }
+             
+         },
+         html:c(({workflow,type}) => html` <host   ext="sse" sse-connect="${workflow}/events" sse-swap="${type}" hx-swap="beforeend" />`, {
             props: {
-                src: {type: String, reflect: true, value: href}
-            },
-            base: Streamable
+                workflow: {type: String, reflect: true, value: workflow},
+                type: {type: String, reflect: true, value: type}
+            } 
         }),
          json:c(({src}) => html`
           <host shadowDom>${src}</host>`, {

@@ -2,13 +2,13 @@ import {c, css, html, useEffect, useHost, useRef, useState} from "atomico";
 
 function styleSvgPath(path) {
     const length = path.getTotalLength();
-    path.style.stroke = '#FF0000'; // Red stroke for high visibility
+    path.style.stroke = "rgb(107 114 128 )" // Red stroke for high visibility
     path.style.strokeWidth = 2;
-    path.style.fill = 'black'; // No fill initially to ensure stroke visibility
+    path.style.fill = 'white'; // No fill initially to ensure stroke visibility
     // Set the stroke-dasharray and dashoffset to create the drawing effect
     // path.style.strokeDasharray = length;
     // path.style.strokeDashoffset = length;
-
+    path.style.fillOpacity ="70%"
     // Add the animation class to animate the stroke
     path.classList.add('draw-path');
 }

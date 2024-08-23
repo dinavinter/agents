@@ -80,9 +80,7 @@ export const machine = setup({
                         <div class="max-h-[90vh] shadow-sm" hx-ext="sse" sse-connect="${stream.href}/events" sse-swap="doodle"
                              hx-swap="beforeend">
                         </div>
-                    </div>
-
-
+                    </div> 
                 </div>
             `),
             invoke: {
