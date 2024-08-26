@@ -72,3 +72,10 @@ export async function * batchAsync< T extends  any,TIterable extends AsyncIterab
         }
     }
 }
+
+export async function * delayAsync<T>(stream: AsyncIterable<T>, ms= 50): AsyncGenerator<T> {
+    for await (const value of stream) {
+        await new Promise((resolve) => setTimeout(resolve, ms));
+        yield value;
+    }
+}

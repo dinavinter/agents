@@ -8,12 +8,11 @@ import {
 } from "xstate";
 import {sendHtml} from "./htmx";
 import {html} from "atomico";
-import {Streamable} from "./components/streamable";
-import {castAsync, filterEventAsync, mapAsync} from "../stream";
+import {castAsync, delayAsync, filterEventAsync, mapAsync} from "../stream";
 import { serviceMachine} from "./inspector";
 import {JsonStream} from "./components/json";
 import {Snapshot} from "./components/snapshot";
-import { workflowStream} from "./render"; 
+import { workflowStream} from "./render";
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
@@ -64,10 +63,10 @@ export function routes(fastify: FastifyInstance) {
         const {service, hub} = actor.getSnapshot().context;
         if (request.headers.accept === 'text/event-stream') {
             service.start();
-            return reply.sse(mapAsync(hub.emitted, ({data,event, type}) => ({
+            return reply.sse(delayAsync(mapAsync(hub.emitted, ({data,event, type}) => ({
                 data: data,
                 event: event || type
-            }))); 
+            })))); 
         }
         const meta = (service as unknown as {logic: AnyStateMachine})?.logic?.config?.meta;
         if( meta?.render) {
