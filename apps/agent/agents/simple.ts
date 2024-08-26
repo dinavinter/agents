@@ -37,11 +37,11 @@ export const machine = setup({
     initial: 'thinking',
     context: ({input}) => input,
     entry: render(({html, stream}) => html`
-        <main class="mx-auto  bg-slate-50" >
+        <main class="mx-auto  bg-slate-50 h-full" >
         <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
                 The Wiser
          </header>
-           <div class="flex flex-col items-center justify-center *:w-2/3 *:justify-center" hx-ext="sse" sse-connect="${stream.href}/events" sse-swap="content" hx-swap="beforeend">
+           <div class="flex flex-col items-center justify-center *:w-1/2 *:justify-center" hx-ext="sse" sse-swap="content" hx-swap="beforeend">
            </div>
                    
         </main>`
@@ -49,9 +49,17 @@ export const machine = setup({
     states: {
         thinking: {
             entry: renderTo('content',({stream, html}) => html`
-                <div class="mt-4 shadow-md mb-4 ">
-                    <h2 class="text-xl font-semibold">Thinker</h2>
-                    <${stream.service("thinker").event("text-delta").text}  />  
+                <div class="flex items-start gap-2.5  p-2 m-2 w-full">
+                <img class="w-12 h-12 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="thinker avatar" />
+                <div class="flex flex-col gap-1 w-full ">
+                    <div class="flex items center space-x-2 rtl:space-x-reverse">
+                        <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white">Thinker</span>
+                        <span class="text-sm  lg:text-lg font-normal text-gray-500 dark:text-gray-400">${new Date(Date.now()).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
+                        <pre class="text-lg text-slate-900 inline text-wrap" sse-swap="@thinker.text-delta" />
+                    </div>
+                </div> 
                 </div>
                 `
             ), 
@@ -73,15 +81,22 @@ export const machine = setup({
         } , 
         doodle: {  
             entry: renderTo('content', ({html,stream}) => html`
-                <div class="mt-4  shadow-md mb-4 ">
-                    <h2 class="text-xl font-semibold">Doodler:</h2>
-                    <div class="mt-1  shadow-md  "> 
-                        <pre>Searching for a doodle to describe my thought</pre>
-                        <div class="max-h-[90vh] shadow-sm" hx-ext="sse" sse-connect="${stream.href}/events" sse-swap="doodle"
-                             hx-swap="beforeend">
+                <div class="float-right flex items-start gap-2.5  p-2 m-2 w-full ">
+                    <img class="w-12 h-12 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-3.jpg" alt="thinker avatar" />
+                    <div class="flex flex-col gap-1 w-full  ">
+                        <div class="flex items center space-x-2 rtl:space-x-reverse">
+                            <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900  ">Doodler</span>
+                            <span class="text-sm lg:text-lg font-normal text-gray-500  ">${new Date(Date.now()).toLocaleTimeString()}</span>
                         </div>
-                    </div> 
-                </div>
+                        <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
+                            <pre class="text-lg text-slate-900 inline text-wrap " >
+                               <div class="max-h-[90vh] shadow-sm" hx-ext="sse"  sse-swap="doodle" >
+                                     Searching for a doodle to describe my thought...
+                                </div>
+                            </pre>
+                        </div>
+                    </div>
+                </div> 
             `),
             invoke: {
                 src: 'aiStream',
@@ -96,9 +111,9 @@ export const machine = setup({
             on: {
                 'tool-result': {
                     actions: renderTo('doodle',({event: {result: {src, alt}}, html}) => html`
-                        <div class="mt-2 flex flex-col justify-items-center max-h-full justify-center shadow-md">
-                            <pre class="float-left">Here is one.</pre>
-                            <${SVG} slot="doodle" src="${src}" alt="${alt}" class="" style="height: 50%; width: 50%; inset: -20%"/>
+                        <div class="flex flex-grow flex-wrap ">
+                            <span>Here is one!</span>
+                            <${SVG} src="${src}" alt="${alt}" class="inline-flex  h-1/3 w-1/3  opacity-50   -translate-y-[10%] -mb-[20%] -mx-[7%] " />
                         </div>
                     `)
                 }
