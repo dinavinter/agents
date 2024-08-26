@@ -4,6 +4,7 @@ import {createAgent, fromDecision} from "@statelyai/agent";
 import {openaiGP4o} from "../ai";
 import {render, renderTo} from "../ui/render";
 import {SVG} from "../ui/components/svg";
+import {c, css, html} from "atomico";
 
 const agent = createAgent({
     name: 'support-agent',
@@ -36,6 +37,7 @@ const agent = createAgent({
 });
 
 
+
 export const machine = setup({
     types: {
         events: agent.types.events,
@@ -50,46 +52,34 @@ export const machine = setup({
     context: ({input}) => ({
         customerIssue: input ?? `I've changed my mind and I want a refund for order #182818!`,
     }),
-    // entry: render(({html, context: {customerIssue}, stream}) => html`
-    //     <main class="mx-auto  bg-slate-50 h-screen">
-    //         <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
-    //             Customer Support
-    //         </header>
-    //         <div class="flex flex-col items-center justify-center *:w-2/3 *:justify-center *:shadow-md" hx-ext="sse"
-    //              sse-swap="render" hx-swap="beforeend">
-    //             <pre class="shadow-2xl  text-lg text-slate-900 p-2 m-2"><p>${customerIssue}</p></pre>
-    //         </div>
-    //     </main>
-    // `),
+    entry: render(({html, context: {customerIssue}, stream}) => html`
+        <main class="mx-auto  bg-slate-50 h-screen w-screen">
+            <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
+                Customer Support
+            </header>
+            <div class="flex flex-col items-center justify-center *:justify-center w-full *:w-2/3 " hx-ext="sse"  sse-swap="content" hx-swap="beforeend">
+            </div>
+        </main>
+    `),
 
     states: {
         call: {
-            entry: render(({html, context: {customerIssue}, stream}) => html`
-                <main class="mx-auto  bg-slate-50 h-full">
-                    <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
-                        Customer Support
-                    </header>
-                    <div class="flex flex-col justify-evenly items-center  *:w-2/3 *:justify-center *:shadow-lg *:rounded-lg *:p-4 "
-                         hx-ext="sse" sse-swap="content" hx-swap="beforeend">
-                        <div>
-                            <h2 class="text-2xl text-cyan-700 shadow-sm">Customer</h2> 
-                            <pre class="shadow-2xl  text-lg text-slate-900 p-2 m-2"><p>${customerIssue}</p></pre>
-                        </div>
-                    </div>
-                </main>
-            `),
+            entry: renderTo('content', ({html, context: {customerIssue}}) => html`
+                <${ChatBubble} content=${customerIssue} 
+                               name="Customer"
+                               img="https://flowbite.com/docs/images/people/profile-picture-3.jpg"  />
+                    
+            `), 
             after: {
-                100: 'frontline',
+                50: 'frontline',
             }
         },
         frontline: {
             entry: renderTo('content', ({html, stream}) => html`
-                        <div  >
-                            <h2 class="text-2xl text-cyan-700 shadow-sm">Frontline</h2> 
-                            <pre class="shadow-2xl  text-lg text-slate-900 p-2 m-2"><${stream.event("classify").text}/></pre>
-                        </div>
-                `
-            ),
+                <${ChatBubble} name="Frontline" swap="classify"
+                               img="https://flowbite.com/docs/images/people/profile-picture-4.jpg"/>
+
+            `),
             invoke: {
                 src: 'agent',
                 input: ({context}) => ({
@@ -126,10 +116,8 @@ export const machine = setup({
         },
         billing: {
             entry: renderTo('content', ({html, stream}) => html`
-                   <div >
-                       <h2 class="text-2xl text-cyan-700 shadow-sm">Billing</h2>
-                            <pre class="shadow-2xl  text-lg text-slate-900 p-2 m-2"><${stream.event("billing").text}/></pre>
-                        </div>
+                <${ChatBubble} name="Billing" swap="billing"
+                               img="https://flowbite.com/docs/images/people/profile-picture-4.jpg"/> 
                 `
             ),
             invoke: {
@@ -148,12 +136,9 @@ export const machine = setup({
             },
         },
         technical: {
-            entry: renderTo('content', ({html}) => html`
-                        <div >
-                            <h2 class="text-2xl text-cyan-700 shadow-sm"> Technical</h2>
-                            <p class="shadow-2xl  text-lg text-slate-900 p-2 m-2">Let's solve the technical issue.</p>
-                            <slot name="technical.solve"></slot>
-                        </div>
+            entry: renderTo('content', ({html,stream}) => html`
+                <${ChatBubble} name="Technical" swap="technical.solve"
+                               img="https://flowbite.com/docs/images/people/profile-picture-5.jpg"/>
                 `
             ),
             invoke: {
@@ -166,18 +151,15 @@ export const machine = setup({
             },
             on: {
                 'agent.technical.solve': {
-                    actions: renderTo('content', ({html, event}) => html`
-                        <pre class="shadow-2xl  text-lg text-slate-900 p-2 m-2" slot="technical.solve">${event.solution}</pre>`),
+                    actions: renderTo('technical.solve', ({html, event}) => html`<p${event.solution}</p>`),
                     target: 'conversational',
                 },
             },
         },
         conversational: {
             entry: renderTo('content', ({html, stream}) => html`
-                        <div  >
-                            <h2 class="text-2xl text-cyan-700 shadow-sm">Conversational</h2>
-                            <pre class="shadow-2xl  text-lg text-slate-900 p-2 m-2" > <${stream.event("conversation").text}/></pre>
-                        </div>
+                <${ChatBubble} name="Conversational" swap="conversation"
+                               img="https://flowbite.com/docs/images/people/profile-picture-1.jpg"/>
                 `
             ),
             invoke: {
@@ -195,30 +177,64 @@ export const machine = setup({
             },
         },
         refund: {
-            entry: renderTo('content', ({html}) => html`
-                        <div >
-                            <h2 class="text-2xl text-cyan-700 shadow-sm">Refund</h2>
-                            <div  style="height: 5rem; display: flex; flex-wrap: wrap;"> 
-                                <${SVG} class="shadow-lg" style="height: 6rem;width: 6rem; display: inline; object-fit: contain"
-                                        src="https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-106.svg"/>
-                            </div>
-                        </div>
-                `
-            ),
+            entry: renderTo('billing', ({html}) => html`
+                <${SVG} class="inline-block w-1/2" src="https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-106.svg"/>
+           `),
             after: {
                 1000: {target: 'conversational'},
             },
         },
-        end: {
-            entry: renderTo('content', ({html}) => html`
-                <h1 class="text-4xl text-cyan-600 font-semibold">The End</h1>
-            `),
-
+        end: { 
             type: 'final',
 
         },
     },
 });
 
- 
-  
+
+const ChatBubble = c(({content, name, img, swap }) => {
+    return html`<div class="flex items-start gap-2.5  p-2 m-2 w-full">
+            <img class="w-12 h-12 rounded-full" src=${img} alt=${name} />
+            <div class="flex flex-col gap-1 w-full">
+                <div class="flex items center space-x-2 rtl:space-x-reverse">
+                    <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white">${name}</span>
+                    <span class="text-sm  lg:text-lg font-normal text-gray-500 dark:text-gray-400">${new Date(Date.now()).toLocaleTimeString()}</span>
+                </div>
+                <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
+                    <pre class="text-lg text-slate-900 inline text-wrap" sse-swap="${swap}">${content}</pre>
+                </div>
+            </div>
+        </div>
+    `;
+},{
+    props: {
+        swap: {
+            type: String,
+            reflect: true
+        },
+        content: {
+            type: String,
+            reflect: true
+        },
+        name: {
+            type: String,
+            reflect: true
+        },
+        img: {
+            type: String,
+            reflect: true
+        }
+    },
+    styles: css`
+        @tailwind base;
+        @tailwind components;
+        @tailwind utilities;
+        @tailwind screens;
+        
+        :host {
+            display: block;
+            width: 100%;
+        }
+    `
+});
+customElements.define('chat-bubble', ChatBubble);
