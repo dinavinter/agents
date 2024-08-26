@@ -64,12 +64,10 @@ export function routes(fastify: FastifyInstance) {
         const {service, hub} = actor.getSnapshot().context;
         if (request.headers.accept === 'text/event-stream') {
             service.start();
-            return reply.sse(mapAsync(filterEventAsync(hub.emitted, "render"), ({data,event}) => ({
+            return reply.sse(mapAsync(hub.emitted, ({data,event, type}) => ({
                 data: data,
-                event: event
-            })));
-                ;   
-            
+                event: event || type
+            }))); 
         }
         const meta = (service as unknown as {logic: AnyStateMachine})?.logic?.config?.meta;
         if( meta?.render) {
@@ -144,7 +142,7 @@ export function routes(fastify: FastifyInstance) {
         const {agent, workflow, event} = request.params as { agent: string, workflow: string, event: string };
         const service = await getOrCreateWorkflow(agent, workflow);
         const { hub} = service.getSnapshot().context; 
-        return reply.sse(filterEventAsync((hub.emitted), event))  
+        return reply.sse(filterEventAsync(hub.emitted, event))  
     })
 
     fastify.get('/agents/:agent/:workflow/:service/events/:event', async function handler(request, reply: FastifyReply) {
