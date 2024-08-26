@@ -57,9 +57,9 @@ export const layout = (agent:string, workflow:string) => `
               <span class="mx-2 text-gray-500">/</span> 
               <a href="#" class="text-slate-400 hover:text-slate-300">${workflow}</a> 
             </div>
-        </header>
-            <div hx-ext="sse" sse-connect="${workflow}" sse-swap="render" hx-swap="beforeend">
-              
+        </header> 
+            <div hx-ext="sse" sse-connect="${workflow}"   >
+              <div  sse-swap="render" ext="sse" hx-swap="beforeend">
             </div>
  
          </body>
