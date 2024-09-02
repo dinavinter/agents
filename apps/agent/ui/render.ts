@@ -111,6 +111,15 @@ export function renderTo<TContext extends MachineContext & {stream?: RenderStrea
     })
 
     function renderEvent(type:string, node:VNode<Element>) {
+         if(!node?.render) {
+             console.log('No render method',type, node);
+             debugger;
+             return {
+                 type: type,
+                 event: type,
+                 data: node.toString(),
+             };
+         }
         const rendered = node.render() as unknown as {
             type: string,
             name: string,
@@ -122,9 +131,9 @@ export function renderTo<TContext extends MachineContext & {stream?: RenderStrea
         const event = {
             type: type,
             event: type,
-            data: rendered.toString(),
+            data: rendered?.toString(),
         } satisfies EventMessage & { type: typeof type, event: string}
-        console.log(event);
+        console.log(event, node);
         return event 
     }
 

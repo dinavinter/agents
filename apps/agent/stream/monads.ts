@@ -14,12 +14,6 @@ export async function * cloneAsync<T>(stream: AsyncIterable<T>, target: Pushable
         yield event;
     }
 }
-export   function teeAsync<T>(stream: AsyncIterable<T>): [AsyncIterable<T>,AsyncIterable<T>] {
-    const target = pushable<T>({objectMode: true}) ;
-    return [cloneAsync(stream, target), target[Symbol.asyncIterator]()];
-}
-
-
 
 export async function * joinAsync(stream: AsyncIterable<string[]>, separator?:string ): AsyncGenerator<string> {
     return mapAsync(stream, (value) => value.join(separator));
@@ -47,13 +41,7 @@ export async function * filterAsync<T, TFiltered extends T>(stream: AsyncIterabl
         }
     }
 }
-
-export async function* castAsync<T>(e: AsyncIterable<any>) {
-    for await (const value of e) {
-        yield value as T;
-    }
-}
-
+ 
 export async function * filterEventAsync<T extends EventObject, TType extends T["type"], TFiltered extends  T & {type:TType}>(stream: AsyncIterable<T>, ...type: TType[]): AsyncGenerator<TFiltered> {
     function isType(event: T): event is TFiltered {
         return type.includes(event.type as TType);
@@ -61,6 +49,12 @@ export async function * filterEventAsync<T extends EventObject, TType extends T[
     yield * filterAsync(stream, isType);
 }
 
+
+export async function* castAsync<T>(e: AsyncIterable<any>) {
+    for await (const value of e) {
+        yield value as T;
+    }
+}
 
 export type BatchAsyncParams<T>={stream: AsyncIterable<T>, split?:(i:T)=> boolean}
 export async function * batchAsync< T extends  any,TIterable extends AsyncIterable<T>=AsyncIterable<T>>(stream: TIterable, split?:(i:T)=> boolean ): AsyncGenerator<T[]> {
@@ -78,4 +72,26 @@ export async function * delayAsync<T>(stream: AsyncIterable<T>, ms= 50): AsyncGe
         await new Promise((resolve) => setTimeout(resolve, ms));
         yield value;
     }
+}
+
+
+/* in use? */
+export   function teeAsync<T>(stream: AsyncIterable<T>): [AsyncIterable<T>,AsyncIterable<T>] {
+    const target = pushable<T>({objectMode: true}) ;
+    return [cloneAsync(stream, target), target[Symbol.asyncIterator]()];
+}
+
+export   function teePushableAsync<T>(stream: Pushable<T>): [AsyncIterable<T>, Pushable<T>] {
+    const target = pushable<T>({objectMode: true}) ;
+    return [cloneAsync(stream, target), target];
+}
+
+
+
+export  function concatAsync<T>(...streams: AsyncIterable<T>[]): AsyncGenerator<T> {
+    const p = pushable<T>({objectMode: true});
+    for (const stream of streams) {
+        cloneAsync(stream, p);
+    }
+    return p;
 }

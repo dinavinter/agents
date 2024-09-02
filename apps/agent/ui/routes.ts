@@ -1,7 +1,7 @@
 import {FastifyInstance, FastifyReply} from "fastify";
 import {  FastifySSEPlugin} from "fastify-sse-v2";
 import {
-    ActorRefFrom, 
+    ActorRefFrom,  
     AnyMachineSnapshot,
     AnyStateMachine,
     createActor, StateValue
@@ -16,6 +16,7 @@ import { workflowStream} from "./render";
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
+    fastify.register(import('@fastify/formbody'))
 
     const services: Map<string,
         ActorRefFrom<typeof serviceMachine>
@@ -142,6 +143,22 @@ export function routes(fastify: FastifyInstance) {
         const service = await getOrCreateWorkflow(agent, workflow);
         const { hub} = service.getSnapshot().context; 
         return reply.sse(filterEventAsync(hub.emitted, event))  
+    })
+
+    fastify.post('/agents/:agent/:workflow/events/:event',{
+        schema: {
+            body: {
+                type: 'object'
+                
+            }
+        }
+    }, async function handler(request, reply: FastifyReply) {
+        const {agent, workflow, event} = request.params as { agent: string, workflow: string, event:string  };
+        const data = request.body as object;
+        const actorRef = await getOrCreateWorkflow(agent, workflow);
+        const {service} = actorRef.getSnapshot().context;
+        service.send({type: event, ...data});
+        return  reply.send('sent at '+ new Date().toISOString());
     })
 
     fastify.get('/agents/:agent/:workflow/:service/events/:event', async function handler(request, reply: FastifyReply) {
