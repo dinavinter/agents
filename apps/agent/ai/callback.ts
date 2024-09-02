@@ -18,13 +18,12 @@ export function fromAIEventCallback<TDefaultOptions extends Partial<CallbackInpu
                     ...event,
                     history: chatHistory.format()
                 }, defaultOptions, input  );
-
-
-                if (event.type ===  type) { 
-                    console.log("ai-callback", {
-                        prompt: options.prompt,
-                        history: chatHistory.format()
-                    });
+                
+                if (event.type ===  type || (Array.isArray(type) && type.includes(event.type))) { 
+                    // console.log("ai-callback", {
+                    //     prompt: options.prompt,
+                    //     history: chatHistory.format()
+                    // });
 
                     const historyChunk=chatHistory.push(event);
                     const {fullStream, text} = await streamText(options);

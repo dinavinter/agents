@@ -31,9 +31,11 @@ export const layout = (agent:string, workflow:string) => `
         }
         </script> 
 <!--         <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" ></script>-->
+<!--  <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>-->
 
-     <script src="https://unpkg.com/htmx.org@2.0.2"></script>
-    <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+       <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+       <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+       <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
 
        <script src="/ui/components/streamable.js" type="module"></script>
        <script  src="/ui/components/svg.js" type="module"> </script>
@@ -44,7 +46,6 @@ export const layout = (agent:string, workflow:string) => `
 
        <script  src="/ui/components/stream-template.js" type="module"> </script>
 
-        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
 
        </head>
        <body> 

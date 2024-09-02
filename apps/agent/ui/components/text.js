@@ -1,5 +1,5 @@
-import {c, css, html, useCallback, useEffect, useMemo, useProp, useRef, useState} from "atomico";
-import {usePropProxy, useRender} from "@atomico/hooks";
+import {c, css, html,  useEffect, useMemo,  useRef, useState} from "atomico";
+import { useRender} from "@atomico/hooks";
     
 
 function component({src}) {
@@ -21,7 +21,7 @@ function component({src}) {
      //     get: () => refSpan.current.empty
      // })
     
-     useRender(() => html`<pre class="text-pretty border-2 shadow-md" ref="${refSpan}">${state}</pre>`)
+     useRender(() => html`<pre   ref="${refSpan}">${state}</pre>`)
          
 
     return html`<host shadowDom>
