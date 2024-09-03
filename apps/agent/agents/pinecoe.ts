@@ -1,12 +1,11 @@
 import { Pinecone, type ScoredPineconeRecord } from "@pinecone-database/pinecone";
-import {cosineSimilarity, embed, tool} from "ai";
+import {  embed, tool} from "ai";
 import {z} from "zod";
 import {embedding, fromAIEventStream, openaiGP4o} from "../ai";
-import {createMachine, setup} from "xstate";
-import {render, RenderStream, renderTo} from "../ui/render";
+import {  setup} from "xstate";
+import {render,   renderTo} from "./agent-render";
 import * as fs from 'fs';
 import {html} from "atomico";
-import {SVG} from "../ui/components/svg";
 
 /*
 

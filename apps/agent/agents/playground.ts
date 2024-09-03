@@ -1,5 +1,5 @@
 import {createMachine, emit} from "xstate";
-import {render} from "../ui/render";
+import {render} from "./agent-render";
 import {marked} from "marked";
 
 export const machine = createMachine({
@@ -28,7 +28,8 @@ export const machine = createMachine({
             actions: emit({
                 type: 'content',
                 event: 'content',
-                data: converter.makeHtml('`var test = new Test();  `')
+                data: marked.parse('`var test = new Test();  `')
+                // data: converter.makeHtml('`var test = new Test();  `')
             })
         },
         90: {

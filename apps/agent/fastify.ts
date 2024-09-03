@@ -1,14 +1,14 @@
 // Import the framework and instantiate it
 import 'atomico/ssr/load';
-import {html} from 'atomico';
-import Fastify, {FastifyReply} from 'fastify' 
+ import Fastify, {FastifyReply} from 'fastify' 
 import {tokenService} from "sap-ai-token";
-import {routes} from "./ui/routes";
+import {routes} from "./api";
 import fastifyStatic from "@fastify/static";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {sendHtml} from "./ui/html";
-
+import {sendHtml} from "./api/ui/html";
+import {html} from "atomico";
+ 
 tokenService.credentialsFromEnv();
  
 const fastify = Fastify({
@@ -25,8 +25,8 @@ console.log(path.join(__dirname, 'ui', "components"));
 
 //static js files
 fastify.register(fastifyStatic, {
-    root: path.join(__dirname, 'ui', "components"),
-    prefix: '/ui/components', // optional: default '/'
+    root: path.join(__dirname,  "components"),
+    prefix: '/components', // optional: default '/'
     // constraints: {  } ,// optional: default {}
     // prefixAvoidTrailingSlash: true,
     extensions: ['js'],
@@ -39,19 +39,15 @@ fastify.register(fastifyStatic, {
     }
 })
 
- 
-  
 //agent router
 fastify.get('/', async function handler(request, reply) {
-    const agents = ['simple',  'news', 'support',   'tictac',  'raffle',  "github"]
+    const agents = ['simple',  'news', 'support',   'tictac',  'raffle',  "github", "screen"  ]
     sendHtml(reply, html`
         <h1>AI AGents</h1>
            ${agents.map(agent => html`<a href="/agents/${agent}">${agent}</a>`)}
        </div>
     `)
 })
- 
-
 routes(fastify);
 
 try {

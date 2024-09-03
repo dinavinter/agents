@@ -2,10 +2,10 @@ import 'atomico/ssr/load';
 
 import {assign, createActor, log, setup,} from 'xstate';
  import {config} from 'dotenv';
-import {Doodle, findDoodleTool} from "../ui/doodles";
-import {SVG} from "../ui/components/svg";
+import {Doodle, findDoodleTool} from "../doodles";
+import {SVG} from "../components";
 import {fromAIEventStream, openaiGP4o} from "../ai";
-import {render, RenderStream, renderTo} from "../ui/render";
+import {render, RenderStream, renderTo} from "./agent-render";
    
 config();
 

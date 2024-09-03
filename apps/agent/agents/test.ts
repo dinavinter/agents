@@ -1,10 +1,9 @@
-import {AssistantResponse} from 'ai';
-import {AzureOpenAI} from 'openai';
+
 import {type ActorSystem, assign, emit, ErrorActorEvent, fromPromise, setup} from "xstate";
 import {fromEventAsyncGenerator} from "../stream";
 import {ThreadCreateParams} from "openai/src/resources/beta/threads/threads";
 import {IndexByProp} from "xstate/dist/declarations/src/types";
-import {render, renderTo} from "../ui/render";
+import {render, renderTo} from "./agent-render";
 import {type AssistantStreamEvent} from "openai/resources/beta"; 
 import {env} from "node:process";
 import {azureOpenAI} from "../ai";

@@ -1,8 +1,8 @@
 import {assign, emit, setup} from "xstate";
 import {fromAIElementStream, fromAIEventStream, openaiGP4o} from "../ai";
 import {z} from "zod";
-import {render, RenderStream, renderTo} from "../ui/render";
-import {Doodle} from "../ui/doodles";
+import {render, RenderStream, renderTo} from "./agent-render";
+import {Doodle} from "../doodles";
 
  
 
@@ -19,11 +19,7 @@ export const machine = setup({
         })
     },
     types: {
-        input: {} as {
-            stream?: RenderStream,
-            thought?: string ;
-            doodle?: Doodle;
-        },
+        input: {} as any,
         context: {} as {
             request?: string,
             draft?:   [] ;

@@ -3,7 +3,7 @@ import {type ActorSystem, assign, emit, ErrorActorEvent, fromPromise, setup} fro
 import {fromEventAsyncGenerator} from "../stream";
 import {ThreadCreateParams} from "openai/src/resources/beta/threads/threads";
 import {IndexByProp} from "xstate/dist/declarations/src/types";
-import {render, renderTo} from "../ui/render";
+import {render, renderTo} from "./agent-render";
 import {type AssistantStreamEvent} from "openai/resources/beta";
 import {azureOpenAI} from "../ai";
  

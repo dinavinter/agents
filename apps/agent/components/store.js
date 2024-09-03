@@ -28,21 +28,4 @@ export async function* toJsonAsync (stream){
         yield JSON.parse(chunk);
     }
 }
-
-
-/*
-
  
- function useFetchJSONStream(src) {
-     const stream = useMemo(() => pushable({objectMode: true}), [src]);
-     useEffect(async () => {
-         const agentStream = await fetch(src, {headers: {accept: "application/json"}});
-         for await (const chunk of agentStream.body.pipeThrough(new TextDecoderStream())) {
-             stream.push(JSON.parse(chunk));
-         }
-     }, [src]);
-     return stream;
- }
-
-
- */
