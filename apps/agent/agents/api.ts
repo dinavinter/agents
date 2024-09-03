@@ -5,50 +5,23 @@ import {ThreadCreateParams} from "openai/src/resources/beta/threads/threads";
 import {IndexByProp} from "xstate/dist/declarations/src/types";
 import {render, renderTo} from "../ui/render";
 import {type AssistantStreamEvent} from "openai/resources/beta";
+import {azureOpenAI} from "../ai";
  
 
-const getClient = () => {
-    return new AzureOpenAI({
-        apiVersion: "2024-05-01-preview",
-    });
-};
-
-const setupAssistant = async ():Promise<string> => {
-    try {
-        const assistantResponse = await assistantsClient.beta.assistants.create({
-            model: "GPT-4o", // replace with model deployment name
-            name: "tester",
-            instructions: "Your task is to generate gigya open api specs by the user request, search for in the file store for requests, responses and extract an api spec",
-            tools: [{"type":"file_search"}],
-            tool_resources: {"file_search":{"vector_store_ids":["vs_YKZYYep26NbuaDzK98ZV9evu"]}},
-            temperature: 1,
-            top_p: 1
-        });
-        console.log(`Assistant created: ${JSON.stringify(assistantResponse)}`);
-
-        return assistantResponse.id!;
-    } catch (error:any) {
-        console.error(`Error creating assistant: ${error.message}`);
-        
-        throw error;
-    }
-};
  
 
-const assistantsClient = getClient();
+  
+
  
 
 // type AssistantStreamEventMap = IndexByProp<AssistantStreamEvent, "event">
 export type AssistantStreamEventMap =   IndexByProp<AssistantStreamEvent, "event">
 type ThreadMessageCompleted = AssistantStreamEventMap["thread.message.completed"];
 
-type AssistantEventObject =  AssistantStreamEvent extends {event: infer Event, data: infer Data} ? {
-    type: Event;
-} & Data : never;
-
+ 
 type AssistantEmittedEventObject =  {type:"text-delta", event: string, data: string} | {type: "image-url", event: string, data: string}
 
-
+const assistantsClient = azureOpenAI()
 export const machine =  setup({
     types:{
         // events:{} as  AssistantEventObject | {message: string, type: 'message'},
@@ -61,7 +34,26 @@ export const machine =  setup({
         }
     },
     actors:{
-        setupAssistant: fromPromise(setupAssistant),
+        setupAssistant: fromPromise( async ():Promise<string> => {
+            try {
+                const assistantResponse = await assistantsClient.beta.assistants.create({
+                    model: "GPT-4o", // replace with model deployment name
+                    name: "tester",
+                    instructions: "Your task is to generate an open api specs by the user request, search for in the file store for requests, responses and extract an api spec",
+                    tools: [{"type":"file_search"}],
+                    tool_resources: {"file_search":{"vector_store_ids":["vs_YKZYYep26NbuaDzK98ZV9evu"]}},
+                    temperature: 1,
+                    top_p: 1
+                });
+                console.log(`Assistant created: ${JSON.stringify(assistantResponse)}`);
+
+                return assistantResponse.id!;
+            } catch (error:any) {
+                console.error(`Error creating assistant: ${error.message}`);
+
+                throw error;
+            }
+        }),
         createThread:  fromPromise<string, Partial<ThreadCreateParams >>(async ({input }) => {
             const threadId = await assistantsClient.beta.threads.create(input);
             return threadId.id;
@@ -138,7 +130,7 @@ export const machine =  setup({
                              
                     </main>`
     }),
-    initial: 'init',
+    initial: 'setup',
     states: {
         setup: { 
             entry: renderTo('setup', ({html}) =>
@@ -155,11 +147,11 @@ export const machine =  setup({
                     })
                 },
                 onError: {
-                    target: 'error',
+                    target: 'setup',
                     actions: renderTo('content', ({html, event}) => {
                         return html`<pre class="text-lg text-red-900 inline text-wrap">
-                                        ${(event as ErrorActorEvent).error}
-                                    </pre> `
+                                       <span>${JSON.stringify(event.error)}</span>
+                                    </pre>`
                     })
                 }
             }
@@ -206,10 +198,10 @@ export const machine =  setup({
                             </div>
                             <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow " >
                                 <form>
-                                   <input type="text" autocomplete="true" list="examples" class="w-full p-2 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow " name="message" placeholder="Type a message"   />
+                                   <input type="text" autocomplete="true" list="api-message" class="w-full p-2 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow " name="message" placeholder="Type a message"   />
                                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" hx-post="${stream.href}/events/message" hx-swap="outerHTML"  >Send</button>
                                 </form>
-                                <datalist id="examples">
+                                <datalist id="api-message">
                                     <option value="Login with password registration"/>
                                     <option value="Login with social registration"/>
                                     <option value="Login with password and captcha"/>

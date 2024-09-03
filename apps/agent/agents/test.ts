@@ -6,24 +6,18 @@ import {ThreadCreateParams} from "openai/src/resources/beta/threads/threads";
 import {IndexByProp} from "xstate/dist/declarations/src/types";
 import {render, renderTo} from "../ui/render";
 import {type AssistantStreamEvent} from "openai/resources/beta";
-import showdown from 'showdown';
-
-import {marked} from "marked"
+import showdown from 'showdown'; 
 import {env} from "node:process";
+import {azureOpenAI} from "../ai";
 
  
-const getClient = () => {
-    return new AzureOpenAI({
-        apiVersion: "2024-05-01-preview",
-    });
-}; 
-
+ 
 const setupAssistant = async () => {
     try {
         const assistantResponse = await assistantsClient.beta.assistants.create({
             model: "gpt-4o", // replace with model deployment name
             name: "tester",
-            instructions: "Your task is to generate gigya apis tests for the given request, provide code only respoonse, search for similar tests to understand how to use gigya apis",
+            instructions: "Your task is to generate gigya apis tests for the given request, provide code only respoonse, search for similar tests to understand how to use gigya apis, answer only in c# code, with no additional comments",
             tools: [{"type":"file_search"}],
             tool_resources: {"file_search":{"vector_store_ids":["vs_YKZYYep26NbuaDzK98ZV9evu"]}},
             temperature: 1,
@@ -34,25 +28,16 @@ const setupAssistant = async () => {
         console.error(`Error creating assistant: ${error.message}`);
     }
 };
-var converter = new showdown.Converter();
 
-
-const assistantsClient = getClient();
-
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
 
  
   // type AssistantStreamEventMap = IndexByProp<AssistantStreamEvent, "event">
 export type AssistantStreamEventMap =   IndexByProp<AssistantStreamEvent, "event">
 type ThreadMessageCompleted = AssistantStreamEventMap["thread.message.completed"];
- 
-type AssistantEventObject =  AssistantStreamEvent extends {event: infer Event, data: infer Data} ? {
-        type: Event;
-      } & Data : never;
 
 type AssistantEmittedEventObject =  {type:"text-delta", event: string, data: string} | {type: "image-url", event: string, data: string}
- 
+
+const assistantsClient = azureOpenAI();
 
 export const machine =  setup({
     types:{
@@ -142,11 +127,11 @@ export const machine =  setup({
                 return html`
                     <main class="mx-auto  bg-slate-50 h-full">
                         <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
-                            Assistant
+                            Tester 
                         </header>
-                        <div class="flex flex-col items-center justify-center *:w-1/2 *:justify-center" hx-ext="sse"
+                        <div class="flex flex-col items-center justify-center *:w-full w-full *:justify-center" hx-ext="sse"
                              sse-swap="content" hx-swap="beforeend">
-                            setting up assistant
+                            Setting up assistant
                         </div>
                     </main>`
             }),
@@ -263,14 +248,7 @@ export const machine =  setup({
                     actions: renderTo('messages', ({html, event}) =>
                         html`<pre class="text-pretty language-csharp"><code class="font-mono text-slate-900 inline text-wrap" hx-ext="sse" sse-swap=${`@${event.id}.text-delta`} /> </pre>`
                     )
-                },
-                ["text-delta"]: {
-                    actions: emit(({event}) => ({
-                        type: 'text-delta',
-                        event: `@${event.id}.markdown-delta`,
-                        data: converter.makeHtml(event.data)
-                     })) 
-                 }
+                }
 
 
             }
