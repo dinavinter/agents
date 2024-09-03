@@ -8,10 +8,10 @@ import {
 } from 'xstate';
 import {openaiGP4o,fromAIEventCallback} from "../ai";
 import {config} from 'dotenv';
-import {Doodle, findDoodleTool} from "../ui/doodles";
+import {Doodle, findDoodleTool} from "../doodles";
 import {streamText, StreamTextResult, TextStreamPart} from "ai";
-import {SVG} from "../ui/components/svg";
-import {render, renderTo, RenderStream, Html} from "../ui/render";
+import {SVG} from "../components";
+import {render, renderTo, RenderStream} from "./agent-render";
 import {asyncEventGenerator,asyncBatchEvents,type Clonable, cloneable,filterEventAsync} from "../stream";
 import {html} from "atomico";
   

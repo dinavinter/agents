@@ -30,16 +30,7 @@ export const layout = (node:VNodeAny) => `
           }
         }
         </script> 
-<!--         <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" ></script>-->
-       <script src="/ui/components/streamable.js" type="module"></script>
-       <script  src="/ui/components/svg.js" type="module"> </script>
-       <script  src="/ui/components/text.js" type="module"> </script>
-       <script  src="/ui/components/json.js" type="module"> </script>
-       <script  src="/ui/components/snapshot.js" type="module"> </script>
-       <script  src="/ui/components/board.js" type="module"> </script>
-
-       <script  src="/ui/components/stream-template.js" type="module"> </script>
-
+        <script src="/components/index.js" type="module"></script> 
         <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
 
        </head>

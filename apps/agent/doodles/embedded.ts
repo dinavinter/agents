@@ -1,5 +1,5 @@
 import {cosineSimilarity, embed, embedMany, tool} from 'ai';
-import {embedding} from "../../ai";
+import {embedding} from "../ai";
 import { z } from 'zod';
 
 import doodles from "./index.json";

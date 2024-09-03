@@ -2,8 +2,8 @@ import {z} from 'zod';
 import {createActor, emit, setup} from 'xstate';
 import {createAgent, fromDecision} from "@statelyai/agent";
 import {openaiGP4o} from "../ai";
-import {render, renderTo} from "../ui/render";
-import {SVG} from "../ui/components/svg";
+import {render, renderTo} from "./agent-render";
+import {SVG} from "../components";
 import {c, css, html} from "atomico";
 
 const agent = createAgent({

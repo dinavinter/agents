@@ -1,8 +1,5 @@
 import {FastifyReply} from "fastify";
-import {VNodeAny} from "atomico/types/vnode";
-import {UserFetch} from "./components/stream-template";
-import {html} from "atomico";
-
+ 
 
 export type replyWithHtml = (reply:FastifyReply) => Promise<void>;
 
@@ -37,14 +34,7 @@ export const layout = (agent:string, workflow:string) => `
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
 
-       <script src="/ui/components/streamable.js" type="module"></script>
-       <script  src="/ui/components/svg.js" type="module"> </script>
-       <script  src="/ui/components/text.js" type="module"> </script>
-       <script  src="/ui/components/json.js" type="module"> </script>
-       <script  src="/ui/components/snapshot.js" type="module"> </script>
-       <script  src="/ui/components/board.js" type="module"> </script>
-
-       <script  src="/ui/components/stream-template.js" type="module"> </script>
+        <script src="/components/index.js" type="module"></script> 
 
 
        </head>

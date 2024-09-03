@@ -2,7 +2,7 @@ import {assign, setup, log, emit} from 'xstate';
 import {z} from 'zod';
 import {fromAIEventStream, openaiGP4o} from "../ai";
 import {TextStreamPart, tool} from "ai";
-import { render, renderTo} from "../ui/render";
+import { render, renderTo} from "./agent-render";
 
 
 type Player = 'x' | 'o';

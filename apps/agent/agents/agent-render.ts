@@ -1,11 +1,9 @@
 import {c, html} from "atomico";
-import {TextStream} from "./components/text";
-import {Streamable} from "./components/streamable";
 import {Atomico} from "atomico/types/dom";
 import {VNode, VNodeAny} from "atomico/types/vnode";
 import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject, sendTo} from "xstate";
 import {EventMessage} from "fastify-sse-v2";
-import {JsonStream, JsonStreamLog} from "./components/json";
+import {JsonStream, TextStream} from "../components";
 
 
 export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; json:Atomico<any,any, any> ; href:string
