@@ -1,13 +1,33 @@
 import {c, html} from "atomico";
+import {render} from "../render.js";
 
-export const Board =c( ({c0, c1,c2, c3, c4, c5, c6, c7,c8}) => {
+
+export const Cell = c(({id, src}) => {
     return html`<host >
-        <section class="p-5">
+                  <div 	class="w-16 h-16 flex justify-center items-center" ext="sse"  hx-swap-oob="${id}" id="${id}" sse-swap="${id}" >
+                    <button  hx-post=${src}"  hx-target=${id}  hx-swap-oob="true"  hx-swap="outerHTML" class="btn btn-primary mt-2">
+                        Play
+                    </button>
+                  </div>
+              </host>`
+},{
+    props: {
+        src: {type: String, value: ""}
+    }
+})
+customElements.define('tictac-cell', Cell);
+
+
+
+
+ export const Board =c( ({c0, c1,c2, c3, c4, c5, c6, c7,c8}) => {
+    return html`<host >
+        <section class="p-5" >
             <div class="flex justify-center relative">
                 <div class="board grid grid-cols-3" id="board">
-                    <div id="0" class="cell w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center">${c0}</div>
-                    <div id="1" class="cell border-x border-black w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center">${c1}</div>
-                    <div id="2" class="cell w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center">${c2}</div>
+                    <div id="0" class="cell w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center " hx-swap-oob="textContent:c0"  >${c0}</div>
+                    <div id="1" class="cell border-x border-black w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center" hx-swap-oob="textContent:c1" >${c1}</div>
+                    <div id="2" class="cell w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center ">${c2}</div>
                     <div id="3" class="cell border-y border-black w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center">${c3}</div>
                     <div id="4" class="cell border border-black w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center">${c4}</div>
                     <div id="5" class="cell border-y border-black w-20 h-20 md:w-32 md:h-32 text-3xl flex items-center justify-center">${c5}</div>
@@ -26,7 +46,7 @@ export const Board =c( ({c0, c1,c2, c3, c4, c5, c6, c7,c8}) => {
                 <li>
                     <div class="flex items-center gap-x-1 relative"> 
                         <div class="ml-4">
-                            <h3 id="player-x-name" class="text-base front-semibold leading-7 tracking-tight text-gray-900 animate-bounce">Player X</h3>
+                            <h3   class="text-base front-semibold leading-7 tracking-tight text-gray-900 animate-bounce">Player X</h3>
                             <p class="text-xs text-gray-500">Score: <span id="player-x-score">0</span></p>
                         </div>
                     </div>
@@ -44,7 +64,7 @@ export const Board =c( ({c0, c1,c2, c3, c4, c5, c6, c7,c8}) => {
         </section>
 
         <!-- Draw Modal -->
-        <div id="draw-modal" class="ignore relative z-10 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div id="draw-modal" class="ignore relative z-10 hidden" aria-labelledby="modal-title" role="dialog" data-open="true" aria-modal="true">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
 
             <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -113,4 +133,116 @@ export const Board =c( ({c0, c1,c2, c3, c4, c5, c6, c7,c8}) => {
     }
 })
 
+export const Players = c(({playerX, playerO, active}) => {
+    return html`
+        <host >
+            <section class="mb-5 pb-12 flex items-center justify-center"> 
+                <ul role="list" class="mt-10 grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-20">
+                    <li>
+                        <tictac-player name="${playerX.name}" score="${playerX.score}" active="${active === "x"}"></tictac-player>
+                    </li>
+                    <li>
+                        <tictac-player name="${playerO.name}" score="${playerO.score}" active="${active === "o"}"></tictac-player>
+                    </li>
+                </ul>
+            </section>
+        </host>
+    `
+},{
+    props: {
+        playerX: {type: Object, value: {name: "Player X", score: 0}, reflect: false},
+        playerO: {type: Object, value: {name: "Player O", score: 0} , reflect: false},
+        active: {type: String, value: "o", reflect: true}
+    }
+})
+customElements.define('tictac-players', Players);
+
+export const Player = c(({name, score, active}) => {
+    return html`<host>
+        <div class="flex items-center gap-x-1 relative"> 
+            <div class="ml-4">
+                <h3   class="text-base front-semibold leading-7 tracking-tight text-gray-900 ${active && "animate-bounce"}" >${name}</h3>
+                <p class="text-xs text-gray-500">Score: <span>${score}</span></p>
+            </div>
+        </div>
+    </host>`
+},{
+    props: {
+        name: {type: String, value: "Player X"},
+        score: {type: Number, value: 0},
+        active: {type: Boolean, value: false}
+    }
+
+})
+
+customElements.define('tictac-player', Player);
+
 customElements.define('tictac-board', Board);
+
+
+export const BoardHx = c(({src}) => {
+    const Cell = ({id} ) => {
+        return html`
+            <div class="w-16 h-16 flex justify-center items-center" ext="sse" id="${id}" sse-swap="${id}">
+                <button hx-post=${id}" hx-target=${id} hx-swap-oob="${id}" hx-swap="outerHTML"
+                        class="btn btn-primary mt-2">
+                    Play
+                </button>
+            </div>`
+    }
+    const Row = ({id} ) => {
+        return html`
+            <div class="grid grid-cols-3 gap-4">
+                <${Cell} id="${id}:0"></${Cell}>
+                <${Cell} id="${id}:1"></${Cell}>
+                <${Cell} id="${id}:2"></${Cell}>
+            </div>`
+    }
+
+    return html`
+        <host>
+            <div class="grid grid-cols-3 gap-4">
+                <${Row} id="0"></${Row}>
+                <${Row} id="1"></${Row}>
+                <${Row} id="2"></${Row}>
+            </div>
+        </host>`
+}, {
+    props: {
+        src: {type: String, value: ""}
+    }
+})
+
+
+
+
+const renderBoard = render(({stream, html}) => {
+    const Cell = (id ) => {
+        return html`
+            <div class="w-16 h-16 flex justify-center items-center" ext="sse" id="${id}" sse-swap="${id}"
+                 hx-swap="textContent"/>`
+    }
+    const Row = (id ) => {
+        id = id * 3;
+        return html`
+            <div class="grid grid-cols-3 gap-4">
+                ${Cell(id)}
+                ${Cell(id + 1)}
+                ${Cell(id + 2)}
+            </div>`
+    }
+
+    return html`
+        <main class="mx-auto  bg-slate-50">
+            <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
+                Tic Tac Toe
+            </header>
+
+            <div class="grid grid-rows-3 gap-4" ext="sse" sse-connect="${stream.href}/events">
+                ${Row(0)}
+                ${Row(1)}
+                ${Row(2)}
+            </div>
+        </main>`
+
+})

@@ -6,7 +6,7 @@ export async function getRepoFiles({repo,branch, accessToken}: GithubLoaderParam
 
         const headers = {
             'Authorization': `Bearer ${accessToken}`,
-            'Accept': 'application/vnd.github.v3+json'
+            'Accept': 'application/vnd.github+json'
         };
 
         const response = await fetch(url, { headers }) ;
