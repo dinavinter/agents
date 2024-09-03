@@ -5,8 +5,7 @@ import {fromEventAsyncGenerator} from "../stream";
 import {ThreadCreateParams} from "openai/src/resources/beta/threads/threads";
 import {IndexByProp} from "xstate/dist/declarations/src/types";
 import {render, renderTo} from "../ui/render";
-import {type AssistantStreamEvent} from "openai/resources/beta";
-import showdown from 'showdown'; 
+import {type AssistantStreamEvent} from "openai/resources/beta"; 
 import {env} from "node:process";
 import {azureOpenAI} from "../ai";
 
@@ -17,7 +16,7 @@ const setupAssistant = async () => {
         const assistantResponse = await assistantsClient.beta.assistants.create({
             model: "gpt-4o", // replace with model deployment name
             name: "tester",
-            instructions: "Your task is to generate gigya apis tests for the given request, provide code only respoonse, search for similar tests to understand how to use gigya apis, answer only in c# code, with no additional comments",
+            instructions: "Your task is to generate api tests for the given request, provide code only respoonse, search for similar tests to understand how to use gigya apis, answer only in c# code, with no additional comments",
             tools: [{"type":"file_search"}],
             tool_resources: {"file_search":{"vector_store_ids":["vs_YKZYYep26NbuaDzK98ZV9evu"]}},
             temperature: 1,
