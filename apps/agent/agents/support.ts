@@ -1,10 +1,11 @@
 import {z} from 'zod';
-import {createActor, emit, setup} from 'xstate';
+import {emit, setup} from 'xstate';
 import {createAgent, fromDecision} from "@statelyai/agent";
 import {openaiGP4o} from "../ai";
 import {render, renderTo} from "./agent-render";
 import {SVG} from "../components";
-import {c, css, html} from "atomico";
+import {ChatBubble} from "./components/chatBubble";
+import {Header} from "./components/header";
 
 const agent = createAgent({
     name: 'support-agent',
@@ -37,7 +38,7 @@ const agent = createAgent({
 });
 
 
-
+ 
 export const machine = setup({
     types: {
         events: agent.types.events,
@@ -52,16 +53,11 @@ export const machine = setup({
     context: ({input}) => ({
         customerIssue: input ?? `I've changed my mind and I want a refund for order #182818!`,
     }),
-    entry: render(({html, context: {customerIssue}, stream}) => html`
-        <main class="mx-auto  bg-slate-50 h-screen w-screen">
-            <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
-                Customer Support
-            </header>
-            <div class="flex flex-col items-center justify-center *:justify-center w-full *:w-2/3 " hx-ext="sse"  sse-swap="content" hx-swap="beforeend">
-            </div>
-        </main>
-    `),
-
+    entry: render(({html}) => html`
+       <main class="mx-auto  h-screen w-screen">
+          <${Header} title="Customer Support" />
+          <div class="flex flex-col items-center justify-center *:justify-center w-full *:w-2/3 " hx-ext="sse"  sse-swap="content" hx-swap="beforeend" />
+         </main>`),
     states: {
         call: {
             entry: renderTo('content', ({html, context: {customerIssue}}) => html`
@@ -192,49 +188,3 @@ export const machine = setup({
 });
 
 
-const ChatBubble = c(({content, name, img, swap }) => {
-    return html`<div class="flex items-start gap-2.5  p-2 m-2 w-full">
-            <img class="w-12 h-12 rounded-full" src=${img} alt=${name} />
-            <div class="flex flex-col gap-1 w-full">
-                <div class="flex items center space-x-2 rtl:space-x-reverse">
-                    <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white">${name}</span>
-                    <span class="text-sm  lg:text-lg font-normal text-gray-500 dark:text-gray-400">${new Date(Date.now()).toLocaleTimeString()}</span>
-                </div>
-                <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
-                    <pre class="text-lg text-slate-900 inline text-wrap" sse-swap="${swap}">${content}</pre>
-                </div>
-            </div>
-        </div>
-    `;
-},{
-    props: {
-        swap: {
-            type: String,
-            reflect: true
-        },
-        content: {
-            type: String,
-            reflect: true
-        },
-        name: {
-            type: String,
-            reflect: true
-        },
-        img: {
-            type: String,
-            reflect: true
-        }
-    },
-    styles: css`
-        @tailwind base;
-        @tailwind components;
-        @tailwind utilities;
-        @tailwind screens;
-        
-        :host {
-            display: block;
-            width: 100%;
-        }
-    `
-});
-customElements.define('chat-bubble', ChatBubble);

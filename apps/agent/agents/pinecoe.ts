@@ -161,7 +161,7 @@ export const machine = set.createMachine({
     initial: 'generate',
     
     context: {
-        request: 'social regitration and link accounts',
+        request: 'social registration and link accounts',
     },
     entry: render(({html}) => html`
         <main class="mx-auto  bg-slate-50 h-full">

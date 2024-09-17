@@ -146,7 +146,7 @@ export const machine = setup({
                         src: 'ai',
                         id: 'x',
                         input: {
-                            template: `You are playing as x in a game of tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array.
+                            template: `Let's play tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array.
                              you are playing as {{player}}. board state is "{{board}}", you can only play on empty cells which are represented by 'empty'.
                              play the best move to win the game.`,
                             tools: {
@@ -179,7 +179,7 @@ export const machine = setup({
                         src: 'ai',
                         id: 'o',
                         input: {
-                            template: `You are playing as x in a game of tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array.
+                            template: `You are playing as x in a game of tic tac toe. This is the current game state. The 3x3 board is represented by a 9-element array, 
                              you are playing as {{player}}. board state is "{{board}}", you can only play on empty cells which are represented by 'empty'.
                              play the best move to win the game.`,
                             tools: {
