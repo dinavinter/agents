@@ -1,13 +1,12 @@
 import 'atomico/ssr/load';
 
-import {assign, createActor, log, setup,} from 'xstate';
- import {config} from 'dotenv';
+import {assign, setup,} from 'xstate';
 import {Doodle, findDoodleTool} from "../doodles";
 import {SVG} from "../components";
 import {fromAIEventStream, openaiGP4o} from "../ai";
 import {render, RenderStream, renderTo} from "./agent-render";
-   
-config();
+import {ChatBubble} from "./components/chatBubble";
+import {Header} from "./components/header";
 
  
     
@@ -38,30 +37,18 @@ export const machine = setup({
     context: ({input}) => input,
     entry: render(({html, stream}) => html`
         <main class="mx-auto  bg-slate-50 h-full" >
-        <header class="sticky top-0 z-10 backdrop-filter backdrop-blur bg-opacity-30 border-b border-gray-200 flex h-6 md:h-14 items-center justify-center px-4 text-xs md:text-lg font-medium sm:px-6 lg:px-8">
-                The Wiser
-         </header>
-           <div class="flex flex-col items-center justify-center *:w-1/2 *:justify-center" hx-ext="sse" sse-swap="content" hx-swap="beforeend">
-           </div>
-                   
+            <${Header} title="The Wiser" />
+           <div class="flex flex-col items-center justify-center *:w-1/2 *:justify-center" hx-ext="sse" sse-swap="content" hx-swap="beforeend" />
         </main>`
     ),
     states: {
         thinking: {
             entry: renderTo('content',({stream, html}) => html`
-                <div class="flex items-start gap-2.5  p-2 m-2 w-full">
-                <img class="w-12 h-12 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="thinker avatar" />
-                <div class="flex flex-col gap-1 w-full ">
-                    <div class="flex items center space-x-2 rtl:space-x-reverse">
-                        <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white">Thinker</span>
-                        <span class="text-sm  lg:text-lg font-normal text-gray-500 dark:text-gray-400">${new Date(Date.now()).toLocaleTimeString()}</span>
-                    </div>
-                    <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
-                        <pre class="text-lg text-slate-900 inline text-wrap" sse-swap="@thinker.text-delta" />
-                    </div>
-                </div> 
-                </div>
-                `
+                <${ChatBubble} name="Thinker" 
+                               img="https://flowbite.com/docs/images/people/profile-picture-5.jpg" 
+                               swap="@thinker.text-delta" />
+ 
+                 `
             ), 
             invoke: {
                 src: 'aiStream',
@@ -80,23 +67,12 @@ export const machine = setup({
             } 
         } , 
         doodle: {  
-            entry: renderTo('content', ({html,stream}) => html`
-                <div class="float-right flex items-start gap-2.5  p-2 m-2 w-full ">
-                    <img class="w-12 h-12 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-3.jpg" alt="thinker avatar" />
-                    <div class="flex flex-col gap-1 w-full  ">
-                        <div class="flex items center space-x-2 rtl:space-x-reverse">
-                            <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900  ">Doodler</span>
-                            <span class="text-sm lg:text-lg font-normal text-gray-500  ">${new Date(Date.now()).toLocaleTimeString()}</span>
-                        </div>
-                        <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
-                            <pre class="text-lg text-slate-900 inline text-wrap " >
-                               <div class="max-h-[90vh] shadow-sm" hx-ext="sse"  sse-swap="doodle" >
-                                     Searching for a doodle to describe my thought...
-                                </div>
-                            </pre>
-                        </div>
-                    </div>
-                </div> 
+            entry: renderTo('content', ({html}) => html`
+                <${ChatBubble} name="Doodler" 
+                                img="https://flowbite.com/docs/images/people/profile-picture-3.jpg" 
+                                swap="doodle"
+                                Content="Searching for a doodle to describe my thought..." />
+                
             `),
             invoke: {
                 src: 'aiStream',
