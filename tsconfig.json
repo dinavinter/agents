@@ -1,0 +1,13 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": [],
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["src/template"]
+}
