@@ -60,7 +60,7 @@
 
   {#each src.paths || [] as path}
     {#if drawParams}
-      <path {...path} in:draw={drawParams === true ? {} : drawParams} />
+      <path {...path} in:draw|global={drawParams === true ? {} : drawParams} />
     {:else}
       <path {...path} />
     {/if}
