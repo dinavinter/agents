@@ -1,0 +1,15 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:create-hono@latest": "npm:create-hono@0.13.0"
+    },
+    "npm": {
+      "create-hono@0.13.0": {
+        "integrity": "sha512-xJEmLekacAKXkuU4/8uX1WocE7RwDg66NjBJOutPsXkCb+osBf9jOW9xNtlo+268ZG/k2OolV+RFhJwMsuPqLg==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {}
+}
