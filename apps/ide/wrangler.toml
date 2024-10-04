@@ -1,0 +1,17 @@
+# https://developers.cloudflare.com/pages/how-to/use-direct-upload-with-continuous-integration/
+# production
+# npx wrangler pages publish .svelte-kit/cloudflare --project-name=twind-run --branch=main
+# preview
+# npx wrangler pages publish .svelte-kit/cloudflare --project-name=twind-run --branch=next
+
+name = "twind-run"
+
+# https://developers.cloudflare.com/workers/platform/compatibility-dates/
+compatibility_date = "2022-11-11"
+
+# Also opt into an upcoming fix to the FormData API.
+compatibility_flags = [ "transformstream_enable_standard_constructor", "streams_enable_constructors" ]
+
+[vars]
+# https://developers.cloudflare.com/pages/platform/build-configuration/#language-support-and-tools
+NODE_VERSION = "16"
