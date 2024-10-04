@@ -1,0 +1,81 @@
+{
+  "name": "ide",
+  "version": "1.1.2",
+  "description": "Twind Run",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://twind.run",
+  "bugs": "https://github.com/tw-in-js/twind/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tw-in-js/twind.git",
+    "directory": "sites/twind.run"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18.12.0"
+  },
+  "imports": {
+    "#manifest": "./package.json"
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "postinstall": "svelte-kit sync",
+    "start": "npm run dev",
+    "dev": "vite dev",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "build": "vite build",
+    "preview": "wrangler pages dev .svelte-kit/cloudflare"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^3.18.0",
+    "@ctrl/tinycolor": "^3.4.1",
+    "@jsenv/importmap": "^1.2.1",
+    "@jsenv/logger": "4.1.1",
+    "@jspm/generator": "1.0.0-beta.38",
+    "@rollup/browser": "^3.3.0",
+    "@rollup/plugin-commonjs": "^23.0.2",
+    "@rollup/pluginutils": "^5.0.2",
+    "@sastan/svelte-headlessui": "^1.0.2",
+    "@sveltejs/adapter-cloudflare": "^1.0.0",
+    "@sveltejs/kit": "^1.0.0",
+    "@twind/core": "^1.1.3",
+    "@twind/intellisense": "^1.1.3",
+    "@twind/preset-autoprefix": "^1.0.7",
+    "@twind/preset-radix-ui": "^1.0.7",
+    "@twind/preset-tailwind": "^1.1.4",
+    "@twind/preset-typography": "^1.0.7",
+    "@twind/with-sveltekit": "^1.1.3",
+    "@types/lz-string": "^1.3.34",
+    "@types/node": "^18.11.9",
+    "@types/prettier": "^2.7.1",
+    "@types/systemjs": "^6.13.0",
+    "clipboard-copy": "^4.0.1",
+    "comlink": "^4.3.1",
+    "cssbeautify": "^0.3.1",
+    "date-fns": "^2.29.3",
+    "es-module-lexer": "^1.1.0",
+    "fast-diff": "^1.2.0",
+    "fast-glob": "^3.2.12",
+    "just-debounce": "^1.1.0",
+    "lz-string": "^1.4.4",
+    "miniflare": "^2.11.0",
+    "monaco-editor": "0.34.1",
+    "prettier": "2.8.1",
+    "resolve.exports": "^1.1.0",
+    "rollup-plugin-polyfill-node": "^0.10.2",
+    "sucrase": "^3.28.0",
+    "svelte": "^3.54.0",
+    "svelte-check": "^2.10.2",
+    "svelte-splitpanes": "^0.7.3",
+    "sver": "^1.8.3",
+    "systemjs": "^6.13.0",
+    "tinykeys": "^1.4.0",
+    "typescript": "~4.8.4",
+    "vite": "^4.0.1",
+    "wrangler": "^2.2.1",
+    "zod": "^3.19.1"
+  }
+}
