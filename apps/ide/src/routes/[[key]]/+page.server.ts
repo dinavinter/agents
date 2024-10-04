@@ -151,12 +151,12 @@ export async function load({
       const data = decompressFromEncodedURIComponent(key)
 
       if (!data) {
-        throw error(404, 'Not found')
+        error(404, 'Not found');
       }
 
       if (!data.startsWith(`${EXPECTED_VERSION}:`)) {
         // TODO: better error message
-        throw error(404, 'Not found')
+        error(404, 'Not found');
       }
 
       const workspace = JSON.parse(data.slice(`${EXPECTED_VERSION}:`.length))
@@ -164,7 +164,7 @@ export async function load({
       const result = workspaceSchema.safeParse(workspace)
 
       if (!result.success) {
-        throw error(400, 'invalid workspace')
+        error(400, 'invalid workspace');
       }
 
       return { workspace: result.data }
@@ -172,17 +172,17 @@ export async function load({
 
     if (data.httpMetadata?.contentType !== 'application/json') {
       // TODO: better error message
-      throw error(404, 'Not found')
+      error(404, 'Not found');
     }
 
     if (data.customMetadata?.version !== EXPECTED_VERSION) {
-      throw error(404, 'Not found')
+      error(404, 'Not found');
     }
 
     if (data.httpMetadata.contentEncoding) {
       if (data.httpMetadata.contentEncoding !== 'gzip') {
         // TODO: better error message
-        throw error(404, 'Not found')
+        error(404, 'Not found');
       }
 
       const blob = await toBlob(data.body.pipeThrough(await createGunzipStream()), {
