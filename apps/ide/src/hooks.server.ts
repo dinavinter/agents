@@ -5,6 +5,8 @@ import { sequence } from '@sveltejs/kit/hooks'
 import handleTwind from '@twind/with-sveltekit/hooks'
 
 import { dev } from '$app/environment'
+import './app.d.ts'
+
 const handlers: Handle[] = [handleTwind()]
 
 if (dev) {

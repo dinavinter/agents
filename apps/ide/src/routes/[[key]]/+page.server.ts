@@ -5,18 +5,18 @@ import { Semver } from 'sver'
 
 import { dev } from '$app/environment'
 import { env } from '$env/dynamic/private'
-
+import '../../app.d.ts'
 import { loadDefaultTemplate, loadTemplate } from '$lib/templates'
 import { toBase64, toBase64url } from '$lib/base64'
 import type { Manifest, Workspace } from '$lib/types'
-
+import { FixedLengthStream } from '@cloudflare/workers-types'
 import pkg from 'lz-string'
 const { decompressFromEncodedURIComponent, compressToEncodedURIComponent } = pkg
 
 import { version as SITE_VERSION } from '../../../package.json'
 
 const MANIFEST_PATH = '/_app/cdn.json'
-const HOSTNAME = 'twind-run.pages.dev'
+const HOSTNAME = 'localhost:4174'
 
 // interface PageData {
 //   manifests: {
@@ -64,11 +64,11 @@ const workspaceSchema = z.object({
 export async function load({
   request,
   params: { key },
-  platform: { env, caches },
+  platform,
   fetch,
 }: Parameters<import('./$types').PageServerLoad>[0]) {
   const { workspace } = await loadWorkspace()
-
+   const { env, caches } = platform || {}
   // default no version: use version from local manifest
   // specific version: load manifest from v1-0-0.twind-run.pages.dev
   // dist tag: load manifest from twind-run.pages.dev for 'latest' or dist-tag.twind-run.pages.dev
@@ -131,7 +131,7 @@ export async function load({
       return template
     }
 
-    const data = await env.WORKSPACES.get(key).catch((error) => {
+    const data = await env?.WORKSPACES.get(key).catch((error:any) => {
       if (error.message.includes('(10020)')) {
         // get: The specified object name is not valid. (10020)
         // maybe a lz-string encoded url
@@ -210,7 +210,7 @@ export async function load({
 
     const cache = caches?.default
 
-    let response = await cache?.match(url).catch((error) => {
+    let response = await cache?.match(url).catch((error: any) => {
       console.warn(`Failed to use cached CDN manifest for ${version} (${origin})`, error)
       return null
     })
@@ -223,10 +223,10 @@ export async function load({
         throw new Error(`[${response.status}] ${response.statusText || 'request failed'}: ${url}`)
       }
 
-      cache?.put(url, response.clone())
+      await cache?.put(url, response.clone())
     }
 
-    const manifest = await response.json<Manifest>()
+    const manifest = await response.json() as Manifest
 
     if (manifest.version !== version) {
       try {
@@ -318,7 +318,7 @@ export const actions: import('./$types').Actions = {
       const blob = new Blob([JSON.stringify(result.data)], { type: 'application/json' })
 
       try {
-        const { key, integrity, missing } = await generate(platform, await blob.arrayBuffer())
+        const { key, integrity, missing } = await generate( await blob.arrayBuffer(),platform)
 
         // not found
         if (missing) {
@@ -330,8 +330,8 @@ export const actions: import('./$types').Actions = {
               : { readable: value, writable: null }
 
           await Promise.all([
-            writable && value.stream().pipeTo(writable),
-            platform.env.WORKSPACES.put(key, readable, {
+            writable && value.stream().pipeTo(writable as WritableStream<Uint8Array>),
+            platform?.env.WORKSPACES.put(key, readable, {
               customMetadata: { version, integrity },
               httpMetadata: {
                 contentType: 'application/json',
@@ -361,7 +361,7 @@ export const actions: import('./$types').Actions = {
   },
 }
 
-async function generate(platform: App.Platform, source: BufferSource) {
+async function generate(source: BufferSource, platform?: App.Platform) {
   const sha256 = await crypto.subtle.digest('SHA-512', source)
   const integrity = toBase64(sha256)
 
@@ -377,7 +377,7 @@ async function generate(platform: App.Platform, source: BufferSource) {
       wordlist[view.getUint16((i += 2)) % wordlist.length],
     ].join('-')
 
-    const existing = await platform.env.WORKSPACES.head(key)
+    const existing = await platform?.env?.WORKSPACES?.head(key)
 
     // does not exist or it is the same data
     if (
@@ -397,7 +397,7 @@ async function generate(platform: App.Platform, source: BufferSource) {
       .slice(-12)
       .replace(/(.{4})(?!$)/g, '$1-')
 
-    const existing = await platform.env.WORKSPACES.head(key)
+    const existing = await platform?.env.WORKSPACES.head(key)
 
     // does not exist or it is the same data
     if (
@@ -417,7 +417,7 @@ async function generate(platform: App.Platform, source: BufferSource) {
       .slice(-25)
       .replace(/(.{5})(?!$)/g, '$1-')
 
-    const existing = await platform.env.WORKSPACES.head(key)
+    const existing = await platform?.env.WORKSPACES.head(key)
 
     // does not exist or it is the same data
     if (
@@ -431,7 +431,7 @@ async function generate(platform: App.Platform, source: BufferSource) {
   // fallback to full integrity
   const key = toBase64url(integrity)
 
-  const existing = await platform.env.WORKSPACES.head(key)
+  const existing = await platform?.env.WORKSPACES.head(key)
 
   return { key, integrity, missing: !existing }
 }
@@ -445,7 +445,7 @@ async function createGzipStream(): Promise<ReadableWritablePair<Uint8Array, Uint
 
     return {
       writable: stream.Writable.toWeb(gzip),
-      readable: stream.Readable.toWeb(gzip),
+      readable: stream.Readable.toWeb(gzip) as ReadableStream<Uint8Array>,
     }
   }
 
@@ -461,7 +461,7 @@ async function createGunzipStream(): Promise<ReadableWritablePair<Uint8Array, Ui
 
     return {
       writable: stream.Writable.toWeb(gzip),
-      readable: stream.Readable.toWeb(gzip),
+      readable: stream.Readable.toWeb(gzip) as ReadableStream<Uint8Array>,
     }
   }
 
