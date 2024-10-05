@@ -1,0 +1,76 @@
+{
+  "version": "1.1.2",
+  "dist-tag": "latest",
+  "imports": {
+    "@twind/core": "https://esm.sh/@twind/core@1.1.3/core.js",
+    "@twind/core/package.json": "https://esm.sh/@twind/core@1.1.3/package.json",
+    "@twind/intellisense": "https://esm.sh/@twind/intellisense@1.1.3/intellisense.js",
+    "@twind/intellisense/package.json": "https://esm.sh/@twind/intellisense@1.1.3/package.json",
+    "@twind/preset-autoprefix": "https://esm.sh/@twind/preset-autoprefix@1.0.7/preset-autoprefix.js",
+    "@twind/preset-autoprefix/package.json": "https://esm.sh/@twind/preset-autoprefix@1.0.7/package.json",
+    "@twind/preset-container-queries": "https://esm.sh/@twind/preset-container-queries@1.0.7/preset-container-queries.js",
+    "@twind/preset-container-queries/package.json": "https://esm.sh/@twind/preset-container-queries@1.0.7/package.json",
+    "@twind/preset-ext": "https://esm.sh/@twind/preset-ext@1.0.7/preset-ext.js",
+    "@twind/preset-ext/rules": "https://esm.sh/@twind/preset-ext@1.0.7/rules.js",
+    "@twind/preset-ext/variants": "https://esm.sh/@twind/preset-ext@1.0.7/variants.js",
+    "@twind/preset-ext/package.json": "https://esm.sh/@twind/preset-ext@1.0.7/package.json",
+    "@twind/preset-line-clamp": "https://esm.sh/@twind/preset-line-clamp@1.0.7/preset-line-clamp.js",
+    "@twind/preset-line-clamp/package.json": "https://esm.sh/@twind/preset-line-clamp@1.0.7/package.json",
+    "@twind/preset-radix-ui": "https://esm.sh/@twind/preset-radix-ui@1.0.7/preset-radix-ui.js",
+    "@twind/preset-radix-ui/defaultTheme": "https://esm.sh/@twind/preset-radix-ui@1.0.7/defaultTheme.js",
+    "@twind/preset-radix-ui/darkColor": "https://esm.sh/@twind/preset-radix-ui@1.0.7/darkColor.js",
+    "@twind/preset-radix-ui/colors": "https://esm.sh/@twind/preset-radix-ui@1.0.7/colors.js",
+    "@twind/preset-radix-ui/package.json": "https://esm.sh/@twind/preset-radix-ui@1.0.7/package.json",
+    "@twind/preset-tailwind": "https://esm.sh/@twind/preset-tailwind@1.1.4/preset-tailwind.js",
+    "@twind/preset-tailwind/base": "https://esm.sh/@twind/preset-tailwind@1.1.4/base.js",
+    "@twind/preset-tailwind/preflight": "https://esm.sh/@twind/preset-tailwind@1.1.4/preflight.js",
+    "@twind/preset-tailwind/rules": "https://esm.sh/@twind/preset-tailwind@1.1.4/rules.js",
+    "@twind/preset-tailwind/variants": "https://esm.sh/@twind/preset-tailwind@1.1.4/variants.js",
+    "@twind/preset-tailwind/baseTheme": "https://esm.sh/@twind/preset-tailwind@1.1.4/baseTheme.js",
+    "@twind/preset-tailwind/colors": "https://esm.sh/@twind/preset-tailwind@1.1.4/colors.js",
+    "@twind/preset-tailwind/defaultTheme": "https://esm.sh/@twind/preset-tailwind@1.1.4/defaultTheme.js",
+    "@twind/preset-tailwind/package.json": "https://esm.sh/@twind/preset-tailwind@1.1.4/package.json",
+    "@twind/preset-tailwind-forms": "https://esm.sh/@twind/preset-tailwind-forms@1.1.2/preset-tailwind-forms.js",
+    "@twind/preset-tailwind-forms/package.json": "https://esm.sh/@twind/preset-tailwind-forms@1.1.2/package.json",
+    "@twind/preset-typography": "https://esm.sh/@twind/preset-typography@1.0.7/preset-typography.js",
+    "@twind/preset-typography/package.json": "https://esm.sh/@twind/preset-typography@1.0.7/package.json"
+  },
+  "scopes": {
+    "https://esm.sh/@twind/intellisense@1.1.3/": {
+      "quick-lru": "https://ga.system.jspm.io/npm:quick-lru@6.1.1/index.js",
+      "showdown": "https://ga.system.jspm.io/npm:showdown@2.1.0/dist/showdown.js",
+      "cssbeautify": "https://ga.system.jspm.io/npm:cssbeautify@0.3.1/cssbeautify.js",
+      "css-tree/parser": "https://ga.system.jspm.io/npm:css-tree@2.3.1/lib/parser/index.js",
+      "css-tree/walker": "https://ga.system.jspm.io/npm:css-tree@2.3.1/lib/walker/index.js",
+      "@ctrl/tinycolor": "https://ga.system.jspm.io/npm:@ctrl/tinycolor@3.5.0/dist/module/public_api.js",
+      "genex": "https://ga.system.jspm.io/npm:genex@1.1.0/build/index.js",
+      "css-tree/generator": "https://ga.system.jspm.io/npm:css-tree@2.3.1/lib/generator/index.js",
+      "match-sorter": "https://ga.system.jspm.io/npm:match-sorter@6.3.1/dist/match-sorter.esm.js"
+    },
+    "https://ga.system.jspm.io/npm:genex@1.1.0/": {
+      "ret": "https://ga.system.jspm.io/npm:ret@0.2.2/lib/index.js"
+    },
+    "https://ga.system.jspm.io/npm:css-tree@2.3.1/": {
+      "source-map-js/lib/source-map-generator.js": "https://ga.system.jspm.io/npm:source-map-js@1.0.2/lib/source-map-generator.js"
+    },
+    "https://ga.system.jspm.io/npm:match-sorter@6.3.1/": {
+      "@babel/runtime/helpers/esm/extends": "https://ga.system.jspm.io/npm:@babel/runtime@7.20.13/helpers/esm/extends.js",
+      "remove-accents": "https://ga.system.jspm.io/npm:remove-accents@0.4.2/index.js"
+    },
+    "https://esm.sh/@twind/preset-autoprefix@1.0.7/": {
+      "style-vendorizer": "https://ga.system.jspm.io/npm:style-vendorizer@2.2.3/dist/esm/bundle.min.mjs"
+    }
+  },
+  "packages": {
+    "@twind/core": "1.1.3",
+    "@twind/intellisense": "1.1.3",
+    "@twind/preset-autoprefix": "1.0.7",
+    "@twind/preset-container-queries": "1.0.7",
+    "@twind/preset-ext": "1.0.7",
+    "@twind/preset-line-clamp": "1.0.7",
+    "@twind/preset-radix-ui": "1.0.7",
+    "@twind/preset-tailwind": "1.1.4",
+    "@twind/preset-tailwind-forms": "1.1.2",
+    "@twind/preset-typography": "1.0.7"
+  }
+}
