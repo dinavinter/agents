@@ -4,14 +4,14 @@
 # preview
 # npx wrangler pages publish .svelte-kit/cloudflare --project-name=twind-run --branch=next
 
-name = "twind-run"
+name = "agent-run"
 
 # https://developers.cloudflare.com/workers/platform/compatibility-dates/
-compatibility_date = "2022-11-11"
+compatibility_date = "2024-09-23"
 
 # Also opt into an upcoming fix to the FormData API.
-compatibility_flags = [ "transformstream_enable_standard_constructor", "streams_enable_constructors" ]
+compatibility_flags = ["nodejs_compat_v2"   ]
 
 [vars]
 # https://developers.cloudflare.com/pages/platform/build-configuration/#language-support-and-tools
-NODE_VERSION = "16"
+NODE_VERSION = "22"

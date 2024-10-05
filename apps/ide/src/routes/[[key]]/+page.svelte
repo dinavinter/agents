@@ -260,31 +260,43 @@
 
   const MOD_KEY = browser && /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
 
-  if (browser) {
-    onMount(async () => {
-      const { createKeybindingsHandler } = await import(  'tinykeys')
+  /** @type {EventListener } */
 
-      const keyHandler = createKeybindingsHandler({
+  let keyHandler ;
+  async function bindKeys(){
+    const { createKeybindingsHandler } = await import('tinykeys')
+   
+      keyHandler = createKeybindingsHandler({
+        /** @type {EventListener } */
         '$mod+Shift+KeyP': (event) => {
-          event.preventDefault()
-          editor?.trigger('editor.action.quickCommand', 'ctrl-shift-p')
-        },
+        event.preventDefault()
+        editor?.trigger('editor.action.quickCommand', 'ctrl-shift-p')
+      },
+        /** @type {EventListener } */
         '$mod+KeyS': (event) => {
-          event.preventDefault()
-          editor?.trigger('file:save', 'ctrl-s')
-        },
+        event.preventDefault()
+        editor?.trigger('file:save', 'ctrl-s')
+      },
+        /** @type {EventListener } */
         '$mod+Alt+KeyS': (event) => {
-          event.preventDefault()
-          editor?.trigger('file:save:all', 'ctrl-alt-s')
-        },
+        event.preventDefault()
+        editor?.trigger('file:save:all', 'ctrl-alt-s')
+      },
+        /** @type {EventListener } */
         'Shift+Alt+KeyF': (event) => {
-          event.preventDefault()
-          editor?.trigger('editor.action.formatDocument', 'shift-alt-f')
-        },
-      })
+        event.preventDefault()
+        editor?.trigger('editor.action.formatDocument', 'shift-alt-f')
+      },
+    })
+    addEventListener('keydown', keyHandler)
 
-      addEventListener('keydown', keyHandler)
-      return () => removeEventListener('keydown', keyHandler)
+
+  }
+  
+  
+  if (browser) {
+    onMount(  () => { 
+      return () => keyHandler  && removeEventListener('keydown', keyHandler)
     })
   }
 
