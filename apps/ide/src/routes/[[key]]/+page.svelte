@@ -238,7 +238,7 @@
   }
 
   if (browser) {
-    onMount(async () => {
+    onMount( () => {
       /**
        * @param {BeforeUnloadEvent} event
        */
