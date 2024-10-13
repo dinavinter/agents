@@ -18,7 +18,9 @@ type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
 export const serviceMachine = setup({
     types: {
         input: {} as CreateServiceMachineOptions<AnyActorLogic>,
-        events: {} as InspectionEvent ,
+        events: {} as InspectionEvent | ({
+            type: "update.logic"; 
+        } & CreateServiceMachineOptions<AnyActorLogic>) ,
         context: {} as {
             service: AnyActorRef,
             hub: serviceHub
@@ -53,6 +55,25 @@ export const serviceMachine = setup({
     }),
    
     on:{
+        "update.logic": {
+            actions: enqueueActions(({context: {service, hub}, event:{logic, ...options},self, enqueue}) => {
+                enqueue.assign({
+                     service: createActor(withInspector(logic, hub), {
+                        id: self.id,
+                        ...options,
+                        logger: console.log,
+                        inspect: {
+                            next: (e) => {
+                                e.type === '@xstate.event' && hub.inspected.push(e)
+                            }
+                        }
+                    })
+
+                })
+                enqueue(()=> service.stop())
+                
+            })
+        },
         "*" : {
             actions:  ({event, context: {service}}) => {
                 console.log('Me Event:', event.type, {id: service.id, sessionId: service.sessionId});
