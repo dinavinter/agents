@@ -15,9 +15,9 @@ import {
 } from '@/utils/dependency'
 import { atou, utoa } from '@/utils/encode'
 import elementPlusCode from '../template/element-plus.js?raw'
-import mainCode from '../template/main.vue?raw'
 import tsconfigCode from '../template/tsconfig.json?raw'
 import welcomeCode from '../template/welcome.vue?raw'
+import mainCode from '../template/main.vue?raw'
 
 export interface Initial {
   serializedState?: string
@@ -73,14 +73,20 @@ export const useStore = (initial: Initial) => {
     return importMap
   })
 
+  
+  
   const storeState: Partial<StoreState> = toRefs(
     reactive({
-      files: initFiles(),
-      mainFile: MAIN_FILE,
-      activeFilename: APP_FILE,
-      vueVersion: computed(() => versions.vue),
-      typescriptVersion: versions.typescript,
-      builtinImportMap,
+      files: {"src/app.vue": new File("src/app.vue", welcomeCode),"tsconfig.json": new File("tsconfig.json", tsconfigCode), "import-map.json": new File("import-map.json", JSON.stringify(genImportMap(versions, nightly.value), undefined, 2))},
+      mainFile: "welcome.vue",
+      activeFilename: "welcome.vue",
+      vueVersion: computed(() => "latest"),
+      typescriptVersion: "latest",
+      builtinImportMap:{
+        imports: {
+          "xstate": "https://cdn.jsdelivr.net/npm/xstate/+esm"
+        }
+      },
       template: {
         welcomeSFC: mainCode,
       },
@@ -88,8 +94,8 @@ export const useStore = (initial: Initial) => {
         script: {
           propsDestructure: true,
         },
-      },
-    }),
+      }
+    })
   )
   const store = useReplStore(storeState)
   store.files[ELEMENT_PLUS_FILE].hidden = hideFile

@@ -54,7 +54,7 @@ export default defineConfig({
       dts: path.resolve(pathSrc, 'components.d.ts'),
     }),
     Unocss(),
-    Mkcert(),
+    // Mkcert(),
     Inspect(),
   ],
   optimizeDeps: {
