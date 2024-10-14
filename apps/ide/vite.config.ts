@@ -7,21 +7,30 @@ import { execSync } from 'node:child_process'
 
 import fg from 'fast-glob'
 import { resolve } from 'resolve.exports'
-import { rollup } from '@rollup/browser'
+import {type PluginContext, rollup} from '@rollup/browser'
 import { Generator } from '@jspm/generator'
 import { composeTwoImportMaps } from '@jsenv/importmap'
 import { dataToEsm } from '@rollup/pluginutils'
 
 import { sveltekit } from '@sveltejs/kit/vite'
-import { searchForWorkspaceRoot, defineConfig, transformWithEsbuild, send } from 'vite'
+import {
+  searchForWorkspaceRoot,
+  defineConfig,
+  transformWithEsbuild,
+  send,
+  type UserConfig,
+  type PluginOption
+} from 'vite'
 
 import commonjs from '@rollup/plugin-commonjs'
 import nodePolyfills from 'rollup-plugin-polyfill-node'
 
-import format from 'date-fns/format'
+import {format, formatDate} from 'date-fns/format'
 import { version as VERSION } from './package.json'
+import {type CustomPluginOptions} from "rollup";
 
-export default defineConfig((env) => {
+  // import type {CustomPluginOptions, PluginContext} from 'vite'
+export default defineConfig((env):UserConfig => {
   const cdn = new Map<string, string | Buffer>()
   const root = `_app/`
 
@@ -97,12 +106,13 @@ export default defineConfig((env) => {
 
               const exports = Object.keys(manifest.exports)
                 .map((entry) => {
-                  const resolved = resolve(manifest, entry, { conditions })
+                  const output = resolve(manifest, entry, { conditions })
 
-                  if (!resolved) {
+                  if (!output || !output.length) {
                     // ignore
                     return
                   }
+                  const resolved = output[0]
 
                   const file = path.resolve(path.dirname(manifestFile), resolved)
                   return { entry, resolved, file }
@@ -176,14 +186,15 @@ export default defineConfig((env) => {
                           .readFile(manifestFile, { encoding: 'utf8' })
                           .then((raw) => JSON.parse(raw))
                           .then((manifest) => {
-                            const resolved = resolve(manifest, './env', { conditions })
-                            if (!resolved) {
+                            const output = resolve(manifest, './env', { conditions })
+                            
+                            if (!output || !output.length) {
                               external.add(source)
 
                               return { id: source, external: true }
                             }
 
-                            return path.resolve(path.dirname(manifestFile), resolved)
+                            return path.resolve(path.dirname(manifestFile), output[0])
                           })
                       }
 
@@ -339,7 +350,7 @@ export default defineConfig((env) => {
                   // but resolve latest to current build
                   local: {
                     // https://cdn.jsdelivr.net/npm/twind@1.0.0-next-20221115000153/package.json
-                    parseUrlPkg(url) {
+                    parseUrlPkg(url){
                       const pkg = packages.find((pkg) => new URL('.', pkg.url).href === url)
 
                       if (pkg) {
@@ -356,9 +367,9 @@ export default defineConfig((env) => {
                         return { registry, name, version }
                       }
 
-                      return undefined
+                      return null
                     },
-                    pkgToUrl(target) {
+                    async pkgToUrl(target) {
                       const pkg = packages.find((pkg) => pkg.manifest.name === target.name)
 
                       if (pkg) {
@@ -454,7 +465,7 @@ export default defineConfig((env) => {
           // console.debug(importMap)
           const version = process.env.CI
             ? VERSION
-            : VERSION.replace(/^([.\d]+)(-.+)?$/, `$1-dev-${format(Date.now(), 'yyyyMMddHHmmss')}`)
+            : VERSION.replace(/^([.\d]+)(-.+)?$/, `$1-dev-${formatDate(Date.now(), 'yyyyMMddHHmmss')}`)
 
           const cdnManifest = {
             version,
@@ -513,7 +524,7 @@ export default defineConfig((env) => {
 
     resolve: {
       // no browser condition because this is sometimes used for umd builds
-      exportConditions: [
+      conditions: [
         env.mode,
         'esnext',
         'modern',
@@ -523,43 +534,47 @@ export default defineConfig((env) => {
         'import',
         'require',
         'default',
-        env.ssrBuild && 'node',
-      ].filter(Boolean),
+        env.isSsrBuild && 'node',
+      ].filter( isString ),
     },
 
     worker: {
       format: env.mode === 'development' ? 'es' : 'iife',
-      plugins: [
-        {
-          name: 'fix-umd-imports',
-          enforce: 'pre',
-          resolveId(source, importer, options) {
-            return this.resolve(source, importer, { ...options, skipSelf: true }).then(
-              (resolved) => {
-                if (resolved.id?.includes('/@jridgewell/') && resolved.id.endsWith('.umd.js')) {
-                  resolved.id = resolved.id.replace(/\.umd\.js$/, '.mjs')
-                }
-                return resolved
-              },
-            )
-          },
-        },
-        env.mode !== 'development' &&
-          commonjs({
-            sourceMap: false,
-          }),
-        env.mode !== 'development' &&
-          nodePolyfills({
-            // transform all files, including all files including any source files
-            include: null,
-          }),
-        {
-          name: 'resolve-to-location',
-          resolveFileUrl({ fileName }) {
-            return `new URL('${fileName}',location.href).href`
-          },
-        },
-      ].filter(Boolean),
+      // plugins:():PluginOption[]=> [
+      //   {
+      //     name: 'fix-umd-imports',
+      //     enforce: 'pre' as "pre" | "post",
+      //     async resolveId(this: PluginContext, source:string, importer:string | undefined, options: {
+      //       attributes: Record<string, string>;
+      //       custom?: CustomPluginOptions;
+      //       ssr?: boolean;
+      //       isEntry: boolean;
+      //     }) {
+      //       const resolved = await this.resolve(source, importer, {...options, skipSelf: true})
+      //       if (resolved?.id?.includes('/@jridgewell/') && resolved.id.endsWith('.umd.js')) {
+      //         resolved.id = resolved.id.replace(/\.umd\.js$/, '.mjs')
+      //       }
+      //       return resolved
+      //     } 
+      //   },
+      //   env.mode !== 'development' &&
+      //     commonjs({
+      //       sourceMap: false
+      //      
+      //     }),
+      //   env.mode !== 'development' &&
+      //     nodePolyfills({
+      //       // transform all files, including all files including any source files
+      //       include: null,
+      //     }),
+      //   {
+      //     name: 'resolve-to-location',
+      //    
+      //      resolveFileUrl({ fileName } : { fileName: string }) {
+      //       return `new URL('${fileName}',location.href).href`
+      //     },
+      //   },
+      // ].filter(Boolean),
       rollupOptions: {
         output: {
           inlineDynamicImports: env.mode !== 'development',
@@ -584,3 +599,7 @@ export default defineConfig((env) => {
     },
   }
 })
+
+export  function isString(input: unknown): input is string{
+  return typeof input === 'string'
+}
