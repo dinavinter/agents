@@ -33,7 +33,7 @@ export const layout = (agent:string, workflow:string) => `
        <script src="https://unpkg.com/htmx.org@2.0.2"></script>
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
-
+        
         <script src="/components/index.js" type="module"></script> 
 
 

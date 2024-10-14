@@ -32,12 +32,7 @@ async function main() {
         logic.provide({
             actors: {
                 terminal: fromPromise( ({input}:{input:string}) =>  terminal.question(input)),
-                renderer: fromCallback(({receive}) => {
-                    receive(({node}) => {
-                        // terminal.write(node.render());
-                    }) 
-                }) satisfies renderCallbackActor
-            }
+             }
         }), {
             ...options,
             inspect:loggerInspector

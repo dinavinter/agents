@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+    <link href="https://unpkg.com/splitpanes/dist/splitpanes.css" rel="stylesheet">
+<script type="module">
+    import { defineCustomElement }  from 'https://esm.sh/vue'
+    import { Splitpanes, Pane } from  'https://esm.sh/splitpanes'
+    customElements.define('split-panes', defineCustomElement(Splitpanes))
+    customElements.define('split-pane', defineCustomElement(Pane))
+    
+
+</script>
+
+</head>
+<body>
+<div class="w-screen h-screen flex flex-col antialiased bg-brand-1 text-brand-11">
+    <header class="flex-none bg-brand-4 text-brand-12 p-4 shadow-sm">
+        <div class="relative flex-none overflow-visible flex items-center space-x-(1 md:2 lg:4) text-small py-1 pl-5 pr-3 sm:pl-6 sm:pr-4 md:pr-3.5 lg:px-6">
+            <slot name="header"></slot>
+        </div>
+    </header>
+    <main class="flex-auto flex relative border-t border-brand-7">
+        <split-panes @resize="debouncedResize" >
+            <!-- Editor Pane -->
+            <split-pane class="flex-auto flex flex-col w-1/2">
+                <div class="flex-none flex items-center justify-between gap-4 p-4">
+                    <div class="flex-none flex items-center justify-between gap-4 pl-(5 sm:6) pr-(4 lg:6)">
+                        <div class="flex space-x-5">
+                            <button
+                                    type="button"
+                                    class="relative flex py-3 text-sm leading-6 font-semibold focus:outline-none text-accent-11 active:(text-brand-11 hover:text-brand-12 focus:text-brand-12)"
+                            >
+                                <span class="absolute bottom-0 inset-x-0 bg-accent-11 h-0.5 rounded-full transition-opacity duration-150 active:opacity-100 opacity-0"></span>
+                                Editor Tab
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-4 overflow-auto">
+                            <button
+                                    type="button"
+                                    class="flex items-center hover:text-brand-12"
+                                    title="Format and focus editor"
+                            >
+
+                                <iconify-icon icon="ep:magic-stick" class="w-5 h-5" alt="Format and focus editor" data-tooltip="Format and focus editor" ></iconify-icon>
+                            </button>
+                            <button
+                                    type="button"
+                                    class="items-center hover:text-brand-12 sr-only md:not-sr-only"
+                                    title="Command Palette (⇧ ⌘ P)"
+
+                            >
+                                <iconify-icon icon="heroicons:ellipsis-horizontal" class="w-5 h-5" alt="Format and focus editor"></iconify-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative flex-auto h-[50%]" >
+                    <div class="absolute inset-0 w-full h-full"  >
+                        <slot name="editor">
+                            <textarea class="flex-auto w-full h-full p-4 text-sm font-mono bg-brand-1 text-brand-11 outline-none resize-none" placeholder="Enter your code here..."></textarea>
+                        </slot>
+                    </div>
+                </div>
+            </split-pane>
+
+
+            <!-- Preview Pane -->
+            <split-pane class="splitpanes__pane flex-auto flex flex-col w-1/2">
+                <div class="flex-none overflow-auto flex items-center pl-5 sm:pl-6 pr-4 lg:pr-6">
+                    <div class="flex space-x-5">
+
+                        <button
+                                type="button"
+                                class="relative flex py-3 text-sm leading-6 uppercase font-semibold focus:outline-none text-accent-11 active:(text-brand-11 hover:text-brand-12 focus:text-brand-12)"
+                        >
+                            <span class="absolute bottom-0 inset-x-0 bg-accent-11 h-0.5 rounded-full transition-opacity duration-150 opacity-0 active:opacity-100"></span>
+                            Preview Tab
+                        </button>
+                    </div>
+                </div>
+                <div class="w-full h-full bg-white notready:(bg-brand-2 grayscale blur-sm)' " >
+                    <slot name="preview"></slot>
+                </div>
+            </split-pane>
+        </split-panes>
+    </main>
+</div>
+<!-- <script type="module">
+     import { setup } from "https://cdn.skypack.dev/twind/shim"
+
+       setup({
+         target: document.body 
+       })
+
+   </script> -->
+</body>
+</html>

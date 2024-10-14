@@ -51,6 +51,9 @@
     "polymate": "^0.1.7",
     "sap-ai-token": "workspace:*",
     "socket.io-p2p": "^2.2.0",
+    "splitpanes": "^3.1.5",
+    "twind": "^0.16.19",
+    "vue": "^3.5.11",
     "xstate": "^5.16.0",
     "yjs": "^13.6.18"
   },
