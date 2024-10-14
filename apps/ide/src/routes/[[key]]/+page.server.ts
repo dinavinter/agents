@@ -9,7 +9,7 @@ import '../../app.d.ts'
 import { loadDefaultTemplate, loadTemplate } from '$lib/templates'
 import { toBase64, toBase64url } from '$lib/base64'
 import type { Manifest, Workspace } from '$lib/types'
-import { FixedLengthStream } from '@cloudflare/workers-types'
+// import { FixedLengthStream } from '@cloudflare/workers-types'
 import pkg from 'lz-string'
 const { decompressFromEncodedURIComponent, compressToEncodedURIComponent } = pkg
 
@@ -210,24 +210,14 @@ export async function load({
 
     const cache = caches?.default
 
-    let response = await cache?.match(url).catch((error: any) => {
-      console.warn(`Failed to use cached CDN manifest for ${version} (${origin})`, error)
-      return null
-    })
-
-    if (!response) {
-      console.debug(`Fetching CDN manifest for ${version} (${origin})`)
-      response = await fetch(url)
-
-      if (!(response.ok && response.status === 200)) {
-        throw new Error(`[${response.status}] ${response.statusText || 'request failed'}: ${url}`)
-      }
-
-      await cache?.put(url, response.clone())
+    const depsurl = import.meta.url;
+    const manifest:Manifest = {
+       "version":version,
+      "dist-tag":"dev","git-sha":"3987bf579e3bdc5be295c6e2969b0988bdb28a53",
+      "imports":{},"packages":{},
+      "url":depsurl
+      
     }
-
-    const manifest = await response.json() as Manifest
-
     if (manifest.version !== version) {
       try {
         console.debug(
@@ -243,8 +233,8 @@ export async function load({
 
     return {
       ...manifest,
-      ...normalizeImportMap(manifest, response.url),
-      url: response.url,
+      ...normalizeImportMap(manifest, depsurl),
+      url: depsurl,
     }
   }
 }
@@ -325,9 +315,9 @@ export const actions: import('./$types').Actions = {
           // This dance is the only way I could get it work
           const value = await toBlob(blob.stream().pipeThrough(await createGzipStream()))
           const { readable, writable } =
-            typeof FixedLengthStream === 'function'
-              ? new FixedLengthStream(value.size)
-              : { readable: value, writable: null }
+            // typeof FixedLengthStream === 'function'
+            //   ? new FixedLengthStream(value.size):
+               { readable: value, writable: null }
 
           await Promise.all([
             writable && value.stream().pipeTo(writable as WritableStream<Uint8Array>),

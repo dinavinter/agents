@@ -66,6 +66,7 @@
     "monaco-editor": "0.52.0",
     "prettier": "3.3.3",
     "resolve.exports": "^2.0.2",
+    "rollup": "^4.24.0",
     "rollup-plugin-polyfill-node": "^0.13.0",
     "sucrase": "^3.35.0",
     "svelte": "^4.2.19",
@@ -78,5 +79,12 @@
     "vite": "^5.4.8",
     "wrangler": "^3.80.0",
     "zod": "^3.23.8"
+  },
+  "overrides": {
+    "ts-interface-checker": "^1.0.2"
+  },
+  "dependencies": {
+    "ts-interface-checker": "^1.0.2",
+    "vue": "^3.5.3"
   }
 }

@@ -3,9 +3,9 @@ import type { Twind, Sheet, BaseTheme } from '@twind/core'
 
 import * as Comlink from 'comlink'
 
-import debounce from 'just-debounce'
+import * as _debounce from 'just-debounce'
 import System, { type ImportMap } from '$lib/system'
-
+const debounce = _debounce.default
 export interface Preview {
   setup(
     options: { importMap: ImportMap; entry: string; script: string; html: string },
