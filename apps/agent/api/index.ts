@@ -7,10 +7,11 @@ import {sendHtml} from "./ui/htmx";
 import {html} from "atomico";
 import {delayAsync, filterEventAsync, mapAsync} from "../stream";
 import {getOrCreateWorkflow} from "../agents/agent-store";
-
+import {routes as ideRoutes} from "./ide";
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
     fastify.register(import('@fastify/formbody')) 
+    ideRoutes(fastify)
 
     // fastify.register(import('./debug'))
  
