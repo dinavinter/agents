@@ -1,7 +1,7 @@
-import 'atomico/ssr/load'; 
+import 'atomico/ssr/load';
 import {html} from "atomico";
 import {VNode, VNodeAny} from "atomico/types/vnode";
-import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject, sendTo} from "xstate";
+import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject} from "xstate";
 import {EventMessage} from "fastify-sse-v2";
 
 
@@ -91,13 +91,11 @@ export function renderTo<TContext extends MachineContext & {stream?: RenderStrea
             innerHTML: string,
             outerHTML: string,
         };
-        const event = {
+        return {
             type: type,
             event: type,
             data: rendered?.toString(),
-        } satisfies EventMessage & { type: typeof type, event: string}
-        console.log(event, node);
-        return event 
+        } satisfies EventMessage & { type: typeof type, event: string } 
     }
 
 

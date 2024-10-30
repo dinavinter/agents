@@ -45,8 +45,10 @@ fastify.register(fastifyStatic, {
 routes(fastify);
 
 try {
-    await fastify.listen({port: 5002})
+   await fastify.listen({port: 5002})
 } catch (err) {
     fastify.log.error(err)
     process.exit(1)
 }
+
+console.log(`Server listening on http://localhost:${5002}`)

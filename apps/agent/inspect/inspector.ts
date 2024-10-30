@@ -1,7 +1,7 @@
 import {
     Actor, AnyActorLogic,
     AnyActorRef, createActor,
-    enqueueActions, EventObject, InspectionEvent,
+    enqueueActions, EventObject, InspectionEvent, log,
     setup
 } from "xstate";
 import {EventMessage} from "fastify-sse-v2";
@@ -29,8 +29,8 @@ export const serviceMachine = setup({
         const hub = createYjsHub();
         const service =createActor(withInspector(logic,hub), {
             id: self.id,
+            logger: (s) => {},
             ...options,
-            logger:console.log,
             inspect: {
                 next:(e) => {
                     e.type === '@xstate.event' && hub.inspected.push(e)
@@ -46,7 +46,6 @@ export const serviceMachine = setup({
 
     entry: enqueueActions(({context: {service, hub}, enqueue}) => {
         service.on("*", (event: EventMessage & EventObject) => {
-            // console.log('* Service Event:', event?.type,event.data, {id:service.id, sessionId: service.sessionId});
             hub.emitted.push(event);
             
         })  
@@ -54,9 +53,9 @@ export const serviceMachine = setup({
    
     on:{
         "*" : {
-            actions:  ({event, context: {service}}) => {
-                console.log('Me Event:', event.type, {id: service.id, sessionId: service.sessionId});
-            }
+            actions: log (({event, context: {service}}) => {
+                return  {type: event.type, id: service.id, sessionId: service.sessionId}
+            })
         }
     }
     
@@ -73,7 +72,6 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
         Object.entries(newState.children)?.forEach(([service, ref]) => {
             const {isNew, hub: serviceHub} = hub.child(service)
             if (isNew) {
-                console.log('New Service:', service);
 
                 if (ref instanceof Actor) {
                     ref.on("*", (event) => {
@@ -88,7 +86,6 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
                         });
                     }) 
                     ref.subscribe((snapshot) => {
-                        console.log('Service Snapshot:', snapshot);
                         serviceHub.snapshot.push(snapshot);
                     })
                 }
