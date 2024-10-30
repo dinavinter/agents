@@ -1,19 +1,22 @@
 import {FastifyInstance, FastifyReply} from "fastify";
 import {  FastifySSEPlugin} from "fastify-sse-v2";
-import { 
-    AnyStateMachine 
-} from "xstate";
-import {sendHtml} from "./ui/htmx";
-import {html} from "atomico";
+
+import {sendHtml} from "./htmx";
 import {delayAsync, filterEventAsync, mapAsync} from "../stream";
 import {getOrCreateWorkflow} from "../agents/agent-store";
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
-    fastify.register(import('@fastify/formbody')) 
+    fastify.register(import('@fastify/formbody'))
 
-    // fastify.register(import('./debug'))
- 
+    fastify.get('/', async function handler(_, reply) {
+        reply.redirect('/agents/agent-catalog/index');
+    })
+
+    fastify.get('/agents', async function handler(_, reply) {
+        reply.redirect('/agents/agent-catalog/index');
+    })
+    
     fastify.get('/agents/:agent', async function handler(request, reply: FastifyReply) {
         const {agent} = request.params as { agent: string };
         reply.redirect(`/agents/${agent}/${generateActorId()}`);

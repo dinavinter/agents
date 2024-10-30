@@ -6,8 +6,6 @@ import {routes} from "./api";
 import fastifyStatic from "@fastify/static";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {sendHtml} from "./api/ui/html";
-import {html} from "atomico";
  
 tokenService.credentialsFromEnv();
  
@@ -20,15 +18,11 @@ const fastify = Fastify({
 // @ts-ignore
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
-console.log(__dirname);
-console.log(path.join(__dirname, 'ui', "components"));
 
 //static js files
 fastify.register(fastifyStatic, {
-    root: path.join(__dirname,  "components"),
+    root: path.join(__dirname, "agents",  "components"),
     prefix: '/components', // optional: default '/'
-    // constraints: {  } ,// optional: default {}
-    // prefixAvoidTrailingSlash: true,
     extensions: ['js'],
     setHeaders: (res,path,) => {
         console.log(path);
@@ -39,15 +33,7 @@ fastify.register(fastifyStatic, {
     }
 })
 
-//agent router
-fastify.get('/', async function handler(request, reply) {
-    const agents = ['simple',  'news', 'support',   'tictac',  'raffle',  "github", "screen"  ]
-    sendHtml(reply, html`
-        <h1>AI AGents</h1>
-           ${agents.map(agent => html`<a href="/agents/${agent}">${agent}</a>`)}
-       </div>
-    `)
-})
+//agent router 
 routes(fastify);
 
 try {

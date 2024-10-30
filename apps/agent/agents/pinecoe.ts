@@ -1,4 +1,5 @@
-import { Pinecone, type ScoredPineconeRecord } from "@pinecone-database/pinecone";
+//Note: working on the pinecone database, requires the pinecone api key to be set in the environment variable PINECONE_API_KEY
+import { Pinecone } from "@pinecone-database/pinecone";
 import {  embed, tool} from "ai";
 import {z} from "zod";
 import {embedding, fromAIEventStream, openaiGP4o} from "../ai";
@@ -6,71 +7,11 @@ import {  setup} from "xstate";
 import {render,   renderTo} from "./agent-render";
 import * as fs from 'fs';
 import {html} from "atomico";
-
-/*
-
-
-blobType: "application/json"
-line: 3
-loc.lines.from: 1
-loc.lines.to: 1
-source: "blob"
-text: "ServiceFlagsClient.cs"
-
- */
-type Metadata = {
-    blobType: string;
-    line: number;
-    source: string;
-    text: string;
-}
-//
-// export type Metadata = {
-//     url: string,
-//     text: string,
-//     chunk: string,
-//     hash: string
-// }
-
-// The function `getMatchesFromEmbeddings` is used to retrieve matches for the given embeddings
-const getMatchesFromEmbeddings = async (embeddings: number[], topK: number, namespace: string): Promise<ScoredPineconeRecord<Metadata>[]> => {
-    // Obtain a client for Pinecone
-    const pinecone = new Pinecone();
-
-    const indexName: string = process.env.PINECONE_INDEX || 'test';
-    if (indexName === '') {
-        throw new Error('PINECONE_INDEX environment variable not set')
-    }
-
-    // Retrieve the list of indexes to check if expected index exists
-    const indexes = (await pinecone.listIndexes())?.indexes;
-    if (!indexes || indexes.filter(i => i.name === indexName).length !== 1) {
-        throw new Error(`Index ${indexName} does not exist`)
-    }
-
-    // Get the Pinecone index
-    const index = pinecone!.Index<Metadata>(indexName);
-
-    // Get the namespace
-    const pineconeNamespace = index.namespace(namespace ?? '')
-
-    try {
-        // Query the index with the defined request
-        const queryResult = await pineconeNamespace.query({
-            vector: embeddings,
-            topK,
-            includeMetadata: true,
-        })
-        return queryResult.matches || []
-    } catch (e) {
-        // Log the error and throw it
-        console.log("Error querying embeddings: ", e)
-        throw new Error(`Error querying embeddings: ${e}`)
-    }
-}
+import {env} from "node:process";
+ 
 
 const pc = new Pinecone({
-    apiKey: '9ee31bd9-e396-45aa-b8cc-81051c186c92',
+    apiKey: env.PINECONE_API_KEY!,
     fetchApi: fetch
 });
 const index = pc.index('test');
