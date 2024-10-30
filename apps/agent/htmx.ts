@@ -1,7 +1,4 @@
 import {FastifyReply} from "fastify";
- 
-
-export type replyWithHtml = (reply:FastifyReply) => Promise<void>;
 
 export function sendHtml(reply:FastifyReply, agent:string, workflow:string ) {
     reply.header('Cache-Control', 'no-store'); 

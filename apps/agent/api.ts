@@ -1,9 +1,8 @@
 import {FastifyInstance, FastifyReply} from "fastify";
-import {  FastifySSEPlugin} from "fastify-sse-v2";
-
+import {  FastifySSEPlugin} from "fastify-sse-v2"; 
 import {sendHtml} from "./htmx";
-import {delayAsync, filterEventAsync, mapAsync} from "../stream";
-import {getOrCreateWorkflow} from "../agents/agent-store";
+import {delayAsync, filterEventAsync, mapAsync} from "./stream";
+import {getOrCreateWorkflow} from "./agents/agent-store";
 
 export function routes(fastify: FastifyInstance) {
     fastify.register(FastifySSEPlugin);
