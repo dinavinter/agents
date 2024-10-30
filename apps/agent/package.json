@@ -12,7 +12,7 @@
     "git": "pnpm tsx-env  ./agents/git.ts",
     "support": "tsx  --env-file=../../.env ./examples/support.ts",
     "simple": "pnpm tsx-env ./examples/simple.ts",
-    "tsx-env": "tsx --env-file=../../.env"
+    "tsx-env": "tsx --env-file=../../.env "
   },
   "keywords": [],
   "author": "",

@@ -6,7 +6,18 @@ import {routes} from "./api";
 import fastifyStatic from "@fastify/static";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
- 
+ import {config} from 'dotenv';
+import {env} from "node:process";
+config();
+// @ts-ignore
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the directory
+console.log(__dirname);
+config({
+   path: path.join(__dirname, '../.env')
+});
+
+console.log(env.SAP_TOKEN_URL, env.SAP_CLIENT_ID, env.SAP_CLIENT_SECRET, env.SAP_AUDIENCE);
 tokenService.credentialsFromEnv();
  
 const fastify = Fastify({
@@ -15,9 +26,6 @@ const fastify = Fastify({
     }
 })
 
-// @ts-ignore
-const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
-const __dirname = path.dirname(__filename); // get the name of the directory
 
 //static js files
 fastify.register(fastifyStatic, {
