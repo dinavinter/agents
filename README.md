@@ -148,15 +148,12 @@ pnpx nx start ai-sdk
 #### [apps/agent](apps/agent)
 Example usage example of SAP AI with agents using (`ai-sdk`)[https://sdk.vercel.ai] and (`xstate`)[https://stately.ai/docs/xstate].
 
-## start with api and ui
+## start agent application
 ```bash
-pnpx nx dev agent
+pnpm agent:dev
 ```
 
-## start a single agent
-```bash
-pnpx nx start agent
-```
+
 
 #### [apps/langchain](apps/langchain)
 Example usage of SAP AI with `langchain` https://langchain.com/docs
