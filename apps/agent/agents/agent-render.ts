@@ -15,18 +15,6 @@ export type RenderStream = StreamOptions & {
 
 };
 
-export function agentStream(agent:string, workflow: string ):RenderStream {
-    const href = `/agents/${agent}/${workflow}`;
-    return {
-        href,
-        event: (type: string) => streamElements(workflow, `${href}/events/${type}`),
-        service: (id?: string) => workflowStream(`${href}/${id}` ),
-        html: streamElements(href).html,
-        text: streamElements(href).text,
-        json: streamElements(href).json,
-        connect: streamElements(href).connect
-    }
-}
 export function workflowStream(workflow: string ):RenderStream {
     return {
         href: workflow,
