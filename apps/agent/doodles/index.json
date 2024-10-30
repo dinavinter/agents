@@ -1,0 +1,602 @@
+[
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-01.svg",
+    "alt": "The image is a cartoon illustration of an orange cat. The cat is standing on its hind legs and has a simple, stylized design. It is wearing large, black-framed glasses. The cat has a small, black nose and a tiny mouth with a slight smile. There are yellow stripes on its forehead and yellow markings on its belly. The tail is orange with yellow stripes. The overall style is cute and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-02.svg",
+    "alt": "The image is a simple, cartoon-style drawing of a cat's face. The cat is gray with darker gray stripes on its forehead. It has a rounded face with small, black, round eyes that have white highlights, giving them a shiny appearance. The cat's nose is small and black, and it has a small, curved mouth. There are also small black dots on its cheeks, possibly representing whisker spots. The overall expression of the cat appears to be neutral or slightly curious. The drawing is outlined in black."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-03.svg",
+    "alt": "The image is a cartoon-style illustration of a cute character. The character has a round, white face with a simple, happy expression, featuring two black eyes and a smiling mouth. The body is green with an orange patch on the front, and it has two long, green ears with orange inner sections, resembling a bunny or rabbit. The character also has small, orange arms and short legs. The overall design is playful and whimsical, with a friendly and approachable appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-04.svg",
+    "alt": "The image is a cartoon illustration of a lemon. The lemon is bright yellow with a smooth texture and small black dots scattered across its surface. It has a cute, smiling face with two round eyes and a small curved mouth. At the top of the lemon, there are two green leaves attached to a short stem. The overall style is simple and playful, with bold black outlines."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-05.svg",
+    "alt": "The image is a cartoon-style illustration of a hamburger with a cute, smiling face. The hamburger consists of a top bun, a layer of green lettuce, a brown patty, a layer of yellow cheese, and a bottom bun. The top bun has two black eyes and a small, curved mouth, giving it a friendly and cheerful expression. The overall design is simple and playful, with bold outlines and bright colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-06.svg",
+    "alt": "The image is a cartoon illustration of a green pyramid with a cute, smiling face. The pyramid has two eyes and a smiling mouth, giving it a friendly and cheerful appearance. The edges of the pyramid are outlined in black, and one of the sides is shaded in a darker green, adding a sense of depth to the illustration. The overall style is simple and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-07.svg",
+    "alt": "The image is a cartoon illustration of a green cactus with a surprised or shocked expression. The cactus has two arms raised, and its body is covered with black spines. The eyes are wide open with black pupils, and the mouth is open in an \"O\" shape, adding to the surprised look. The overall style is simple and playful, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-08.svg",
+    "alt": "The image is a cartoon-style illustration of a face with a peaceful expression. The face has closed eyes and a small, content smile. The character has blue hair, which is styled in a spiky manner. The skin tone is a light peach color, and there are two small dots on the cheeks, possibly representing freckles or dimples. The overall style is simple and cute, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-09.svg",
+    "alt": "The image is a colorful illustration of a high-top sneaker. The shoe features a variety of bright colors, including yellow, green, purple, and blue. The design is segmented into different colored sections, with a yellow tongue and lace area, green and purple panels on the sides, and a yellow sole. The shoe has a playful and vibrant appearance, with black outlines and stitching details that add to its cartoon-like style."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-10.svg",
+    "alt": "The image depicts a stylized, upward-pointing arrow. The arrow is primarily green with a lighter green outline along the right edge. The design is simple and bold, with a black border outlining the entire shape, giving it a cartoon-like appearance. The arrow is slightly curved, adding a dynamic feel to the image."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-100.svg",
+    "alt": "The image is a simple, cartoon-style illustration of a brown cat. The cat is depicted in a playful, upside-down position with its head at the bottom and its body and tail extending upwards. The cat has a round face with small, black eyes, a small nose, and a tiny mouth. It also has whiskers and pointed ears. The tail is curved and has a darker tip. The overall style is minimalistic and cute, with clean lines and a solid color fill."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-101.svg",
+    "alt": "The image is a cartoon-style illustration of a cute, brown creature with a round body and small limbs. It has two orange and yellow striped horns on its head, and two small ears. The creature has a happy expression with closed eyes and a red tongue sticking out. The overall design is simple and playful, giving it a friendly and whimsical appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-102.svg",
+    "alt": "The image is a cartoon-style illustration of a single large eye. The eye is surrounded by a green, fuzzy, circular shape, resembling fur or hair. The eye itself has a blue iris and a black pupil with two white reflections, giving it a shiny appearance. The overall design is simple and playful, likely intended to represent a friendly or whimsical character."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-103.svg",
+    "alt": "The image is a cartoon-style illustration of a pineapple. The pineapple is depicted in two parts: the top part with green leaves and the upper section of the fruit, and the bottom part, which is a slice of the fruit. The pineapple has a typical orange-yellow color with a crisscross pattern and small black dots representing the texture of the fruit's skin. The inside of the fruit is shown as yellow. The illustration has a bold black outline."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-104.svg",
+    "alt": "The image is a cartoon-style illustration of a bear's head. The bear has a friendly and cute appearance with a round face, small black eyes, and a small black nose. The bear's fur is brown, and it has a lighter brown muzzle area. There is an orange headband across the top of the bear's head, giving it a playful and sporty look. The overall design is simple and charming, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-105.svg",
+    "alt": "The image depicts a stylized drawing of a digital pen or stylus. The pen is primarily gray with a darker tip and base. It features a button or switch on its side, which is typical for digital pens used with graphic tablets or touchscreen devices. The overall design is simple and functional, with clean lines and minimal detailing."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-106.svg",
+    "alt": "The image is a simple, cartoon-style illustration of a stack of green paper money. The bills are bound together with a white band in the middle. The stack is slightly fanned out, showing multiple bills. The illustration uses bold black outlines to define the shapes and edges."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-107.svg",
+    "alt": "The image is a cartoon-style illustration of a hand making the \"rock on\" or \"devil horns\" gesture. The hand is depicted with the index finger and little finger extended, while the middle and ring fingers are folded down, held in place by the thumb. The nails are painted pink, and there is an orange wristband on the wrist. The illustration has a bold black outline and a simple, flat color style."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-108.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a campfire. The fire has a friendly, anthropomorphic face with two small black eyes and a smiling mouth. The flames are depicted in two colors: the inner part is bright yellow, and the outer part is orange. The fire is burning on two brown logs that are crossed at the bottom. The overall style is simple and playful, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-109.svg",
+    "alt": "The image is a cartoon-style illustration of an old-fashioned mobile phone. The phone is gray with a blue screen and blue buttons. It has an antenna on top, which is a characteristic feature of early mobile phones. The design is simple and stylized, with rounded edges and a minimalistic look."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-11.svg",
+    "alt": "The image is of a cartoon character with a round, blue, furry body. The character has two small black eyes and a simple, straight-lined mouth. It has long, green arms and legs, with three-fingered hands raised in the air. The character is wearing green and yellow sneakers. The overall appearance is playful and whimsical."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-110.svg",
+    "alt": "The image is a cartoon-style illustration of an old-fashioned television set. The TV has a brown frame with a blue screen that features a cute, smiling face with two eyes and a mouth. The television has two black antennas on top and a gray knob on the right side. Below the knob, there are three horizontal lines, likely representing buttons or vents. The overall design is simple and playful, giving the television a friendly and anthropomorphic appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-112.svg",
+    "alt": "The image is a cartoon-style illustration of a toy building block, similar to a LEGO brick. The block is rectangular with a yellow top surface and orange sides. It has four circular studs on the top, which are typically used to connect with other similar blocks. The illustration is outlined in black, giving it a bold and defined appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-113.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a tea bag. The tea bag has a simple, smiling face with two round eyes and a small, curved mouth. It also has two small dots on its cheeks, giving it a friendly and cheerful expression. The tea bag is light brown with a black outline, and it has a string attached to it. At the end of the string, there is a small tag with a heart symbol on it. The overall design is playful and endearing."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-114.svg",
+    "alt": "The image is a cartoon illustration of a jellyfish. The jellyfish has a purple dome-shaped body with a small, smiling face. It has two small, white eyes and a simple curved line for a mouth. Below the body, there is a yellow frilled edge, and it has several tentacles. The tentacles are primarily purple, with one tentacle being yellow with an orange outline. The overall style is cute and whimsical."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-115.svg",
+    "alt": "The image is a cartoon-style illustration of a raccoon. The raccoon has a rounded body with a white and gray color scheme. It features the characteristic black \"mask\" around its eyes, a small black nose, and black ears with white inner parts. The raccoon's body is white with small black lines indicating fur texture. It has two small black arms and a large, bushy tail with black and gray stripes. The overall design is simple and cute, with a minimalistic and playful appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-116.svg",
+    "alt": "The image is a cartoon-style illustration of a popsicle. The popsicle has a blue top layer with small yellow and black dots scattered across it. The blue layer appears to be melting slightly over a green layer beneath it. The popsicle is on an orange stick. The overall design is simple and colorful, with a playful and whimsical appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-117.svg",
+    "alt": "The image depicts a simple, cartoon-style illustration of a heart-shaped lollipop. The lollipop is red with a few highlights to indicate shine and is mounted on a thin, beige stick. The heart shape is outlined in black, giving it a clear and defined appearance. The overall design is minimalistic and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-118.svg",
+    "alt": "The image is a simple, cartoon-style illustration of a pineapple. The pineapple has a yellow-orange body with a crisscross pattern representing its texture. The top of the pineapple features green leaves, which are depicted with a few shades of green and outlined in black. The entire illustration is outlined in black, giving it a bold and clear appearance. The background of the image is transparent."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-119.svg",
+    "alt": "The image depicts a green speech bubble with a yellow star in the center. The speech bubble has a black outline, and the star also has a black outline. The design is simple and cartoon-like, with bold colors and clear lines. The green speech bubble has a slight shadow effect, giving it a three-dimensional appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-12.svg",
+    "alt": "The image is a cartoon illustration of a yellow chick. The chick has a round body with small wings and legs. Its eyes are wide open, giving it a surprised or excited expression. The beak is open, showing a small red tongue inside. The chick has a few tufts of feathers on top of its head, adding to its cute and animated appearance. The overall style is simple and playful, with bold outlines and bright colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-120.svg",
+    "alt": "The image is a cartoon-style illustration of a slice of pizza. The pizza slice has a golden-brown crust with a wavy edge on the right side. The toppings include two large red circles, likely representing pepperoni, and several small green circles, which could represent vegetables like green peppers or olives. The overall style is simple and colorful, with bold black outlines around the shapes."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-122.svg",
+    "alt": "The image is a simple, cartoon-style illustration of a light bulb. The bulb is depicted in a light blue color with a black outline. The filament inside the bulb is drawn with a black line in a spiral shape. The base of the bulb is also black. There are a couple of white highlights on the bulb, giving it a shiny appearance. The overall design is minimalistic and stylized."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-123.svg",
+    "alt": "The image is a cartoon-style illustration of a cupcake. The cupcake has a brown base and is topped with pink frosting. The frosting is decorated with small red dots, and there is a cherry with a green leaf on top. The illustration has a simple, bold outline and a playful, whimsical appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-124.svg",
+    "alt": "The image depicts a colorful rainbow with seven distinct bands of color: purple, blue, cyan, green, yellow, orange, and red. The rainbow arches from left to right and is flanked by two white clouds at each end. The design is simple and cartoon-like, with bold outlines around the rainbow and clouds. The background is transparent, making the rainbow and clouds the focal point of the image."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-125.svg",
+    "alt": "The image is a stylized illustration of a blue diamond. The diamond is depicted with various facets, outlined in black, giving it a geometric appearance. The facets are filled with different shades of blue, creating a sense of depth and dimension. The overall shape of the diamond is a classic cut, with a pointed bottom and a wider top. The illustration is simple and uses bold lines and colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-126.svg",
+    "alt": "The image depicts a green, wavy arrow pointing to the right. The arrow has a black outline, giving it a distinct and bold appearance. The wavy design adds a dynamic and flowing element to the otherwise straightforward arrow shape."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-128.svg",
+    "alt": "The image is a simple, stylized illustration of a blue popsicle with two dark blue lines running vertically down its center. The popsicle is on a stick, which is colored orange. The illustration has a black outline, giving it a cartoon-like appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-129.svg",
+    "alt": "The image depicts a stylized, abstract design resembling a flame or a wave. The design consists of multiple curved, flowing lines in varying shades of green, outlined in black. The lines create a sense of movement and fluidity, with the overall shape tapering to a point at the top and curling inward at the bottom right. The use of green shades suggests a natural or organic theme."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-13.svg",
+    "alt": "The image is a stylized illustration of a flower. The flower has six petals, which are colored in shades of red and orange. The petals are outlined in black, giving them a bold and defined look. The center of the flower is a grid-like pattern with alternating brown and yellow squares, also outlined in black. The overall design is simple and cartoon-like, with a vibrant and eye-catching color scheme."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-130.svg",
+    "alt": "The image is a simple, cartoon-style drawing of two red cherries attached to a single brown stem. The stem is tied at the top, and two green leaves are also attached to the stem. The cherries and leaves are outlined in black, and the leaves have some black lines to indicate veins. The overall style is minimalistic and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-131.svg",
+    "alt": "The image depicts a stylized, cartoon-like representation of a yellow crystal or gemstone. The crystal has a geometric shape with sharp edges and facets. There are brown lines and shading on the crystal, giving it a three-dimensional appearance and suggesting depth and texture. The overall design is simple and uses bold outlines."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-132.svg",
+    "alt": "The image is a stylized illustration of a slice of watermelon. The slice is depicted with a red interior and black seeds, and it has a green rind. The illustration is simple and cartoon-like, with bold outlines and a clean design. There are also two bite marks taken out of the bottom edge of the watermelon slice."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-133.svg",
+    "alt": "The image depicts a colorful, spiral-shaped lollipop on a stick. The lollipop features a swirl pattern with alternating sections of blue, yellow, and green. The stick of the lollipop is adorned with a red bow tied around it, adding a decorative touch. The overall design is playful and vibrant, suggesting a fun and sweet treat."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-134.svg",
+    "alt": "The image is a stylized illustration of a container of popcorn. The container has a black and red diagonal stripe pattern. The popcorn is depicted with a white, fluffy appearance and has small circular details to represent the popped kernels. The overall design is simple and cartoon-like."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-135.svg",
+    "alt": "The image is a cartoon illustration of a cute, blue, bear-like character. The character has a rectangular body with rounded edges, small legs, and no visible arms. It has two small, rounded ears on top of its head. The face features two round black eyes with white highlights, a wide open mouth with a pink tongue, and a simple, happy expression. The character's overall appearance is cheerful and friendly."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-136.svg",
+    "alt": "The image is a stylized illustration of a cactus. The cactus has multiple green pads, each adorned with small black dots. Some of the pads have small yellow protrusions, which could represent flowers or new growth. The illustration has a cartoon-like appearance with bold outlines and simple, vibrant colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-137.svg",
+    "alt": "The image is a stylized illustration of a shooting star. The star is bright yellow with a black outline and features a spiral design in the center. Trailing behind the star are several streaks in shades of yellow and orange, also outlined in black, representing the star's tail as it moves through the sky. The overall design is simple and cartoon-like."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-138.svg",
+    "alt": "The image depicts a stylized notification icon commonly associated with social media platforms. It features an orange speech bubble with a black outline. Inside the speech bubble, there is a white heart symbol with a black outline on the left side, and the number \"1\" in black on the right side. This icon typically represents a \"like\" or \"favorite\" notification, indicating that one person has liked a post or content."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-139.svg",
+    "alt": "The image depicts a stylized, blue arrow pointing downwards and to the right. The arrow has a thick black outline and two black lines inside it, which add a sense of depth or shading. The design is simple and cartoon-like, with smooth, rounded edges."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-14.svg",
+    "alt": "The image depicts a stylized bow. The bow has two large, red loops on either side, with a smaller, pink section in the middle that features wavy black lines for added detail. The center of the bow is a solid red square, and the entire bow is outlined in black, giving it a bold and defined appearance. The design is simple yet decorative, with a combination of red and pink colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-140.svg",
+    "alt": "The image depicts a stylized, teardrop-shaped design that resembles a stained glass window. The design is divided into several segments by black lines. The segments are filled with different shades of blue, ranging from light blue to dark blue. The overall shape and color scheme give it a gem-like appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-141.svg",
+    "alt": "The image is a simple, stylized illustration of a croissant. The croissant is depicted in a bright orange color with a thick black outline. The design is minimalistic, with three distinct segments that give it a recognizable croissant shape. The illustration has a cartoon-like appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-142.svg",
+    "alt": "The image depicts a stylized peace symbol. The symbol is circular with three lines inside, forming a shape reminiscent of a Mercedes-Benz logo. The entire symbol is colored in a solid blue with a black outline. The design is simple and bold, with clean lines and a modern aesthetic."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-143.svg",
+    "alt": "The image is a stylized, cartoon-like heart shape. The heart is primarily pink with a black outline. There are also red accents within the heart, adding depth and dimension to the design. The overall appearance is playful and vibrant, often associated with themes of love and affection."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-144.svg",
+    "alt": "The image depicts a stylized, cartoonish open mouth with a black interior and a red outline. The mouth contains several white, irregularly shaped teeth, giving it a somewhat menacing or exaggerated appearance. The overall design is simple and bold, with a strong contrast between the black, red, and white colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-146.svg",
+    "alt": "The image depicts a stylized, cartoonish mouth with exaggerated features. The mouth is open, showing a set of sharp, pointed teeth. The teeth are white, contrasting with the black background of the mouth. The overall shape of the mouth is irregular and somewhat rounded, giving it a playful and slightly menacing appearance. This type of image is often used in cartoon or comic art to represent a monster or a creature with a fierce expression."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-147.svg",
+    "alt": "The image depicts a simple, stylized drawing of a closed eye with long, curved eyelashes. The eyelashes are thick and black, and the eye appears to be in a relaxed or content state. The overall design is minimalistic and cartoon-like, using bold lines and a monochromatic color scheme."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-15.svg",
+    "alt": "The image is a cartoon-style illustration of a blue bird. The bird has a round body with a small beak and two small eyes. It has a tuft of feathers on top of its head and a small wing on its side. The bird's beak and the tips of its feathers are a lighter blue color. The outline of the bird is drawn with a thick black line, giving it a bold and defined appearance. The overall design is simple and cute, with a playful and friendly expression."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-150.svg",
+    "alt": "The image depicts a light blue speech bubble with a unique shape. The bubble has a large, rounded top section that tapers down into a curved, tail-like extension at the bottom. The outline of the speech bubble is black, providing a clear contrast against the light blue interior. The overall design is simple and stylized, making it easily recognizable as a speech bubble."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-152.svg",
+    "alt": "The image depicts a light blue speech bubble with a black outline. The speech bubble is oval-shaped with a pointed tail at the bottom right, indicating the direction of the speaker. The interior of the speech bubble is empty, providing space for text or dialogue."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-153.svg",
+    "alt": "The image depicts a blue cloud-like shape with a black outline. The shape is irregular and rounded, resembling a fluffy cloud or a splash of paint. The background is transparent, allowing the cloud shape to stand out prominently."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-154.svg",
+    "alt": "The image depicts a light blue speech bubble with a black outline. The shape of the speech bubble is somewhat rectangular with rounded corners, and it has a small tail at the bottom pointing to the right, indicating the direction of the speech. The interior of the speech bubble is empty, providing space for text or other content. The overall design is simple and clean, suitable for use in comics, illustrations, or graphic design projects."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-155.svg",
+    "alt": "The image depicts a blue thought bubble with a black outline. The thought bubble consists of a large, cloud-like shape with a smaller, similarly shaped bubble connected to it, indicating a thought or idea. The design is simple and cartoon-like, often used in comics or illustrations to represent thinking or contemplation."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-156.svg",
+    "alt": "The image depicts a light blue starburst shape with a black outline. The starburst has multiple points of varying lengths, giving it a dynamic and energetic appearance. The background is transparent, making the starburst the focal point of the image. This type of shape is often used in graphic design to draw attention or highlight important information."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-157.svg",
+    "alt": "The image depicts a light blue speech bubble with a black outline. The shape of the speech bubble is somewhat irregular, with a rounded top and a pointed tail at the bottom, indicating the direction of the speech. The interior of the speech bubble is empty, providing space for text or other content. The overall design is simple and clean."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-159.svg",
+    "alt": "The image depicts a light blue speech bubble with a black outline. The speech bubble has a rectangular shape with rounded corners and a small tail pointing downward to the right. The interior of the speech bubble is empty, providing space for text or other content. The overall design is simple and clean, suitable for use in comics, graphic design, or digital communication to indicate spoken words or thoughts."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-16.svg",
+    "alt": "The image is a cartoon illustration of a ghost with panda-like features. The ghost is predominantly white with black accents. It has large, round eyes with black circles around them, resembling a panda's eyes. The ghost also has two small black ears on top of its head. Its mouth is open, showing a single tooth, and it has a surprised or scared expression. The bottom of the ghost is wavy, giving it a floating appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-160.svg",
+    "alt": "The image depicts a blue, irregularly shaped burst or explosion graphic, commonly used in comic books or graphic design to indicate an impact, explosion, or emphasis. The shape has multiple pointed edges radiating outward, and it is outlined in black. The overall appearance is dynamic and attention-grabbing."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-17.svg",
+    "alt": "The image is a cartoon illustration of a cute, green dinosaur-like creature. The creature has a round body with small arms and legs. It has a yellow belly and a large open mouth with a red tongue and two visible teeth. The creature has a row of blue, fan-like spikes running along its back, giving it a playful and whimsical appearance. The overall style is simple and colorful, with bold outlines and a friendly expression."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-18.svg",
+    "alt": "The image is a cartoon-style illustration of a mushroom. The mushroom has a red cap with large white spots and a beige stem. The cap features a cute, smiling face with two small black eyes and a simple curved mouth. The overall design is playful and whimsical, with bold black outlines and a simple color palette."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-19.svg",
+    "alt": "The image is a cartoon illustration of a bear's head. The bear has a brown fur coat and is depicted with its eyes closed, giving it a relaxed or sleepy expression. Its mouth is open wide, showing a red tongue and two prominent white fangs. The bear's ears are rounded and positioned on top of its head. The overall style is simple and playful, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-20.svg",
+    "alt": "The image is a simple, cartoon-like drawing of a blue blob-like creature. The creature has a rounded shape with a few drooping extensions at the bottom, giving it a somewhat melting appearance. It has a cute, minimalist face with closed eyes and a small, curved mouth, suggesting a content or sleepy expression. The outline of the creature is black, and there are small black dots on either side of its face, possibly representing cheeks or additional facial features. The overall style is playful and whimsical."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-21.svg",
+    "alt": "The image is a cartoon-style illustration of a sun. The sun has a bright yellow circular center with a simple, smiling face, featuring two small black eyes and a curved mouth. Surrounding the yellow center are orange rays that are irregularly shaped, giving the sun a playful and cheerful appearance. The entire illustration has a black outline, adding to its cartoonish and whimsical style."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-22.svg",
+    "alt": "The image is a simple, cartoon-style drawing of a brown dog. The dog has a rounded body with short legs, a curly tail, and floppy ears. Its face features small, round eyes, a small black nose, and a red tongue sticking out. The drawing is outlined in black, and the overall style is cute and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-23.svg",
+    "alt": "The image is a cartoon-style illustration of a cute, furry creature. The creature is brown and has a rounded body covered in fur. It has two small, black eyes and a simple, smiling mouth with two small fangs protruding from the upper jaw. The creature also has two large, curved horns that are orange with black stripes. The overall appearance is friendly and whimsical."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-24.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a cupcake. The cupcake has a brown base with vertical lines, representing the cupcake liner. The frosting on top is pink and fluffy, with a smiling face drawn on it. The face has two black eyes and a small, curved mouth, giving the cupcake a cheerful and friendly expression. The overall design is simple and playful, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-25.svg",
+    "alt": "The image is a cartoon-style illustration of an orange fox's head. The fox has a white beard and white fur on the inside of its ears. The eyes are small and black, and the nose is also black. The fox has a friendly and cute expression, with a small smile. The illustration is simple and uses bold lines to define the features."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-26.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a yellow rectangular character with a smiling face. The character has closed eyes with long eyelashes, giving it a happy and content expression. There are small black dots on each cheek, resembling blush marks. On top of the character's head is a large blue bow, adding to its adorable appearance. The outline of the character and its features are drawn with a thick black line."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-27.svg",
+    "alt": "The image is a cartoon-style illustration of a handheld mirror. The mirror has a brown frame with two small triangular shapes at the top, resembling cat ears. The reflective surface of the mirror is light blue. The handle of the mirror is also brown and features a red bow tied around it. The overall design is playful and whimsical, with a cute and charming appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-28.svg",
+    "alt": "The image is a cartoon-style illustration of a white, fluffy creature with a blue face and a blue patch on its belly. The creature has a simple, friendly expression with small black eyes and a small black mouth. It has two arms and two legs, and its overall shape is rounded and cute. The creature appears to be waving with one of its arms. The illustration is outlined in black, giving it a clean and defined look."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-29.svg",
+    "alt": "The image is a cartoon-style illustration of a green, oval-shaped creature with a friendly expression. The creature has a simple face with two small black eyes and a curved line for a mouth, giving it a smiling appearance. It is outlined in black and has yellow, petal-like shapes around its edges, resembling a decorative border. The overall design is cute and whimsical, likely intended to be endearing and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-30.svg",
+    "alt": "The image is a cartoon-style illustration of a keyboard or synthesizer. The keyboard has a gray body with black and white keys. There are two yellow buttons on the left side, one larger and one smaller, which likely represent control knobs or buttons. Above the keys, there is a section with a pattern of horizontal lines, possibly representing a speaker or display area. The overall design is simple and stylized, with bold outlines and minimal detail."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-31.svg",
+    "alt": "The image is a cartoon illustration of a green frog. The frog has a simple, stylized design with a rounded body and large eyes. It has several light green spots on its back and a straightforward facial expression. The frog's limbs are also simplified, with the front legs extended forward and the back legs positioned as if it is sitting or ready to jump. The outline of the frog is bold and black, giving it a clear and defined appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-32.svg",
+    "alt": "The image is a simple, cartoon-style drawing of a brown bear. The bear has a large, exaggerated smile with big white teeth, and small black eyes. The overall design is minimalistic, with a solid brown color for the bear's body and a black outline. The bear's ears are small and rounded, positioned at the top of its head. The expression on the bear's face appears to be cheerful and friendly."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-33.svg",
+    "alt": "The image is a cartoon-style illustration of a cute, blue, furry creature with antlers. The creature has a simple, oval-shaped white face with small black eyes and a small, curved mouth. The antlers are brown and have a simple, stylized shape. The overall appearance of the creature is friendly and whimsical."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-34.svg",
+    "alt": "The image is a cartoon-style illustration of a rocket. The rocket has a red body with a circular window in the middle. It has two gray fins on either side and a yellow nose cone with a small antenna on top. The rocket is depicted as being in motion, with bright orange and yellow flames coming out of its exhaust, indicating that it is taking off or flying. The overall design is simple and colorful, giving it a playful and whimsical appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-35.svg",
+    "alt": "The image is a cartoon illustration of a snowman. The snowman has a traditional design with two large snowballs forming its body and head. It is wearing a red top hat and a green scarf. The snowman's face features small black eyes, a carrot nose, and a small smile. Its arms are made of brown sticks, and it has two red buttons on its body. The overall style is simple and cheerful, with a festive and wintery theme."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-36.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a narwhal. The narwhal is depicted in a light blue color with a darker blue flipper and tail. It has a single, orange tusk on its head, characteristic of narwhals. The narwhal has a happy expression with small, black eyes and a smiling mouth. The overall design is simple and playful, with a black outline around the entire figure."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-37.svg",
+    "alt": "The image is a cartoon-style illustration of a blue cloud with a happy face. The cloud has two small black eyes and a smiling mouth. Below the cloud, there are three yellow lightning bolts with black outlines, giving the impression that the cloud is producing lightning. The overall design is playful and cheerful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-38.svg",
+    "alt": "The image is a simple, cartoon-style illustration of an orange octopus. The octopus has a large, rounded head with a small, smiling mouth and two black eyes with white highlights. There are also two small black dots on its face, one near each eye. The octopus has four visible tentacles, each with a rounded end. The illustration is outlined in black, giving it a clean and defined look. The overall design is cute and friendly."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-39.svg",
+    "alt": "The image is a cartoon character with a large, fluffy, orange head that resembles a cloud or a mass of curly hair. The character has a simple, white, oval face with two small black eyes, a small smile, and a few freckles. The body consists of two green, striped, noodle-like legs ending in blue shoes. The overall design is playful and whimsical, with a minimalist and cute aesthetic."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-41.svg",
+    "alt": "The image is a whimsical and playful illustration of a cupcake character. The cupcake has a pink frosting top with a cherry and a green leaf on top. The base of the cupcake is brown and features a smiling face with two eyes and a mouth. The character has long, green, curved legs and is wearing green shoes with yellow accents. The overall design is cute and cartoonish, giving the cupcake a lively and animated appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-42.svg",
+    "alt": "The image is a simple, cartoon-style character with a yellow, oval-shaped body. The character has two small, black eyes and a wide, open mouth with a single large white tooth visible. The mouth is black inside. The character has two orange legs with rounded feet. The overall design is minimalistic and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-43.svg",
+    "alt": "The image is a cartoon illustration of an orange fox. The fox is depicted in a cute and playful manner, with a large, bushy tail that is also orange with some red shading. The fox has a round body, small black eyes, and a small black nose. Its front paws are held up in front of its chest, and it has a happy expression on its face. The overall style is simple and whimsical, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-44.svg",
+    "alt": "The image is a cartoon-style illustration of a character that resembles a cat or a rabbit in a spacesuit. The character has a white face with simple black eyes and a small smile. It is wearing an orange spacesuit with a red control panel on the chest. The helmet is a large, round, blue-tinted bubble that covers the character's head. The overall design is cute and whimsical, with a playful and friendly appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-45.svg",
+    "alt": "The image is a cartoon-style illustration of a book. The book has a blue cover with a red spine and a red bookmark hanging out from the bottom. The book is depicted with a smiling face, featuring two eyes and a simple curved line for a mouth, giving it a cheerful and friendly appearance. The overall style is playful and whimsical."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-46.svg",
+    "alt": "The image is a simple, cartoon-style illustration of a to-go coffee cup. The cup is brown with a white sleeve around it. The sleeve has a black heart symbol in the center. The lid of the cup is also brown, and the entire illustration is outlined in black. The design is minimalistic and has a hand-drawn feel to it."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-47.svg",
+    "alt": "The image depicts a stylized, cartoonish representation of a fish skeleton. The skeleton is gray with a black outline and consists of a fish head with an \"X\" for an eye, a central spine, and several horizontal ribs. The tail is also present, split into two parts. The overall design is simple and minimalistic, giving it a playful and illustrative appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-48.svg",
+    "alt": "The image depicts a stylized representation of a vinyl record. The record is primarily black with a central orange label. The design features alternating orange and yellow curved stripes that radiate from the center, creating a dynamic and vibrant pattern. The overall look is bold and eye-catching, reminiscent of retro or vintage aesthetics."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-49.svg",
+    "alt": "The image is a simple, cartoon-style drawing of a green character. The character has a rounded, dome-shaped head and body combined into one shape, with two small black eyes and a small curved line for a mouth, giving it a friendly expression. It has two short arms with curved lines indicating hands and two long, straight legs. The outline of the character is black, and the overall design is minimalistic and cute."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-50.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a milk bottle. The bottle has a smiling face with two eyes and a mouth, giving it a friendly and cheerful appearance. The bottle is filled with milk, and there is a blue cap on top. A straw is inserted into the bottle, with the top part of the straw bent. The overall design is simple and playful, likely intended to appeal to a younger audience or to add a whimsical touch."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-51.svg",
+    "alt": "The image is a cartoon-style illustration of a spray paint can. The can is primarily gray with red and white accents. It has a red heart symbol on its body, with lines radiating from the heart, suggesting it is glowing or being emphasized. The can is depicted as spraying, with a white cloud-like puff coming out from the nozzle. The overall style is simple and playful, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-52.svg",
+    "alt": "The image depicts a stylized, cartoonish yellow face with a wide, open mouth and a red tongue sticking out. The face has two small black eyes and is flanked by a pair of white wings on either side. The overall expression of the face appears to be playful or silly. The design is simple and uses bold lines and colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-53.svg",
+    "alt": "The image is a cartoon-style illustration of a rectangular block character. The block has a green top and front face, with a blue side face that has diagonal lines. The character has two small black eyes and a simple curved line for a mouth, giving it a friendly expression. It also has two blue, curved legs extending from the bottom, making it appear as if it is standing or walking. The overall design is simple and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-54.svg",
+    "alt": "The image is a simple, cartoon-style illustration of a hamburger. The hamburger consists of a top bun with sesame seeds, a layer of green lettuce, a beef patty, a slice of yellow cheese, and a bottom bun. The illustration uses bold black outlines and solid colors, giving it a clean and playful appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-55.svg",
+    "alt": "The image features a stylized, spiral design with vibrant colors. The spiral is composed of alternating bands of red, orange, and yellow, outlined in black. The design starts from a central point and spirals outward, creating a dynamic and eye-catching pattern. The overall shape of the spiral resembles a number \"9\" or a comma, with the tail extending outward and tapering to a point. The use of bold colors and clean lines gives the image a modern and energetic feel."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-56.svg",
+    "alt": "The image is a cartoon-style illustration of a speaker. The speaker is depicted in a three-dimensional perspective, with a slightly angled view. It has a rectangular shape with rounded edges and is primarily gray in color. The front of the speaker features two circular elements, likely representing the speaker drivers. The larger circle is positioned above the smaller one, and both are outlined in white and black. The overall design is simple and stylized, with minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-57.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a green alien with a round head and two antennae. The alien has a simple, happy facial expression with two small black eyes and a smiling mouth. The alien is inside a gray flying saucer with a blue transparent dome covering the top half of its body. The overall design is playful and friendly, with clean lines and a minimalistic color palette."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-58.svg",
+    "alt": "The image depicts a stylized shooting star. The star itself is yellow and has a classic five-pointed shape. It is followed by an orange tail, which gives the impression of motion, suggesting that the star is moving rapidly through space. The design is simple and cartoon-like, with bold black outlines around the star and its tail."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-59.svg",
+    "alt": "The image depicts a cartoon-style speaker with human-like features. The speaker is gray with two blue speaker cones, one larger at the bottom and a smaller one at the top. It has red arms and legs, with yellow hands and feet. The left hand is raised with all fingers extended, while the right hand is making a peace sign. The overall design is playful and anthropomorphic, giving the speaker a lively and animated appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-60.svg",
+    "alt": "The image is a cartoon-style illustration of a blue character that resembles a rabbit. The character has long ears, a simple face with two round eyes, and a mouth with two prominent front teeth. The body is elongated and rectangular with small arms and legs. The outline of the character is black, and the overall design is minimalistic and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-61.svg",
+    "alt": "The image is a cartoon-style illustration of a hand giving a thumbs-up gesture. The hand is depicted with a light skin tone and is set against a bright yellow background. The yellow background has several lines radiating outwards, suggesting a sense of positivity or approval. The illustration is framed as if it were a photograph, with a white border around it."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-62.svg",
+    "alt": "The image is a cartoon-style illustration of a hedgehog. The hedgehog is depicted in a side profile view, facing left. It has a round body covered in spiky fur, which is represented by jagged lines. The hedgehog has a small, pointed snout, a round black eye, and small ears. Its legs are short and black. The overall color of the hedgehog is gray, with darker outlines and details. The illustration is simple and cute, with a playful and friendly appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-63.svg",
+    "alt": "The image depicts a stylized, curved piano keyboard. The keys are arranged in a wavy, arc-like shape, giving the impression of a flexible or bending keyboard. The keys are colored in the traditional black and white pattern, with black keys interspersed among the white keys. The overall design is simple and cartoon-like, with bold outlines and a clean, modern look."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-64.svg",
+    "alt": "The image depicts a cartoonish, green, blob-like character with a happy expression. The character has a simple design with a rounded, irregular shape and a black outline. It has two small black eyes, a wide open mouth with a red tongue, and two small black dots on its cheeks, giving it a cheerful and friendly appearance. The character's body appears to be melting or dripping, adding to its playful and whimsical look."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-65.svg",
+    "alt": "The image is a cartoon-style illustration of a green, dinosaur-like creature. The creature has a simple, rounded body with small legs and arms. It has a friendly expression with two small black eyes, a small curved mouth, and two small dots on its cheeks. The creature's body is decorated with small, curved lines that resemble scales. It also has a series of rounded, green spikes running down its back, giving it a playful and cute appearance. The overall design is simple and whimsical, with a black outline around the entire figure."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-66.svg",
+    "alt": "The image is a cute, cartoon-style illustration of a popsicle. The popsicle has a green base with a red, dripping top that resembles a fruit-flavored coating. The red top has a smiling face with two eyes and a small mouth, giving it a friendly and cheerful appearance. The popsicle is on a wooden stick, and the overall design is outlined in black, making the colors stand out vividly. The illustration has a playful and whimsical feel."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-67.svg",
+    "alt": "The image is a cartoon-style illustration of a piece of meat with a bone. The meat is depicted in shades of blue, with a darker blue on one side and a lighter blue on the other. The surface of the meat has circular patterns or spots in varying sizes. The bone is white and protrudes from one end of the meat. The overall style is simple and playful, with bold outlines and minimal detail."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-68.svg",
+    "alt": "The image is a simple, cartoon-style illustration of a pencil. The pencil has an orange body with black lines indicating the edges of the wooden casing. The tip of the pencil is sharpened, revealing the beige-colored wood and the black graphite core. The opposite end of the pencil has a pink eraser, which is attached to the pencil with a silver metal ferrule. The overall design is clean and straightforward, with bold outlines."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-69.svg",
+    "alt": "The image is a cartoonish, stylized depiction of a yellow, round character with a single large eye and an open mouth. The character has a simple, expressive face with a small black dot for the other eye. There is an orange stripe across the top of its head. The mouth is open wide, showing a single white tooth and a red tongue inside. The overall design is bold and colorful, with thick black outlines."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-70.svg",
+    "alt": "The image is a cartoon-style illustration of a yellow monster. The monster has a rounded, fuzzy body with no visible limbs. It has two small, black eyes and a simple, curved mouth with two small white fangs protruding from the upper jaw. There are several orange spots on its head, including a large one on the top right and smaller ones scattered around. The overall appearance of the monster is friendly and cute."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-71.svg",
+    "alt": "The image is a simple illustration of a paintbrush. The paintbrush has a brown handle and a metal ferrule that connects the handle to the bristles. The bristles are depicted in a stylized manner with curved lines, giving them a flowing appearance. The overall design is clean and minimalistic, with a focus on the essential elements of a paintbrush."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-72.svg",
+    "alt": "The image is a cartoon illustration of an orange cat with a happy expression. The cat has its eyes closed and is smiling, with its arms raised in the air. It has three yellow stripes on its forehead and whiskers on its cheeks. The cat is wearing a yellow inflatable swim ring around its body. The overall style is simple and playful, with bold outlines and bright colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-73.svg",
+    "alt": "The image depicts a cute, cartoonish character with an orange body. The character has a simple, rounded shape with two arms and two legs. It has a smiling face with two small black eyes and a small curved mouth. The character's body is adorned with black stitch-like lines, giving it a patchwork or stitched-together appearance. The character's hands are positioned near its chest, and it has small, white, claw-like fingers. The overall design is playful and whimsical."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-74.svg",
+    "alt": "The image depicts a cartoonish illustration of five green, tentacle-like stalks, each ending in a single large, white eye with a black pupil. The stalks vary in shades of green and are outlined in black. The eyes are exaggerated and give the illustration a whimsical, playful appearance. The overall design is simple and stylized, with a focus on the eyes and the organic, flowing shapes of the stalks."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-75.svg",
+    "alt": "The image is a cartoon-style illustration of a cute, whimsical character. The character has an elongated, oval-shaped body with alternating blue and white horizontal stripes. It has a simple, smiling face with two small black eyes and a small curved mouth. The character has three appendages: one on the left side that is blue and wavy, and two on the right side that are white and wavy. The top of the character's head has a blue oval shape. The overall design is playful and friendly."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-76.svg",
+    "alt": "The image is a cartoon illustration of a small, brown dog. The dog has a round face with a black nose, small black eyes, and a smiling mouth with its tongue sticking out. It has large, pointed ears and a short, stubby tail. The overall style is simple and cute, with clean lines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-77.svg",
+    "alt": "The image is a cartoon illustration of a friendly ghost. The ghost is light blue in color with a black outline. It has large, black, oval eyes with white highlights, giving it a cheerful expression. The ghost is smiling widely with an open mouth. It has two small arms, one raised as if waving, and a small tuft of hair on top of its head. The overall appearance of the ghost is cute and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-78.svg",
+    "alt": "The image is a cartoon illustration of a cow. The cow has a brown body with orange patches and a pink face and udder. It has two small black eyes, a smiling mouth, and two horns with orange and black stripes. The cow's ears are pink on the inside and brown on the outside. The overall style is cute and simplistic, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-79.svg",
+    "alt": "The image is a cartoon-style illustration of a smiling face. The character has spiky green hair and a light skin tone. The eyes are closed, and the mouth is open, showing a happy expression. The overall style is simple and playful, with bold outlines and minimal details."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-80.svg",
+    "alt": "The image is a cartoonish depiction of a blue, one-eyed monster with a large green tongue sticking out. The monster has a single, large eye in the center of its face, a wide mouth with two small white teeth, and a few black lines on its face that suggest fur or texture. The overall expression of the monster appears to be playful or silly."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-81.svg",
+    "alt": "The image is a cartoon character with a whimsical and festive appearance. The character has a rectangular body with a red upper half and a green lower half, featuring scalloped edges where the colors meet. It has a smiling face with two small black eyes and a simple curved mouth. The character is wearing a green hat with a red pom-pom at the end, which droops to one side. It has green arms and legs, with the arms positioned as if one is resting on its hip. The overall design is playful and colorful, giving off a cheerful and friendly vibe."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-82.svg",
+    "alt": "The image is a cartoonish, abstract character with a simple design. The character is primarily blue with a black outline. It has a large, open mouth that is green on the outside and black on the inside, with a red tongue. The character has two small, black eyes with white highlights, giving it a surprised or shocked expression. The overall shape of the character is rounded and somewhat resembles a ghost or a blob-like figure."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-83.svg",
+    "alt": "The image is a cartoonish, rectangular character with a blue body and green accents. It has two small, round eyes and a wide, open mouth with a green interior and a red tongue. The character also has two green antennae-like protrusions on top of its head. The overall expression of the character appears to be happy or excited. The design is simple and playful, with bold outlines and bright colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-84.svg",
+    "alt": "The image is a stylized, cartoon-like depiction of a skull. It features large, round eye sockets with black circles inside, giving it a somewhat cute or whimsical appearance. The skull has a small, triangular nose hole and three teeth at the bottom. The overall design is simple and outlined in black, with a white fill for the skull itself. The style is playful and not intended to be realistic or frightening."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-85.svg",
+    "alt": "The image is a cartoon-style illustration of a donut. The donut has a pink frosting with small black sprinkles scattered across it. The donut also has a cute, smiling face drawn on it, giving it a playful and friendly appearance. The outline of the donut and its features are drawn with a thick black line, enhancing the cartoonish look. The base of the donut is a light brown color, representing the dough."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-86.svg",
+    "alt": "The image depicts a colorful, stylized lollipop. The lollipop has a red, swirled design with blue accents, giving it a vibrant and eye-catching appearance. It is mounted on a stick, and there is a green bow tied around the base of the lollipop, adding a decorative touch. The overall design is simple and cartoon-like, with bold outlines and bright colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-87.svg",
+    "alt": "The image depicts a cartoon-style lollipop shaped like a bear's head. The bear's head is orange with a heart-shaped nose and simple line details for the facial features. The lollipop stick is brown, and there is a blue bow tied around the base of the bear's head. The outline of the bear's head is bordered with a twisted rope design in red and yellow. The overall design is playful and colorful, giving it a whimsical and fun appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-88.svg",
+    "alt": "The image depicts a colorful, cartoon-style lollipop. The lollipop is designed to resemble a flower, with a red, swirled candy center and yellow petals surrounded by a green outline. The lollipop is mounted on a brown stick. The overall design is playful and vibrant, with bold outlines and bright colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-89.svg",
+    "alt": "The image depicts a stylized illustration of a pair of red lips with a smile. The lips are outlined in black, and the teeth are visible, with a few teeth prominently shown in white. The overall design is simple and cartoon-like, with bold colors and clean lines. The lips are slightly open, revealing the teeth and a black area representing the inside of the mouth."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-90.svg",
+    "alt": "The image depicts a simple, stylized illustration of a paper airplane. The paper airplane is primarily white with a gray interior, and it is outlined in black. The design is minimalistic and clean, emphasizing the geometric folds and sharp angles typical of a paper airplane."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-91.svg",
+    "alt": "The image is a cartoon-style illustration of a yellow, blob-like creature with large, green eyes. The creature has a small, simple mouth and is adorned with several blue spots on its body. The overall expression of the creature appears to be friendly and cute. The illustration is outlined in black, giving it a bold and defined appearance."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-92.svg",
+    "alt": "The image is a cartoon illustration of a cute, blue character with a simple, rounded body shape. The character has small black eyes, a wide open mouth with a red tongue, and is smiling. It is wearing a red and green striped hat with a green pom-pom at the end. The character has one arm raised, as if waving or gesturing happily. The overall appearance is cheerful and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-93.svg",
+    "alt": "The image is a cartoon-style illustration of a rocket. The rocket is blue with green accents, including a green nose cone, fins, and a circular window outline. It has two green arms with three-fingered hands raised in the air, giving it a playful and anthropomorphic appearance. The rocket is depicted as launching, with white smoke clouds billowing out from the bottom, indicating thrust. The overall design is whimsical and fun."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-94.svg",
+    "alt": "The image is a graphic illustration of a speech bubble with the letters \"WTF\" inside it. The speech bubble is green with a black outline, and the letters \"WTF\" are in bold, yellow font with a black border. The overall style is cartoonish and playful."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-95.svg",
+    "alt": "The image is a cartoon illustration of a banana. The banana is depicted with a cheerful expression, featuring a wide smile with visible teeth. It is also wearing blue sunglasses, adding a playful and fun element to the image. The banana is bright yellow with simple black outlines and minimal detailing. The overall style is whimsical and lighthearted."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-96.svg",
+    "alt": "The image depicts a simple, stylized illustration of a red pen. The pen has a red body with a black outline, a pink section near the tip, and an orange cap at the top. The design is minimalistic and cartoon-like, with bold lines and solid colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-97.svg",
+    "alt": "The image is a cartoon illustration of a blue bear-like character. The character has a simple, cute design with small black eyes, a small smile, and two small ears on top of its head. It is holding a large yellow pencil with a pink eraser at the end. The overall style is playful and child-friendly, with bold outlines and bright colors."
+  },
+  {
+    "src": "https://raw.githubusercontent.com/MariaLetta/mega-doodles-pack/master/doodles/svg/doodle-99.svg",
+    "alt": "The image is a cartoon-style illustration of a blue teacup filled with a brown liquid, likely tea or coffee. The teacup has a handle on the right side and features a cute, smiling face with two eyes and a small mouth on its front. The overall design is simple and playful, giving the teacup a friendly and cheerful appearance."
+  } 
+]

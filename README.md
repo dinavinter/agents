@@ -146,7 +146,14 @@ pnpx nx start ai-sdk
 ```
 
 #### [apps/agent](apps/agent)
-Example usage example of SAP AI with `statelyai/agent`  https://stately.ai/docs/agents
+Example usage example of SAP AI with agents using (`ai-sdk`)[https://sdk.vercel.ai] and (`xstate`)[https://stately.ai/docs/xstate].
+
+## start with api and ui
+```bash
+pnpx nx dev agent
+```
+
+## start a single agent
 ```bash
 pnpx nx start agent
 ```
@@ -160,7 +167,7 @@ pnpx nx start langchain
 ## Setup
 
 ```bash
-git clone git@github.com:dinavinter/sap-ai.git
+git clone https://github.tools.sap/AI-GUILD-IL/agent-ai
 npm install -g pnpm
 pnpm install
 ```

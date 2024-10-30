@@ -4,6 +4,13 @@
   "description": "",
   "main": "src/index.js",
   "packageManager": "pnpm@9.6.0",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+    
+  },
 
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
