@@ -11,6 +11,7 @@ import { createSSRApp } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import fs from "node:fs";
 import path from "node:path";
+import {randomInt} from "node:crypto";
 const app = createSSRApp({
     data: () => ({ count: 1 }),
     components: { Splitpanes, Pane },
@@ -59,28 +60,30 @@ renderToString(app).then((html) => {
 
 export function routes(fastify: FastifyInstance) {
 
+      fastify.get('/ide/{agent} ', async function handler(request, reply) {
+          reply.redirect(`/ide/${request.params.agent}/${randomInt(1, 100)}`)
+        })
 
-
-      fastify.get('/ide', async function handler(request, reply) {
-                const platform = request.headers['user-agent'] || ''
+      fastify.get('/ide/{agent}/{workflow}', async function handler(request, reply) {
                  reply.header('Cache-Control', 'no-store');  
                 reply.type('text/html')
-          const ctx = {}
+          const {machine} = await import(`~/agents/${request.params.agent}`)
+            const { agent, workflow } = request.params
+                    return sendHtml(reply, ` 
+                            <div class="grid">
+                                    <div>
+                                       <code>
+                                          ${machine}
+                                        </code>
+                                    </div>
+                                    <div class="gutter-col gutter-col-1"></div>
+                                   <div hx-ext="sse" sse-connect="/${workflow}/${workflow}"   >
+                                     <div  sse-swap="render" ext="sse" hx-swap="beforeend">
+                                    </div>
+                              <!--<div id="app">${html}</div> -->
 
-          const html =await renderToString(await createApp(),ctx)
-                return reply.send(`
-                        <!DOCTYPE html>
-                        <html>
-                         <head>
-                            <title>Vue SSR Example</title>
-                            <script type="importmap">
-                              {
-                                "imports": {
-                                  "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
-                                }
-                              }
-                            </script>
-                            <script type="module">
+                                </div>
+                           <script type="module">
                             import Split from 'https://esm.sh/split-grid'
 
                                 Split({
@@ -106,21 +109,16 @@ export function routes(fastify: FastifyInstance) {
                                     grid-column: 2;
                                 }
                                 </style>
-                            <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
 
-                          </head>
-                          <body>
-                            <div class="grid">
-                                    <div></div>
-                                    <div class="gutter-col gutter-col-1"></div>
-                                    <div></div>
-                                </div>
-
-                            <div id="app">${html}</div>
-
-                          </body>
-                        </html>
-                        `)
+ 
+                        `, 
+                     [
+                         "https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries",
+                         "https://unpkg.com/vue@3/dist/vue.esm-browser.js"
+                       ], {
+                            agent,
+                            workflow
+                     })
                 })
 
     fastify.get('/app.js', async function handler(request, reply) {

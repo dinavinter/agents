@@ -1,16 +1,18 @@
 import {FastifyReply} from "fastify";
+import fs from "node:fs";
  
 
 export type replyWithHtml = (reply:FastifyReply) => Promise<void>;
 
-export function sendHtml(reply:FastifyReply, agent:string, workflow:string ) {
+export async function sendHtml(reply:FastifyReply, agent:string, workflow:string ) {
+    // const code = fs.readFileSync(`../agents/${agent}/${workflow}.ts`, 'utf8');
     reply.header('Cache-Control', 'no-store'); 
     reply.type('text/html')
-    reply.send(layout(agent,workflow));
+    reply.send(layout(agent,workflow, ""));
 }
 
 
-export const layout = (agent:string, workflow:string) => `
+export const layout = (agent:string, workflow:string, code:string) => `
 <html>
       <head>
         <title>Agent AI</title>
@@ -40,7 +42,6 @@ export const layout = (agent:string, workflow:string) => `
        </head>
        <body> 
         <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
-
            <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
               <a href="/agents"  ">agents</a> 
               <span class="mx-2 text-gray-500">/</span> 
@@ -51,6 +52,12 @@ export const layout = (agent:string, workflow:string) => `
         </header> 
             <div hx-ext="sse" sse-connect="${workflow}"   >
               <div  sse-swap="render" ext="sse" hx-swap="beforeend">
+            </div>
+            
+            <div class="flex-auto flex flex-col w-1/2 mx-auto resize-x" >
+                <code>
+                  ${code}
+                </code>
             </div>
  
          </body>

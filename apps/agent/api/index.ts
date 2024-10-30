@@ -38,7 +38,7 @@ export function routes(fastify: FastifyInstance) {
             })))); 
         }
         
-        sendHtml(reply, agent,workflow);
+        return await sendHtml(reply, agent,workflow);
     })
  
     fastify.get('/agents/:agent/:workflow/events', async function handler(request, reply: FastifyReply) {
