@@ -2,7 +2,7 @@ import 'atomico/ssr/load';
 
 import {assign, setup,} from 'xstate';
 import {Doodle, findDoodleTool} from "../doodles";
-import {SVG} from "../components";
+import {SVG} from "./components";
 import {fromAIEventStream, openaiGP4o} from "../ai";
 import {render, RenderStream, renderTo} from "./agent-render";
 import {ChatBubble} from "./components/chatBubble";
@@ -35,7 +35,7 @@ export const machine = setup({
 }).createMachine({
     initial: 'thinking',
     context: ({input}) => input,
-    entry: render(({html, stream}) => html`
+    entry: render(({html}) => html`
         <main class="mx-auto  bg-slate-50 h-full" >
             <${Header} title="The Wiser" />
            <div class="flex flex-col items-center justify-center *:w-1/2 *:justify-center" hx-ext="sse" sse-swap="content" hx-swap="beforeend" />
@@ -43,7 +43,7 @@ export const machine = setup({
     ),
     states: {
         thinking: {
-            entry: renderTo('content',({stream, html}) => html`
+            entry: renderTo('content',({ html}) => html`
                 <${ChatBubble} name="Thinker" 
                                img="https://flowbite.com/docs/images/people/profile-picture-5.jpg" 
                                swap="@thinker.text-delta" />

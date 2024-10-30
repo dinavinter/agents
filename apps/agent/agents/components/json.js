@@ -15,30 +15,14 @@ export async function* toJsonAsync (stream){
 export const JsonStream= c(({src} )=>{
     const refSlotTemplate = useRef();
     const [Template] = useSlot(refSlotTemplate);
-    const [state, setState] = useState([]);
     const [props, setProps]= useState({});
     const {stream}= getOrCreate(useStore(EventSourceStore),src);
-     const [Element, setElement]= useState();
-    // useEffect(() => {
-    //     if (templates.length){
-    //         setState(templates.map((Template) => html`
-    //             <${Template} slot="" ...${props}  cloneNode />`.render()
-    //           ))
-    //     }
-    // }, [templates]);
+ 
     
     useEffect(async () => {
         for await (const props of toJsonAsync(stream)) { 
             console.debug("json:props", props, Template)
-             setProps(props);
-             // for (const node of state){
-             //    Object.assign(node, props);
-             // }
-            
-            
-            // setState((s)=>[...s, ...templates.map((Template) => {
-            //     return html`<${Template} slot="" ...${props} cloneNode />`.render();
-            // })])
+             setProps(props); 
         } 
     })
 

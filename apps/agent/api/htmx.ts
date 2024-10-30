@@ -27,8 +27,6 @@ export const layout = (agent:string, workflow:string) => `
           }
         }
         </script> 
-<!--         <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" ></script>-->
-<!--  <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>-->
 
        <script src="https://unpkg.com/htmx.org@2.0.2"></script>
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>

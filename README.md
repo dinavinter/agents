@@ -160,7 +160,7 @@ pnpx nx start langchain
 ## Setup
 
 ```bash
-git clone git@github.com:dinavinter/sap-ai.git
+git clone https://github.tools.sap/AI-GUILD-IL/agent-ai
 npm install -g pnpm
 pnpm install
 ```
