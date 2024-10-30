@@ -1,6 +1,32 @@
   
 # AI Agents 
 
+## Table of Contents
+- [Agents Overview](#agents-overview)
+    - [Simple Agent](#simple-agent)
+    - [Parallel Agent](#parallel-agent)
+    - [Screen Set Builder](#screen-set-builder)
+    - [Support Agent](#support-agent)
+    - [Tic Tac Toe Agent](#tic-tac-toe-agent)
+    - [Test Agent](#test-agent)
+    - [GitHub Agent](#github-agent)
+    - [Pinecone Agent](#pinecone-agent)
+- [Running the Project](#running-the-project)
+- [Implementation Details](#implementation-details)
+    - [State Management](#state-management)
+    - [UI Rendering](#ui-rendering)
+    - [Streaming](#streaming)
+        - [Streaming AI to UI](#streaming-ai-response-to-ui)
+        - [Streaming Text Events](#streaming-text-events)
+        - [Streaming Object Events](#streaming-object-events)
+    - [Construct Prompt w/t Context Variables](#construct-prompt-wt-context-variables)
+    - [AI Tools](#ai-tools)
+    - [API](#api)
+- [Environment Variables](#environment-variables)
+- [SAP-AI-Integration](#libssap-ai-token)
+
+
+
 This project showcases a series of AI agents built using the [xstate](https://github.com/statelyai/xstate) library, for easily managing state transitions and asynchronous tasks.
 
 The agents are designed to demonstrate various capabilities and integrations with external services, such as GitHub, Pinecone, and UI streaming, highlighting the power and flexibility of modern AI technologies.
@@ -145,11 +171,47 @@ const machine = Machine({
 
 ```
 
-### Streaming AI response into machine events
+### Streaming
 
 To stream AI responses into the state machine's events, we use an [observable actor](https://stately.ai/docs/observable-actors)  to stream the AI response into the state machine's events, triggering state transitions and actions based on the response.
 
-#### Streaming Text: fromAIEventStream
+#### Streaming AI response to UI
+
+To stream AI responses directly into the UI, we can use swap attributes with the @{actor}.{event} syntax. This approach allows us to render the AI response directly into the UI without additional state transitions or actions. For instance:
+
+```js
+const machine = Machine({
+    id: 'simpleAgent',
+    initial: 'loading',
+    context: {
+        thought: '',
+    },
+    entry: renderTo('content', ({html}) => html`
+                <${ChatBubble} name="Thinker" 
+                               img="https://flowbite.com/docs/images/people/profile-picture-5.jpg" 
+                               swap="@thinker.text-delta" />
+ 
+                 `
+    ),
+    states: {
+        states: {
+            thinking: {
+                invoke: {
+                    src: 'aiStream',
+                    id: 'thinker',
+                    systemId: 'thinker',
+                    input: 'Think about a random topic, and then share that thought.'
+                }
+            }
+        }
+    }
+});
+
+```
+
+#### Streaming Text Events
+
+`fromAIEventStream` is a utility function that creates an observable actor from an AI model and a prompt. The function takes an object with the model and prompt properties and returns an observable actor that streams the AI response into the state machine's events. For instance:
     
  ```js
     const machine = Machine({
@@ -180,7 +242,9 @@ To stream AI responses into the state machine's events, we use an [observable ac
 });
 ```
 
-#### Streaming Objects: fromAIElementStream
+#### Streaming Object Events
+
+`fromAIElementStream` is a utility function that creates an observable actor from an AI model and a template. The function takes an object with the model and template properties and returns an observable actor that streams the AI response into the state machine's events. For instance:
 
 > see usage in [screen](./apps/agent/agents/screen.ts) agent
     
@@ -222,39 +286,7 @@ const machine = Machine({
 });
 ```
 
-### Streaming AI response directly into UI
 
-To stream AI responses directly into the UI, we can use swap attributes with the @{actor}.{event} syntax. This approach allows us to render the AI response directly into the UI without additional state transitions or actions. For instance:
-
-```js
-const machine = Machine({
-    id: 'simpleAgent',
-    initial: 'loading',
-    context: {
-        thought: '',
-    },
-    entry: renderTo('content', ({html}) => html`
-                <${ChatBubble} name="Thinker" 
-                               img="https://flowbite.com/docs/images/people/profile-picture-5.jpg" 
-                               swap="@thinker.text-delta" />
- 
-                 `
-    ),
-    states: {
-        states: {
-            thinking: {
-                invoke: {
-                    src: 'aiStream',
-                    id: 'thinker',
-                    systemId: 'thinker',
-                    input: 'Think about a random topic, and then share that thought.'
-                }
-            }
-        }
-    }
-});
-
-```
 #### Construct Prompt w/t Context Variables
 
 To construct prompts with context variables, we use the `template` param in the input object. The template string can include placeholders for context variables, which are replaced with the actual values when the AI model is called. For instance:
@@ -282,7 +314,7 @@ const machine = Machine({
 })
 ```
 
-### Using AI Tools 
+### AI Tools
 
 AI tools are incorporated using actions and invoked services. For instance, tools like findDoodleTool or searchTestsTool are used to perform specific AI-driven tasks, such as finding a doodle or searching for tests. These tools can be called within the state machine's states using invoke or on event handlers.
 
@@ -322,7 +354,7 @@ Example AI Tool Invocation: in the Simple Agent's state machine, the generate st
 ```        
  
   
-### API 
+### API
 The agents are served using [fastify](https://fastify.dev/), a fast and low overhead web framework for Node.js. The API routes are defined in the [`api.ts`](./apps/agent/api.ts) file, which handles requests and responses for the agents.
  
 The API routes are defined as follows:
