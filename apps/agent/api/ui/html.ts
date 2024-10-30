@@ -17,7 +17,7 @@ export function sendHtml(reply:FastifyReply,  node?:VNodeAny | string , scripts?
 
 
 
-export const layout = ({body, scripts}:{body?:string, scripts:{src:string,type:string, async:boolean}[]}) => `
+export const layout = ({body, scripts,workflow, agent}:{body?:string, agent?:string,workflow?:string, scripts:{src:string,type:string, async:boolean}[]}) => `
 <html>
       <head>
         <title>Agent AI</title>
@@ -46,7 +46,16 @@ export const layout = ({body, scripts}:{body?:string, scripts:{src:string,type:s
          ${scripts.map(script => `<script src="${script.src}" type="${script.type}" ${script.async ? 'async' : ''}></script>`).join('\n')}
        </head>
        <body> 
-             ${body || ''}  
+         <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
+           <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
+              <a href="/agents"  ">agents</a> 
+              <span class="mx-2 text-gray-500">/</span> 
+              <a href="/agents/${agent || "simple"} " >${agent || "simple"}</a> 
+              <span class="mx-2 text-gray-500">/</span> 
+              <a href="#" class="text-slate-400 hover:text-slate-300">${workflow || `${agent}-0`}</a> 
+            </div>
+          </header>
+             ${body || ''}   
          </body>
  </html>
 `
