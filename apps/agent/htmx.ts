@@ -15,10 +15,8 @@ export const layout = (agent:string, workflow:string) => `
         {
           "imports": {
             "atomico": "https://unpkg.com/atomico",
-            "animejs":"https://cdn.jsdelivr.net/npm/animejs@3.2.2/+esm",
             "@atomico/hooks":"https://esm.sh/@atomico/hooks",
             "@atomico/hooks/use-slot":"https://esm.sh/@atomico/hooks@4.4.1/use-slot",
-            "it-pushable":"https://esm.sh/it-pushable",
             "@atomico/store":"https://esm.sh/@atomico/store"
             
           }
