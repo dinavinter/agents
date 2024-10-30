@@ -284,7 +284,13 @@ const machine = Machine({
             }
         }
     }
-});
+}).provide({
+    actors:{
+        aiElementStream: fromAIElementStream({
+            model: openaiGP4o(),
+        })
+    }
+})
 ```
 
 
