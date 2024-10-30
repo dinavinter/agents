@@ -1,6 +1,5 @@
 import {type AssistantStreamEvent } from "openai/resources/beta";
 import {type RunCreateParamsBaseStream} from "openai/src/lib/AssistantStream";
-import {z} from "zod";
 import {IndexByProp} from "xstate/dist/declarations/src/types";
 import {FromDefault} from "./options";
 import {azureOpenAI} from "./providers/openai";

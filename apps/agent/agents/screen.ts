@@ -1,8 +1,7 @@
 import {assign, emit, setup} from "xstate";
 import {fromAIElementStream, fromAIEventStream, openaiGP4o} from "../ai";
 import {z} from "zod";
-import {render, RenderStream, renderTo} from "./agent-render";
-import {Doodle} from "../doodles";
+import {render, renderTo} from "./agent-render";
 import {ChatBubble} from "./components/chatBubble";
 
  

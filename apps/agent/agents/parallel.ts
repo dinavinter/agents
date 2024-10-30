@@ -10,7 +10,7 @@ import {openaiGP4o,fromAIEventCallback} from "../ai";
 import {config} from 'dotenv';
 import {Doodle, findDoodleTool} from "../doodles";
 import {streamText, StreamTextResult, TextStreamPart} from "ai";
-import {SVG} from "../components";
+import {SVG} from "./components";
 import {render, renderTo, RenderStream} from "./agent-render";
 import {asyncEventGenerator,asyncBatchEvents,type Clonable, cloneable,filterEventAsync} from "../stream";
 import {html} from "atomico";

@@ -1,55 +1,33 @@
-import {c, html} from "atomico";
-import {Atomico} from "atomico/types/dom";
+import 'atomico/ssr/load';
+import {html} from "atomico";
 import {VNode, VNodeAny} from "atomico/types/vnode";
-import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject, sendTo} from "xstate";
+import {ActionArgs, emit, EventObject, MachineContext, type ParameterizedObject} from "xstate";
 import {EventMessage} from "fastify-sse-v2";
-import {JsonStream, TextStream} from "../components";
 
 
-export type StreamOptions ={ html: Atomico<any,any, any> ; text:Atomico<any,any, any> ; json:Atomico<any,any, any> ; href:string
+export type StreamOptions ={
+    href:string
    connect: (options?:{event?:string, swap?:string}) => Record<string,any>
 };
+
 export type RenderStream = StreamOptions & {
     service:(id?: string) => RenderStream;
     event:(type:string)=>StreamOptions
 
 };
 
-export function agentStream(agent:string, workflow: string ):RenderStream {
-    const href = `/agents/${agent}/${workflow}`;
-    return {
-        href,
-        event: (type: string) => streamElements(workflow, `${href}/events/${type}`),
-        service: (id?: string) => workflowStream(`${href}/${id}` ),
-        html: streamElements(href).html,
-        text: streamElements(href).text,
-        json: streamElements(href).json,
-        connect: streamElements(href).connect
-    }
-}
 export function workflowStream(workflow: string ):RenderStream {
     return {
         href: workflow,
         event: (type: string) => streamElements(workflow, type),
         service: (id?: string) => workflowStream(`${workflow}/${id}` ),
-        html: streamElements(workflow).html,
-        text: streamElements(workflow).text,
-        json: streamElements(workflow).json,
         connect: streamElements(workflow).connect
     }
 }
 export function streamElements(workflow: string, type?: string | undefined):StreamOptions {
     const href = `${workflow}${type ? `/events/${type}` : ''}`;
-
      return {
-         href,
-         text:c(({src}) => html`
-          <host shadowDom>${src}</host>`, {
-            props: {
-                src: {type: String, reflect: true, value: href}
-            },
-            base: TextStream
-        }), 
+         href, 
          connect(options)  {
              const {event, swap}= options ||{ }
              return {
@@ -59,20 +37,7 @@ export function streamElements(workflow: string, type?: string | undefined):Stre
                  'ext':'sse'
              }
              
-         },
-         html:c(({workflow,type}) => html` <host   ext="sse" sse-connect="${workflow}/events" sse-swap="${type}" hx-swap="beforeend" />`, {
-            props: {
-                workflow: {type: String, reflect: true, value: workflow},
-                type: {type: String, reflect: true, value: type}
-            } 
-        }),
-         json:c(({src}) => html`
-          <host shadowDom>${src}</host>`, {
-             props: {
-                 src: {type: String, reflect: true, value: href}
-             },
-             base: JsonStream
-         }),
+         }
     }
 }
 
@@ -126,13 +91,11 @@ export function renderTo<TContext extends MachineContext & {stream?: RenderStrea
             innerHTML: string,
             outerHTML: string,
         };
-        const event = {
+        return {
             type: type,
             event: type,
             data: rendered?.toString(),
-        } satisfies EventMessage & { type: typeof type, event: string}
-        console.log(event, node);
-        return event 
+        } satisfies EventMessage & { type: typeof type, event: string } 
     }
 
 
