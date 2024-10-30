@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "dev": "pnpm agent:dev",
     "agent:dev": "cd apps/agent && pnpm dev",
     "agent:start": "cd apps/agent && pnpm start"
   },
