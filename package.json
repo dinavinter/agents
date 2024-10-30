@@ -3,8 +3,13 @@
   "packageManager": "pnpm@9.6.0",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev": "pnpm agent:dev",
+    "agent:dev": "cd apps/agent && pnpm dev",
+    "agent:start": "cd apps/agent && pnpm start"
+  },
   "private": true,
+ 
   "dependencies": {
     "@ai-sdk/openai": "^0.0.40",
     "@xstate/graph": "^2.0.0",

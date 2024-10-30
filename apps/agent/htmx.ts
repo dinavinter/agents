@@ -1,7 +1,4 @@
 import {FastifyReply} from "fastify";
- 
-
-export type replyWithHtml = (reply:FastifyReply) => Promise<void>;
 
 export function sendHtml(reply:FastifyReply, agent:string, workflow:string ) {
     reply.header('Cache-Control', 'no-store'); 
@@ -18,17 +15,13 @@ export const layout = (agent:string, workflow:string) => `
         {
           "imports": {
             "atomico": "https://unpkg.com/atomico",
-            "animejs":"https://cdn.jsdelivr.net/npm/animejs@3.2.2/+esm",
             "@atomico/hooks":"https://esm.sh/@atomico/hooks",
             "@atomico/hooks/use-slot":"https://esm.sh/@atomico/hooks@4.4.1/use-slot",
-            "it-pushable":"https://esm.sh/it-pushable",
             "@atomico/store":"https://esm.sh/@atomico/store"
             
           }
         }
         </script> 
-<!--         <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" ></script>-->
-<!--  <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>-->
 
        <script src="https://unpkg.com/htmx.org@2.0.2"></script>
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>

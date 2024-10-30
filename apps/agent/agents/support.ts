@@ -3,7 +3,7 @@ import {emit, setup} from 'xstate';
 import {createAgent, fromDecision} from "@statelyai/agent";
 import {openaiGP4o} from "../ai";
 import {render, renderTo} from "./agent-render";
-import {SVG} from "../components";
+import {SVG} from "./components";
 import {ChatBubble} from "./components/chatBubble";
 import {Header} from "./components/header";
 
