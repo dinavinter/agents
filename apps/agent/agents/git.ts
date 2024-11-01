@@ -1,19 +1,16 @@
 
-//state machine to read repository, analyze each image in a folder , and persist the image with the alt in index json file
+//state machine to load tests from github repo and analyze them, creating a json file with the tests, can be used to create a vector database your tests
+// NOTE: Works with fs, and github api requires GITHUB_TOKEN to be set in the environment variable
+// NOTE: does not work with ui yet
 import {
-    ActorLogic,
-    AnyActorLogic,
-    assign, createActor,
-    createMachine, DoneActorEvent, fromPromise, ObservableActorLogic, setup, spawnChild
+    ActorLogic, 
+    assign,fromPromise, setup
 } from "xstate";
-import type {PromiseActorLogic
-} from "xstate";
-import {getRepoFiles, GithubContentFile, GithubLoaderParams} from "../utils/git";
 import {openaiGP4o} from "../ai";
-import {streamObject, streamText} from "ai";
+import {streamObject} from "ai";
 import {env} from "node:process";
 import fs from "node:fs";
-import {fromAsyncGenerator, fromEventAsyncGenerator} from "../stream";
+import {fromAsyncGenerator} from "../stream";
 import {z} from "zod";
 
 type Test = {
@@ -34,186 +31,22 @@ type Test = {
     path: string;
     attributes: string[];
 }
- 
+
+
+export type GithubLoaderParams = {repo: string, branch: string, accessToken?: string}
+export type GithubContentFile =  {url:string , path:string,  src:string; branch: string, repo: string}
+
     
 type File= Pick<GithubContentFile, "src" | "path"> &   {  tests:Test[],  done?: boolean , state: "pending" | "analyzing" | "done" | "error" }
-type Analysis = File &   { description:string }
-
+ 
 type GithubSource = GithubLoaderParams;
-type Output= {
-    src: string;
-    alt: string;
-}[]
+ 
 
-fs.mkdirSync("tests", {recursive: true})
+ 
 
-    
-
-export const config =   createMachine({
-    initial: 'analyzing',
-    types: {
-        input:  {} as { source: GithubSource; files?: Record<string, File>},
-        context: {} as { source: GithubSource; files: Record<string, File>, processing?: File},
-        output: [] as Output,
-        actors: {} as {
-            logic: PromiseActorLogic<Record<string, File>, GithubSource>;
-            src: 'puller';
-        } | {
-            src: 'analyze';
-            logic: ObservableActorLogic<Test, {src:string, path:string}>;
-        }
-    },
-    context: ({input})=>({
-        files: {} as Record<string, File>,
-        
-        source: {
-            repo: "dinavinter/umtests",
-            branch: "main",
-            recursive: true,
-            accessToken:env.GITHUB_TOKEN,
-            ignorePaths: ["preview", "doodles/svg"]
-        },
-        ...(input as { source?: GithubSource; files?: Record<string, File>} || {})
-    }),
-    states: {
-        reading: {
-            invoke: {
-                src: 'puller',
-                input: ({context}) => context.source,
-                onDone: {
-                    target: 'analyzing',
-                    actions: assign({
-                        files: ({event}) => event.output
-                    })
-                }
-            }
-        },
-        analyzing: {
-            initial: 'looping',
-            states:{
-                looping: {
-                    always: [{
-                        target: 'analyzing',
-                        guard: ({context, event}) => Object.values(context.files).filter(f =>  !f.done).length > 0
-                    },{
-                        target: '#done',
-                        guard: ({context, event}) => Object.values(context.files).filter(f =>  !f.done).length === 0
-                    }]
-                },
-                analyzing: {
-                    entry: assign({
-                        processing: ({context}) => Object.values(context.files).filter(f => !f.done)[0]
-                    }),
-                    invoke: {
-                        src: 'analyze',
-                        id: 'analyzer',
-                        systemId: 'analyzer',
-                        
-                        input: ({context:{processing}}) => processing!,
-                        onSnapshot: {
-                            actions: ({event:{snapshot}, context:{files}})=> 
-                                fs.writeFileSync("./tests/classified.json", JSON.stringify(files, null, 2))
-                        },
-                        onDone: {
-                            target: 'looping',
-                            actions: assign({
-                                files: ({context}) => ( {
-                                    ...context.files,
-                                    [context.processing!.path]:{
-                                        ...context.files[context.processing!.path],
-                                        done: true
-                                    }
-                                })
-                            })
-                        }
-                    },
-                    on: {
-                        test: {
-                            actions: assign({
-                                files: ({context, event}) => {
-                                    const {path} = event as Test;
-                                    return {
-                                        ...context.files,
-                                        [path]: {
-                                            ...context.files[path],
-                                            tests: [...context.files[path].tests, event as Test]
-                                        }
-                                    }
-                                }
-                            })
-                        }
-                    }
-                }
-            }
-
-        },
-
-        done:{
-            id:"done",
-            type: 'final',
-            entry: [({context}) => console.log("done" ,context.files)],
-            output: ({context}) =>context.files 
-        }
-    }
-
-});
-
-
-
-export const analyzeMachine= config.provide({
-    actors: { 
-        puller: fromPromise(async function read({input:options}) {
-            const files=  await getRepoFiles(options)
-            return files
-                .filter(f => f.path.endsWith('.cs') )
-                .slice(0, 100)
-                .reduce((acc, file) => {
-                    acc[file.path] = {
-                        ...file,
-                        state: "pending",
-                        tests: [],
-                        done: false
-                    };
-                    return acc;
-                }, {} as Record<string, File> )
-        }),
-        analyze:fromEventAsyncGenerator(async function * analyze({input:{src,path}}) {
-            const sourceBuffer = await fs.promises.readFile(`/Users/I347305/Src/umtests/Tests/${path}`);
-            const sourceCode = sourceBuffer.toString();
-            const {elementStream} = await streamObject({
-                output: 'array',
-                model: openaiGP4o(),
-                prompt: 'your role is to extract tests from the following code ```cs`' + sourceCode + '```',
-                schema:  z.object( {
-                    name: z.string().describe('The name of the test'),
-                    usecase: z.string().describe('The test use case explained in few sentences'),
-                    apis: z.array(z.string()).describe('The apis involved  in the test'),
-                    flow: z.string().describe('The test flow in  few words'),
-                    tags: z.array(z.string()).describe('Tags that will help to with search queries on the tests'),
-                    category: z.array(z.string()).describe('The categories of the tests' ),
-                    attributes: z.array(z.string()).describe('The attributes of the test'),
-                    loc: z.object({
-                        start: z.number().describe('The start location of the test'),
-                        end: z.number().describe('The end location of the test'),
-                    }),
-                    dependencies: z.array(z.string()).describe('The dependencies of the test'),
-                })
-            });
-            for await (const part of elementStream) {
-                yield {
-                    ...part,
-                    code:sourceCode.slice(part.loc.start, part.loc.end),
-                    src,
-                    path,
-                    type: 'test'
-                }
-            }
-        })
-    }
-})
 
 const analyzer=fromAsyncGenerator(async function * analyze({input:{src,path}}:{input:{src:string, path:string} & any}) {
-    const sourceBuffer = await fs.promises.readFile(`/Users/I347305/Src/umtests/Tests/${path}`);
+    const sourceBuffer = await  fetch(src);
     const sourceCode = sourceBuffer.toString();
     const {elementStream} = await streamObject({
         output: 'array',
@@ -246,7 +79,8 @@ const analyzer=fromAsyncGenerator(async function * analyze({input:{src,path}}:{i
 })
 
 const withFsPersistence=<TInput extends {"$persistent"?: string}, T extends  ActorLogic<any, any, TInput>> (actor: T, path?: string ):T => {
-    let count=0;
+    fs.mkdirSync("tests", {recursive: true})
+
     const transition = actor.transition.bind(actor);
     const getInitialSnapshot = actor.getInitialSnapshot.bind(actor);
     let pathToPersist: string = path || "./index.json";
@@ -307,13 +141,11 @@ createMachine({
         },
         ...(input as { source?: GithubSource; files?: Record<string, File> } || {})
     }),
-    states: {
-
-        init: {
-
+    states: { 
+        init: { 
             invoke: {
                 src: 'puller',
-                input: {repo: "dinavinter/umtests", branch: "main", accessToken: env.GITHUB_TOKEN},
+                input: ({context}) => context.source,
                 onDone: {
                     target: 'paging',
                     actions: [
@@ -380,5 +212,33 @@ createMachine({
         }
     }
 })
- 
- 
+
+
+
+
+export async function getRepoFiles({repo,branch, accessToken}: GithubLoaderParams):Promise<GithubContentFile[]> {
+    let url = `https://api.github.com/repos/${repo}/git/trees/${branch}?recursive=1`;
+
+    const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/vnd.github+json'
+    };
+
+    const response = await fetch(url, { headers }) ;
+    if (!response.ok) {
+        throw new Error(`Failed to fetch files: ${response.status} ${response.statusText}`);
+    }
+    const json = await  response.json()   as {tree: {
+            type: string,
+            path: string,
+            url: string
+        }[]};
+    const files = json.tree.filter((file) => file.type === 'blob' );
+    return files.map((file) => ({
+        ...file,
+        branch, repo,
+        src:`https://raw.githubusercontent.com/${repo}/${branch}/${file.path}`,
+    }));
+}
+
+

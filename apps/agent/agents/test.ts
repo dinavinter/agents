@@ -1,5 +1,5 @@
 
-import {type ActorSystem, assign, emit, ErrorActorEvent, fromPromise, setup} from "xstate";
+import {type ActorSystem, assign, ErrorActorEvent, fromPromise, setup} from "xstate";
 import {fromEventAsyncGenerator} from "../stream";
 import {ThreadCreateParams} from "openai/src/resources/beta/threads/threads";
 import {IndexByProp} from "xstate/dist/declarations/src/types";
@@ -7,7 +7,8 @@ import {render, renderTo} from "./agent-render";
 import {type AssistantStreamEvent} from "openai/resources/beta"; 
 import {env} from "node:process";
 import {azureOpenAI} from "../ai";
-
+//NOTE: works with assistant api of azure-ai / openai, won't work with sap ai
+//NOTE: requires env.ASSISTANT_ID to be set
  
  
 const setupAssistant = async () => {
@@ -29,7 +30,6 @@ const setupAssistant = async () => {
 
 
  
-  // type AssistantStreamEventMap = IndexByProp<AssistantStreamEvent, "event">
 export type AssistantStreamEventMap =   IndexByProp<AssistantStreamEvent, "event">
 type ThreadMessageCompleted = AssistantStreamEventMap["thread.message.completed"];
 
