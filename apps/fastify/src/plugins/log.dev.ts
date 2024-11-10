@@ -4,7 +4,7 @@ import fp from "fastify-plugin";
 
 const logPlugin: FastifyPluginAsyncZod = async function (fastify ) {
 
-    rootLogger.setLoggingLevel('Silly');
+    rootLogger.setLoggingLevel('Debug');
     rootLogger.logMessage('Silly', `Log level is set to Silly`);
 
     rootLogger.setSinkFunction((_level, message) => {
