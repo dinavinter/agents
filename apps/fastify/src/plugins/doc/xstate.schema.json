@@ -1,0 +1,298 @@
+{
+  "$id": "https://example.com/schemas/xstate-machine.json",
+  "type": "object",
+  "additionalProperties": true,
+  "$defs": {
+    "state-machine": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/state"
+            },
+            {
+              "type": "object",
+              "additionalProperties": true
+            }
+          ]
+        },
+        {
+          "properties": {
+            "context": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      ],
+      "examples": [ 
+        {
+        "id": "emitter",
+        "initial": "emit",
+        "states": {
+          "emit": {
+            "after": {
+              "1000":  {
+                "actions": {
+                  "type": "xstate.emit",
+                  "event":  {
+                    "type": "TICK",
+                    "event":  "data",
+                    "data" : "ping"
+                  }
+                }
+
+              }
+            }
+          }
+        }
+      },
+        {
+          "id": "fetchMachine",
+          "initial": "idle",
+          "context": {
+            "retries": 0
+          },
+          "states": {
+            "idle": {
+              "on": {
+                "FETCH": "loading"
+              }
+            },
+            "loading": {
+              "invoke": {
+                "src": "fetchData",
+                "onDone": {
+                  "target": "success"
+                },
+                "onError": {
+                  "target": "failure"
+                }
+              },
+              "on": {
+                "RETRY": {
+                  "target": "loading",
+                  "actions": [
+                    "incrementRetries"
+                  ]
+                }
+              }
+            },
+            "success": {
+              "type": "final"
+            },
+            "failure": {
+              "on": {
+                "RETRY": {
+                  "target": "loading",
+                  "actions": [
+                    "incrementRetries"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "state": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "atomic",
+            "compound",
+            "parallel",
+            "final",
+            "history"
+          ]
+        },
+        "initial": {
+          "type": "string"
+        },
+        "context": {
+          "type": "object"
+        },
+        "states": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/state"
+          }
+        },
+        "on": {
+          "$ref": "#/$defs/transitions"
+        },
+        "entry": {
+          "$ref": "#/$defs/actions"
+        },
+        "exit": {
+          "$ref": "#/$defs/actions"
+        },
+        "invoke": {
+          "$ref": "#/$defs/invoke"
+        }
+      }
+    },
+    "transitions": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "target": {
+                "type": "string"
+              },
+              "actions": {
+                "$ref": "#/$defs/actions"
+              },
+              "guard": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "actions": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "invoke": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "src": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "onDone": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string"
+                },
+                "actions": {
+                  "$ref": "#/$defs/actions"
+                }
+              }
+            },
+            "onError": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string"
+                },
+                "actions": {
+                  "$ref": "#/$defs/actions"
+                }
+              }
+            }
+          },
+          "required": [
+            "src"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/invoke"
+          }
+        }
+      ]
+    } 
+    
+  },
+  "examples": [{
+    "id": "emitter",
+    "initial": "emit",
+    "states": {
+      "emit": {
+         "after": {
+              "1000":  {
+                "actions": {
+                    "type": "xstate.emit",
+                    "event":  {
+                        "type": "TICK",
+                         "event":  "data",
+                         "data" : "ping"
+                    }
+                }
+                 
+              }
+            }
+      }
+    }
+  },
+    {
+      "id": "fetchMachine",
+      "initial": "idle",
+      "context": {
+        "retries": 0
+      },
+      "states": {
+        "idle": {
+          "on": {
+            "FETCH": "loading"
+          }
+        },
+        "loading": {
+          "invoke": {
+            "src": "fetchData",
+            "onDone": {
+              "target": "success"
+            },
+            "onError": {
+              "target": "failure"
+            }
+          },
+          "on": {
+            "RETRY": {
+              "target": "loading",
+              "actions": [
+                "incrementRetries"
+              ]
+            }
+          }
+        },
+        "success": {
+          "type": "final"
+        },
+        "failure": {
+          "on": {
+            "RETRY": {
+              "target": "loading",
+              "actions": [
+                "incrementRetries"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
