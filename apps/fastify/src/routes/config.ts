@@ -14,7 +14,9 @@ import {
 import {EdgeRuntime, runServer} from 'edge-runtime'
  import {serviceMachine} from "agent/inspect/inspector";
 import {createYjsHub} from "agent/stream/hub";
-
+import {vm} from "./vm";
+import '../plugins/xstate'
+import {Code} from "../plugins/xstate";
 const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
     const  example=` createMachine({
@@ -82,124 +84,93 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
             }
         },
         async handler(request, reply) {
-            const {code}= request.body
-            function actor(machine: StateMachine<any, any, any>, hub: ReturnType<typeof createYjsHub>) {
-                return createActor(serviceMachine, {
-                    logic: machine,
-                    id: 'service',
-                    input: {
-                        logic: machine,
-                        hub: hub,
-                    },
-                    inspect: {
-                        next: (e) => {
-                            e.type === '@xstate.event' && console.log(e)
+            const {code}= request.body 
+            
+            const {href, actor, logic, hub}=await vm(code)
+            // const server = await runServer({runtime , host: 'local.zon.cx'})
+            console.log(`Listening at ${href}.`)
+            
+            
+
+            const {id, version, config, implementations} = logic
+            reply.type('application/json');
+            return reply.send(JSON.stringify({
+                id: actor.id,
+                session: actor.sessionId,
+                version: version ?? '0.0.0',
+                config: config,
+                code: code,
+                implementations: implementations, 
+                links: {
+                    self: href,
+                    workers: `/agents/${id}/workers`
+                }
+            }));
+        }
+    })
+    fastify.route({
+        method: 'post',
+        url: '/agents/:agent',
+        schema: {
+            summary: 'Post Specific Agent Code',
+            description: 'This route is to create an agent definition',
+            body: {
+                type: 'object',
+                description: 'The agent javascript code',
+                // examples: [ {
+                //     code: example
+                // }],
+                properties: {
+                    code: {
+                        type: 'string',
+                        description: 'The agent javascript code',
+                        examples: [example]
+                    }
+                }
+            },
+            response: {
+                201: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
                         }
                     }
-                });
-            } 
-            
-            
-            function encodeJson   (readable: ReadableStream)   {
-                return readable.pipeThrough(new  TransformStream({
-                    transform(chunk, controller) {
-                        controller.enqueue(JSON.stringify(chunk) + '\n');
-                    }
-                }) ).pipeThrough(new TextEncoderStream())
-            }
-            
-            function encodeSse   (readable: ReadableStream) {
-                return readable.pipeThrough(new TransformStream({
-                    transform(chunk, controller) {
-                        controller.enqueue(`data: ${JSON.stringify(chunk.data || chunk)}\n\n`);
-                    }
-                })).pipeThrough(new TextEncoderStream())
-            } 
-            
-            function router(hub:Y.Doc) {
-                return (event: FetchEvent) => {
-                    const request = event.request;
-                    if (request.url.includes('/sse')) {
-                        return yjsSseRouter(event)
-                    }
-                    if (request.url.includes('/json')) {
-                        return jsonRouter(event)
-                    }
-                    return event.respondWith(new Response(JSON.stringify(hub.state), {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Cache-Control': 'no-cache',
-                            'Access-Control-Allow-Origin': '*'
-                        }
-                    }));
-
-                    function yjsSseRouter(event: FetchEvent) {
-                        const request = event.request;
-                        const slug = request.url.split('/').pop() || 'emitted';
-                        return event.respondWith(new Response(encodeSse(hub[slug].readableStream()), {
-                            headers: {
-                                'Content-Type': 'text/event-stream',
-                                'Cache-Control': 'no-cache',
-                                'Access-Control-Allow-Origin': '*'
-                            }
-                        }))
-                    }
-
-
-                    function jsonRouter(event: FetchEvent) {
-                        return event.respondWith(new Response(JSON.stringify(hub.state), {
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Cache-Control': 'no-cache',
-                                'Access-Control-Allow-Origin': '*'
-                            }
-                        }));
-
-                    }
-
                 }
             }
+        },
+        async handler(request, reply) {
+            const {code}= request.body
+
             
-            
+            const {src, vm}= fastify.agent(request.params.agent);
+            const codeItem=new Code(code);
+            src.push([{
+                ...codeItem
+            }]);
+           const{rev, timestamp, href, version,id, session} =await vm()  ;
+            // const server = await runServer({runtime , host: 'local.zon.cx'})
+            console.log(`Listening at ${href}.`)
 
 
-            const machineCode =(code:string) => ` 
-                const machine = ${code}; 
-               const hub = createYjsHub();
-               const service = actor(machine, hub).start(); 
-                ${router}
-                
-               addEventListener('fetch', router(hub))
-            `
 
-
-            const runtime = new EdgeRuntime({
-                initialCode: machineCode(code),
-                extend: (context) => Object.assign(context, {
-                    process: {env: {NODE_ENV: 'development'}},
-                    emit,
-                    createMachine,
-                    assign,
-                    actor,
-                    routes,
-                    createYjsHub, 
-                    encodeJson,
-                    encodeSse
-                })
-            })
-            const server = await runServer({runtime , host: 'local.zon.cx'})
-            console.log(`Listening at ${server.url}.`)
-
-            const {id, version, definition, config, implementations} = runtime.evaluate('machine') as AnyStateMachine
             reply.type('application/json');
             return reply.send(JSON.stringify({
                 id: id,
+                rev: rev,
+                timestamp: timestamp,
+                session: session,
                 version: version ?? '0.0.0',
-                config: config,
-                definition: definition,
-                implementations: implementations, 
+                code: code,
                 links: {
-                    self: server.url,
+                    self: href,
                     workers: `/agents/${id}/workers`
                 }
             }));

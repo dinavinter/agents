@@ -6,6 +6,9 @@ import * as Y from "yjs";
 import {EventMessage} from "fastify-sse-v2";
 import {randomFill, randomInt, randomUUID} from "node:crypto";
 import fp from "fastify-plugin";
+import {ActorVm, vm} from "../routes/vm";
+import {TsTypeParameter} from "@swc/core";
+import {createHash} from "node:crypto";
 
 const services: Map<string,
     ActorRefFrom<typeof serviceMachine>
@@ -86,18 +89,70 @@ function worker(this:{doc:Y.Doc}, worker: string) {
 
 }
 
+async function vmAsync(codeArray: Y.Array<{code:string, rev:string, timestamp:number}>,  versionMap: Y.Map<any>):Promise<{
+    code:string,
+    rev:string,
+    timestamp:number,
+    href:string,
+    version:string,
+    id:string,
+    session:string
+}> {
+
+    return codeArray.length ? await getVm(codeArray.get(codeArray.length - 1) ) : await new Promise<ReturnType<typeof getVm>>(function (resolve) {
+        codeArray.observe(callback);
+
+        function callback() {
+            if (codeArray.length) {
+                resolve(getVm(codeArray.get(codeArray.length - 1)))
+            }
+        }
+    } )
+    async function getVm({code,rev}:{code:string, rev:string}, index: number) {
+        if(!versionMap.get(rev)) {
+            const {href,hub, logic, actor} = await vm(code);
+            versionMap.set(rev, {
+                code,
+                rev,
+                timestamp: Date.now(),
+                href,
+                version: index.toString(),
+                id: actor.id,
+                session: actor.sessionId
+            });
+            
+            versionMap.doc?.subdocs.add(hub.doc);
+            
+            
+
+        }
+
+        return versionMap.get(rev);
+    }
+
+}
+export class Code {
+    public rev: string;
+    public timestamp: number;
+    
+    constructor(public code: string) {
+        this.rev = revisionHash(Buffer.from(code));
+        this.timestamp = Date.now();
+    }
+}
+
 const store: AgentStore = (doc) => {
 
     doc = doc ?? new Y.Doc({});
     
     
     function agent(this:{doc}, agent: string) {
-        
+
         const {doc} = this;
         const agents = doc.getMap('agents');
         const agentDoc = agents.get(agent) || agents.set(agent, createAgentDoc());
         const config = agentDoc.getMap('config');
-       
+
         // const machine= {
         //    get config(this:Y.Map<string>) {
         //        return JSON.parse(this.get('json') ?? "{}") as AnyStateMachine["config"];
@@ -107,17 +162,23 @@ const store: AgentStore = (doc) => {
         //     },
         //     logic: atomLogic(config)
         // }
-        const store= {
+        const store = {
             doc: agentDoc,
             logic: atomLogic(config),
             config: config
         }
-        
+
         return {
-            logic:store.logic,
+            logic: store.logic,
+            vm: vmAsync.bind(null, agentDoc.getArray("src"), agentDoc.getMap("versions")),
             configure: configure.bind(store),
-            worker: worker.bind(store)
+            worker: worker.bind(store),
+            src: agentDoc.getArray<{ code: string, rev: string, timestamp: number }>("src"),
+           
+
+
         }
+    }
         
         function configure(this: {config: Y.Map , logic}, definition:AnyStateMachine["config"]) {
             const {config, logic} = this;
@@ -165,17 +226,27 @@ const store: AgentStore = (doc) => {
             return getLogic.bind({configMap});
         }
 
-    }
+      
+
+    
     
     return agent.bind({doc})
 }
+
+
+
+function revisionHash(data:  Uint8Array): string { 
+    
+
+    return createHash('md5').update(data).digest('hex').slice(0, 10);
+}
+
 
  export type XstateWorkerPluginOptions = {
      doc?: Y.Doc 
  }
 
 export const xstateWorkerPlugin: FastifyPluginAsyncJsonSchemaToTs<XstateWorkerPluginOptions> = async function (instance, {doc}) {
-
      
     instance.decorate('agent', store(doc));
     

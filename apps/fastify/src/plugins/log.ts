@@ -3,7 +3,7 @@ import fp from "fastify-plugin";
 import rootLogger, {Framework, Level} from 'cf-nodejs-logging-support'
  
 rootLogger.setFramework(Framework.Fastify);
- 
+ rootLogger.enableTracing()
 
 const logPlugin: FastifyPluginAsyncZod = async function (fastify ) {
  
