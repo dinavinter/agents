@@ -1,0 +1,85 @@
+{
+  "name": "agent-route",
+  "version": "1.0.0",
+  "description": "",
+  "packageManager": "yarn@1.22.22",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:pkgroll",
+    "build:tsup": "pnpx tsup ./src/app.ts --outDir ./dist --target=esnext --format esm --treeshake --shims --publicDir  ",
+    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0  && cp -r ./public/ ./dist ",
+    "dev": "node --import=tsx  --experimental-vm-modules --env-file=.env ./src/dev.ts",
+    "vercel:dev": "npm run build && vercel dev --listen 5005",
+    "vercel:deploy": "npm run build &&  vercel deploy",
+    "cf:deploy": "yarn run build && cf push ",
+    "start": "node ./dist/index.mjs"
+  },
+  "dependencies": {
+    "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
+    "fastify": "^4.28.1",
+    "fastify-plugin": "^4.5.1",
+    "fastify-sse-v2": "^4.0.0"
+  },
+  "devDependencies": {
+    "@ai-sdk/openai": "^0.0.54",
+    "@fastify/formbody": "^7.4.0",
+    "@fastify/one-line-logger": "^1.4.0",
+    "@fastify/static": "^7.0.4",
+    "@fastify/swagger": "^8.15.0",
+    "@scalar/fastify-api-reference": "^1.25.7",
+    "@tsconfig/node22": "^22.0.0",
+    "@types/js-beautify": "^1.14.3",
+    "@types/node": "^22.5.0",
+    "@vercel/functions": "^1.4.1",
+    "@vercel/node": "^3.2.10",
+    "ai": "^3.3.19",
+    "ajv": "^8.17.1",
+    "cf-nodejs-logging-support": "^7.3.0",
+    "dotenv": "^16.4.5",
+    "fastify-type-provider-zod": "^2.0.0",
+    "js-beautify": "^1.15.1",
+    "tsx": "^4.18.0",
+    "typescript": "^5.5.4",
+    "yjs": "^13.6.20",
+    "zod": "^3.23.8"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "bin": "./dist/index.cjs",
+  "exports": {
+    "app": {
+      "require": {
+        "types": "./dist/app.d.cts",
+        "default": "./dist/app.cjs"
+      },
+      "import": {
+        "types": "./dist/app.d.mts",
+        "default": "./dist/app.mjs"
+      }
+    },
+    "serverless": {
+      "require": "./dist/serverless.cjs",
+      "import": "./dist/serverless.mjs",
+      "types": "./dist/serverless.d.ts"
+    },
+    "dev": {
+      "require": "./dist/dev.cjs",
+      "import": "./dist/dev.mjs",
+      "types": "./dist/dev.d.ts"
+    },
+    "index": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": "22.8.0",
+    "yarn": "1.22.19",
+    "npm": "10.7.0"
+  }
+}
