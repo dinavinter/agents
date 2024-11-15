@@ -13,14 +13,14 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     await fastify.register( import('./plugins/doc'))
 
     //routes
-    await fastify.register(import('./routes/agent'))
+    // await fastify.register(import('./routes/agent'))
     await fastify.register(import('./routes/config'))
     // await fastify.register(import('./routes/dom'))
     //
     //sse plugin & sse proxy 
     await fastify.register( import('./plugins/sse'))
     
-    await fastify.register( import('./plugins/xstate'))
+    await fastify.register( import('./plugins/agent'))
     
 
     //redirect default route to /reference
