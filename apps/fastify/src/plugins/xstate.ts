@@ -6,9 +6,9 @@ import * as Y from "yjs";
 import {EventMessage} from "fastify-sse-v2";
 import {randomFill, randomInt, randomUUID} from "node:crypto";
 import fp from "fastify-plugin";
-import {ActorVm, vm} from "../routes/vm";
-import {TsTypeParameter} from "@swc/core";
+import { vm} from "../routes/vm";
 import {createHash} from "node:crypto";
+import {createYjsHub} from "agent/stream/hub";
 
 const services: Map<string,
     ActorRefFrom<typeof serviceMachine>
@@ -99,7 +99,7 @@ async function vmAsync(codeArray: Y.Array<{code:string, rev:string, timestamp:nu
     session:string
 }> {
 
-    return codeArray.length ? await getVm(codeArray.get(codeArray.length - 1) ) : await new Promise<ReturnType<typeof getVm>>(function (resolve) {
+    return codeArray.length ? await getVm(codeArray.get(codeArray.length - 1), codeArray.length - 1 ) : await new Promise<ReturnType<typeof getVm>>(function (resolve) {
         codeArray.observe(callback);
 
         function callback() {
@@ -109,25 +109,36 @@ async function vmAsync(codeArray: Y.Array<{code:string, rev:string, timestamp:nu
         }
     } )
     async function getVm({code,rev}:{code:string, rev:string}, index: number) {
-        if(!versionMap.get(rev)) {
-            const {href,hub, logic, actor} = await vm(code);
-            versionMap.set(rev, {
-                code,
-                rev,
-                timestamp: Date.now(),
-                href,
-                version: index.toString(),
-                id: actor.id,
-                session: actor.sessionId
-            });
+        if (!versionMap.get(rev)) {
+            const {href, hub} = await vm(code,
+                createYjsHub(versionMap.set(rev,
+                    new Y.Doc({
+                        meta: {
+                            type: 'version',
+                            code,
+                            rev,
+                            timestamp: Date.now(),
+                            version: index.toString() 
+                        },
+                        collectionid: "versions",
+                        guid: rev 
+                    }))));
+
+            hub.doc.getMap("meta").set("href", href);
             
-            versionMap.doc?.subdocs.add(hub.doc);
-            
-            
+
+
+            // versionMap.doc?.subdocs.add(hub.doc);
+
 
         }
+        
+        const version = versionMap.get(rev);
 
-        return versionMap.get(rev);
+        return { 
+            ...version.meta,
+            ...version.getMap("meta").toJSON()
+        }
     }
 
 }
@@ -152,16 +163,7 @@ const store: AgentStore = (doc) => {
         const agents = doc.getMap('agents');
         const agentDoc = agents.get(agent) || agents.set(agent, createAgentDoc());
         const config = agentDoc.getMap('config');
-
-        // const machine= {
-        //    get config(this:Y.Map<string>) {
-        //        return JSON.parse(this.get('json') ?? "{}") as AnyStateMachine["config"];
-        //    },
-        //     set config(this:Y.Map<string>, config: AnyStateMachine["config"]) {
-        //         return this.set('json', JSON.stringify(config));
-        //     },
-        //     logic: atomLogic(config)
-        // }
+ 
         const store = {
             doc: agentDoc,
             logic: atomLogic(config),

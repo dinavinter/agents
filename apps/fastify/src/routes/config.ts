@@ -47,17 +47,15 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
     fastify.log.info('example', example)
     fastify.route({
         method: 'post',
-        url: '/agents/from-js',
+        url: '/agents',
         schema: {
-            summary: 'Post Agent Code',
+            summary: 'New Agent',
             description: 'This route is to create an agent definition',
             body: { 
                type: 'object',
                 description: 'The agent javascript code',
-                // examples: [ {
-                //     code: example
-                // }],
                 properties: {
+                    id: {type: 'string' , examples: ['emit']},
                     code: {
                         type: 'string',
                         description: 'The agent javascript code',
@@ -84,27 +82,28 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
             }
         },
         async handler(request, reply) {
-            const {code}= request.body 
+            const {code, id}= request.body 
             
-            const {href, actor, logic, hub}=await vm(code)
-            // const server = await runServer({runtime , host: 'local.zon.cx'})
+            const {src, vm}= fastify.agent(id);
+            const codeItem=new Code(code);
+            src.push([{
+                ...codeItem
+            }]);
+            const{rev, timestamp, href, version, session} =await vm()  ;
             console.log(`Listening at ${href}.`)
-            
-            
-
-            const {id, version, config, implementations} = logic
+ 
             reply.type('application/json');
             return reply.send(JSON.stringify({
-                id: actor.id,
-                session: actor.sessionId,
+                id: id,
+                rev: rev,
+                timestamp: timestamp,
+                session: session,
                 version: version ?? '0.0.0',
-                config: config,
                 code: code,
-                implementations: implementations, 
                 links: {
-                    self: href,
-                    workers: `/agents/${id}/workers`
-                }
+                    self: `/agents/${id}`,
+                    worker: href
+                 }
             }));
         }
     })
@@ -117,9 +116,6 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
             body: {
                 type: 'object',
                 description: 'The agent javascript code',
-                // examples: [ {
-                //     code: example
-                // }],
                 properties: {
                     code: {
                         type: 'string',
@@ -129,7 +125,7 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
                 }
             },
             response: {
-                201: {
+                200: {
                     description: 'Successful response',
                     type: 'object',
                     properties: {
@@ -157,10 +153,7 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
             }]);
            const{rev, timestamp, href, version,id, session} =await vm()  ;
             // const server = await runServer({runtime , host: 'local.zon.cx'})
-            console.log(`Listening at ${href}.`)
-
-
-
+            console.log(`Listening at ${href}.`) 
             reply.type('application/json');
             return reply.send(JSON.stringify({
                 id: id,
@@ -170,54 +163,12 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
                 version: version ?? '0.0.0',
                 code: code,
                 links: {
-                    self: href,
-                    workers: `/agents/${id}/workers`
+                    self: request.originalUrl,
+                    worker: href
                 }
             }));
         }
-    })
-
-    fastify.route({
-        method: 'post',
-        url: '/agents',
-        schema: {
-            summary: 'Post Agent',
-            description: 'This route is to create an agent definition',
-            body: xstateSchema,
-            response: {
-                201: {
-                    description: 'Successful response',
-                    type: 'object',
-                    properties: {
-                        id: {type: 'string'},
-                        version: {type: 'string'},
-                        links: {
-                            type: 'object',
-                            properties: {
-                                self: {type: 'string'},
-                                workers: {type: 'string'}
-                            }
-                        }
-                    }
-                }
-            }
-
-
-        },
-        async handler(request, reply) {
-            const config = request.body as AnyStateMachine["config"];
-            const {id, version} = instance.agent(config.id).configure(request.body)
-            reply.type('application/json');
-            return reply.send({
-                id,
-                version,
-                links: {
-                    self: `/agents/${id}`,
-                    workers: `/agents/${id}/workers`
-                }
-            });
-        }
-    })
+    }) 
 
     fastify.route({
         method: 'get',
@@ -246,17 +197,18 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
         },
         async handler(request, reply) {
             const {agent} = request.params as { agent: string };
-            const {version, id, implementations, config, definition} = instance.agent(agent).logic();
+            const{rev, timestamp, href, version, session, id} =await fastify.agent(agent).vm()  ;
             reply.type('application/json');
-            reply.status(200);
             return reply.send(JSON.stringify({
                 id: id,
+                rev: rev,
+                timestamp: timestamp,
+                session: session,
                 version: version ?? '0.0.0',
-                config: config,
-                definition: definition,
+                code: code,
                 links: {
                     self: request.originalUrl,
-                    workers: `/agents/${id}/workers`
+                    worker: href
                 }
             }));
         }

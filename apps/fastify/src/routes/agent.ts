@@ -13,6 +13,47 @@ import {fileURLToPath} from "node:url";
 import path from "node:path";
 const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance:FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
+    fastify.route({
+        method: 'post',
+        url: '/agents/json',
+        schema: {
+            summary: 'Post Agent',
+            description: 'This route is to create an agent definition',
+            body: xstateSchema,
+            response: {
+                201: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+
+
+        },
+        async handler(request, reply) {
+            const config = request.body as AnyStateMachine["config"];
+            const {id, version} = instance.agent(config.id).configure(request.body)
+            reply.type('application/json');
+            return reply.send({
+                id,
+                version,
+                links: {
+                    self: `/agents/${id}`,
+                    workers: `/agents/${id}/workers`
+                }
+            });
+        }
+    })
 
 
     fastify.route({

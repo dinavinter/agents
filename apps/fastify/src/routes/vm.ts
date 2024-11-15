@@ -78,11 +78,10 @@ function router(hub:Y.Doc) {
 }
 
 
-export async function vm(code:string) {
+export async function vm(code:string, hub:serviceHub) {
     const machineCode = (code: string) => ` 
                const logic = ${code}; 
-               const hub = createYjsHub();
-               const actor = createActor(logic, hub).start(); 
+                const actor = createActor(logic, hub).start(); 
                 ${router} 
                addEventListener('fetch', router(hub))
             `
@@ -93,7 +92,7 @@ export async function vm(code:string) {
             emit,
             createMachine,
             assign,
-            createActor(machine: StateMachine<any, any, any>, hub: ReturnType<typeof createYjsHub>) {
+            createActor(machine: StateMachine<any, any, any>) {
                 return createActor(serviceMachine, {
                     logic: machine,
                     id: 'service',
@@ -108,14 +107,14 @@ export async function vm(code:string) {
                     }
                 });
             },
-            createYjsHub
+            hub
         })
     })
     const server = await runServer({runtime, host: 'local.zon.cx'})
     console.log(`Listening at ${server.url}.`)
     const logic = runtime.evaluate('logic') as AnyStateMachine
     const actor = runtime.evaluate('actor') as ActorRefFrom<AnyStateMachine>
-    const hub = runtime.evaluate('hub') as serviceHub
+    // const hub = runtime.evaluate('hub') as serviceHub
 
     return {
         logic,
