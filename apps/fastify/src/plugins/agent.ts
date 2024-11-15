@@ -113,12 +113,16 @@ async function vmAsync(codeArray: Y.Array<{code:string, rev:string, timestamp:nu
 
 function agents(this:{doc:Y.Doc}) {
     const {doc} = this;
-    const agents = doc.getMap<Y.Doc>('agents');
-    return agents.entries().map(([id, agentDoc]) => {
+    return Array.from(doc.getMap<Y.Doc>('agents')).map(([id, agentDoc]) => {
         return {
+            versions: Array.from(agentDoc.getMap<Y.Doc>("versions")).map(([id, versionDoc]) => ({
+                id,
+                ...versionDoc.meta,
+                ...versionDoc.getMap("meta").toJSON()
+            })) || [],     
             id,
             ...agentDoc.meta,
-            ...agentDoc.getMap("meta").toJSON()
+            ...agentDoc.getMap("meta").toJSON() 
         }
     })
 }

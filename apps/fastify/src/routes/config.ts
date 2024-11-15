@@ -1,22 +1,8 @@
 import {FastifyPluginAsyncJsonSchemaToTs, JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
 import type {FastifyInstance} from "fastify";
-import xstateSchema from "../plugins/doc/xstate.schema.json";
-import {
-    ActorRefFrom,
-    AnyActorRef,
-    AnyStateMachine,
-    assign,
-    createActor,
-    createMachine,
-    emit, Snapshot,
-    StateMachine
-} from "xstate"; 
-import {EdgeRuntime, runServer} from 'edge-runtime'
- import {serviceMachine} from "agent/inspect/inspector";
-import {createYjsHub} from "agent/stream/hub";
-import {vm} from "./vm";
-import '../plugins/xstate'
-import {Code} from "../plugins/xstate";
+
+import '../plugins/agent'
+import {Code} from "../plugins/agent";
 const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
     const  example=` createMachine({
@@ -45,6 +31,47 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
                     }
                 })`
     fastify.log.info('example', example)
+    
+    fastify.route({
+        method: 'GET',
+        url: '/agents',
+        schema: {
+            summary: 'Get all agents',
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        agents: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                additionalProperties: true,
+                                properties: {
+                                    id: {type: 'string'},
+                                    version: {type: 'string'},
+                                    links: {
+                                        type: 'object',
+                                        properties: {
+                                            self: {type: 'string'},
+                                            workers: {type: 'string'}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+             reply.type('application/json');
+            return reply.send({
+                agents: fastify.agents()
+            });
+        }
+    })
+    
     fastify.route({
         method: 'post',
         url: '/agents',
