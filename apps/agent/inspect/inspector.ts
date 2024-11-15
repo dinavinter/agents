@@ -1,14 +1,17 @@
 import {
-    Actor, AnyActorLogic,
-    AnyActorRef, createActor,
+    Actor, ActorRefFrom, AnyActorLogic,
+    AnyActorRef, AnyStateMachine, createActor,
     enqueueActions, EventObject, InspectionEvent, log,
     setup
 } from "xstate";
 import {EventMessage} from "fastify-sse-v2";
 import {createYjsHub, serviceHub} from "../stream/hub";
+import * as Y from "yjs";
 type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
     logic: TLogic,
-    name?: string
+    name?: string,
+    doc: Y.Doc,
+    hub?: serviceHub
 } & Parameters<typeof createActor<TLogic>>[1]
     & Record<string, any>
 
@@ -25,8 +28,8 @@ export const serviceMachine = setup({
         }
     } 
 }).createMachine({ 
-    context: ({input: {logic, ...options}, spawn, self}) => {
-        const hub = createYjsHub();
+    context: ({input: {logic,doc,hub, ...options}, spawn, self}) => {
+        hub = hub ?? createYjsHub(doc);
         const service =createActor(withInspector(logic,hub), {
             id: self.id,
             logger: (s) => {},
@@ -40,18 +43,20 @@ export const serviceMachine = setup({
         return {
             ...options,
             hub,
-            service: service,
+            service: service.start(),
          }
     },
 
     entry: enqueueActions(({context: {service, hub}, enqueue}) => {
         service.on("*", (event: EventMessage & EventObject) => {
-            hub.emitted.push(event);
-            
+            hub.emitted.push({
+                ...event 
+            }); 
         })  
     }),
    
     on:{
+       
         "*" : {
             actions: log (({event, context: {service}}) => {
                 return  {type: event.type, id: service.id, sessionId: service.sessionId}
@@ -63,12 +68,18 @@ export const serviceMachine = setup({
 
 
 
-function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):T {
+function withInspector<T extends ActorRefFrom<AnyStateMachine>>(actorLogic: T,  hub:serviceHub):T {
     const transition = actorLogic.transition;
     actorLogic.transition = (state, event, actorCtx) => {
         // hub.inspected.push(event);
         const newState= transition(state, event, actorCtx);
-        hub.snapshot.push(actorCtx.self.getSnapshot());
+        const snapshot = actorCtx.self.getSnapshot();
+        hub.snapshot.push(snapshot);
+        hub.state = {
+            next: getAllOwnEventDescriptors(snapshot),
+            state: snapshot.value,
+            event: event?.type
+        };
         Object.entries(newState.children)?.forEach(([service, ref]) => {
             const {isNew, hub: serviceHub} = hub.child(service)
             if (isNew) {
@@ -97,4 +108,8 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
     
     return actorLogic;
    
+}
+
+function getAllOwnEventDescriptors(snapshot) {
+    return [...new Set([...snapshot._nodes.flatMap(sn => sn.ownEvents)])];
 }
