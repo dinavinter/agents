@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
+    "@hocuspocus/provider": "^2.13.7",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
     "fastify-sse-v2": "^4.0.0"
