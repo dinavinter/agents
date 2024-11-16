@@ -1,0 +1,47 @@
+{
+  "name": "hocuspocus",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "yarn run build:pkgroll",
+    "build:tsup": "pnpx tsup ./index.ts --outDir ./dist --target=esnext --format esm --treeshake --shims --publicDir  ",
+    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0   ",
+    "copy:public": "cp -r ./public/ ./dist ",
+    "dev": "node --import=tsx  --experimental-vm-modules --env-file=.env.local ./src/index.ts",
+    "vercel:dev": "npm run build && vercel dev --listen 5005",
+    "vercel:deploy": "npm run build &&  vercel deploy",
+    "cf:deploy": "yarn run build && cf push ",
+    "start": "node ./dist/index.mjs",
+    "test": "node --import=tsx  --experimental-vm-modules --env-file=.env ./src/test.ts"
+  },
+  "dependencies": {
+    "@hocuspocus/extension-logger": "^2.13.7",
+    "@hocuspocus/extension-sqlite": "^2.13.7",
+    "@hocuspocus/provider": "^2.13.7",
+    "@hocuspocus/server": "^2.13.7",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.8"
+  },
+  "devDependencies": {
+    "cf-nodejs-logging-support": "^7.3.0",
+    "tsx": "^4.18.0",
+    "typescript": "^5.5.4"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "bin": "./dist/index.cjs",
+  "exports": {
+    "index": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": "22.8.0",
+    "yarn": "1.22.19",
+    "npm": "10.7.0"
+  }
+}
