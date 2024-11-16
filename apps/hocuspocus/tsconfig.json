@@ -1,0 +1,30 @@
+{
+   "compilerOptions": {
+    
+
+    // Treat files as modules even if it doesn't use import/export
+    "moduleDetection": "force",
+
+    // Ignore module structure
+    "module": "Preserve",
+
+    // Allow JSON modules to be imported
+    "resolveJsonModule": true,
+
+    // Allow JS files to be imported from TS and vice versa
+    "allowJs": true,
+
+    // Use correct ESM import behavior
+//    "esModuleInterop": true,
+
+    // Disallow features that require cross-file awareness
+    "isolatedModules": true,
+    "allowArbitraryExtensions": true,
+    "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+//    "module": "ESNext" /* Specify what module code is generated. */,
+    "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
+    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+    "strict": true /* Enable all strict type-checking options. */,
+    "skipLibCheck": true /* Skip type checking all .d.ts files. */
+  }
+}

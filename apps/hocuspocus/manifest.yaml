@@ -1,0 +1,24 @@
+applications:
+  -   name: hocuspocus
+      command: yarn run start
+      
+      routes:
+        - route: 'https://hp.cfapps.us10-001.hana.ondemand.com'
+      stack: cflinuxfs4
+      memory: 512M
+      instances: 1
+      random-route: true
+      env:
+        NODE_OPTIONS: --max-http-header-size=80000
+        NODE_ENV: production
+        UAA_SERVICE: fastify-uaa-service
+        LOG_SENSITIVE_CONNECTION_DATA: true
+        LOG_REMOTE_USER: true
+        LOG_REFERER: true
+        
+      buildpacks:
+        - https://github.com/cloudfoundry/nodejs-buildpack
+      services:
+        - fastify-uaa-service
+        - log
+ 
