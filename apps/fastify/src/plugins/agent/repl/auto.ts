@@ -1,10 +1,9 @@
 import * as Y from "yjs";
-import './yjs.type'
-import {Code} from "./source";
-import {t, YTMap} from "./yjs.type";
+import {Code} from "./revision";
+import {t} from "../yjs.type";
 import fp from "fastify-plugin";
-import './agent'
-import {Agent, AgentFactory, FastifyInstance} from "fastify";
+import '../agent'
+import {Agent} from "fastify";
 
 export type VM= {
     rev:string,
@@ -16,17 +15,6 @@ export type VM= {
 }
 
 
- type VMCollectionId<TAgent extends string> = `${TAgent}/vm`;
-//
-//
-// type VMDoc<TAgent extends string = string> = Y.Doc & {
-//     collectionid: VMCollectionId<TAgent>,
-//     meta: {
-//         rev: string,
-//         timestamp: number
-//     }  
-// }
-
 
 export const autoVmToLatestCodePlugin= fp(async function (fastify, {doc}: {doc:Y.Doc}) {
 
@@ -34,14 +22,10 @@ export const autoVmToLatestCodePlugin= fp(async function (fastify, {doc}: {doc:Y
         const source = t<Code>(agent.getMap());
         let latest= undefined as ReturnType<typeof agent["revision"]> | undefined;
         function callback(e: Y.YMapEvent<any>) {
-            function hrefUpdateCallback(e:Y.YMapEvent<any>) {
-                agent.getMap().set("href", e.target.get("href"));
-            }
+        
 
             if (e.keysChanged.has("rev")) {
                 latest = agent.revision(source.get("rev"));
-                // latest.getMap().observe(hrefUpdateCallback)
-                // prev?.getMap().unobserve(hrefUpdateCallback)
             }
         }
 
@@ -66,63 +50,27 @@ export const autoVmToLatestCodePlugin= fp(async function (fastify, {doc}: {doc:Y
         }
     });
 });
-
-//
-//
-//
-// 
-// export const srcToVmSyncPlugin = fp(async (fastify: FastifyInstance) => {
-//     function syncSrcToVm(agent: Y.Doc) {
-//         const source = t<Code>(agent.getMap());
-//         function callback(e: Y.YMapEvent<any>) {
-//             if (e.keysChanged.has("rev")) {
-//                 agent?.getMap<VMDoc>("vms").set(source.get("rev"), createVmDoc(
-//                     `${agent.guid}/vms`,
-//                     source.toJSON()));
-//             }
-//         }
-//
-//         source.observe(callback);
-//         return {
-//             unobserve: () => source.unobserve(callback)
-//         }
-//
-//         function createVmDoc<TAgent extends string>(collectionid:string,{rev,src,timestamp}: Code) {
-//             const doc = new Y.Doc({
-//                 guid: rev,
-//                 collectionid: collectionid,
-//                 meta: {
-//                     rev: rev,
-//                     timestamp: timestamp
-//                 }
-//             }) as VMDoc<TAgent>;
-//             doc.getMap().set("src", src);
-//             doc.getMap().set("rev", rev);
-//             doc.getMap().set("timestamp", timestamp);
-//             return doc;
-//         }
-//     } 
-//     function syncAgentsVm(agents: Y.Doc) {
-//         const observers = new Map<Y.Doc, ReturnType<typeof syncSrcToVm>>();
-//         agents.on("subdocs", async ({added, removed, loaded}) => {
-//             for (const agent of Array.from(new Set<Y.Doc>([...loaded, ...added]))) {
-//                 observers.set(agent, syncSrcToVm(agent));
-//             }
-//             for (const agent of Array.from(removed)) {
-//                 observers.get(agent)?.unobserve();
-//             }
-//         });
-//     }
-//
-//     syncAgentsVm(fastify.agents); 
-// });
+ 
 
 
-export const agentVmPlugin = fp(async (fastify: FastifyInstance) => {
-    // fastify.register(srcToVmSyncPlugin); 
-     
+ /*
+        function callback(e: Y.YMapEvent<any>) {
+           function hrefUpdateCallback(e:Y.YMapEvent<any>) {
+                agent.getMap().set("href", e.target.get("href"));
+            }
+            
     
-});
+
+            if (e.keysChanged.has("rev")) {
+                latest = agent.revision(source.get("rev"));
+                 latest.getMap().observe(hrefUpdateCallback)
+               prev?.getMap().unobserve(hrefUpdateCallback)
+            }
+        }
+
+     
+
+  */
 
 
 function iterateMap<T extends  Y.Doc>(map: Y.Map<T>, sort: (a: any, b: any) => number= (a, b) => a - b) {

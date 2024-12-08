@@ -2,8 +2,6 @@ import Fastify, {FastifyPluginAsync} from 'fastify'
 import fp from "fastify-plugin";
 import {JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
 import './plugins/yjs';
-import * as Y from "yjs"
-import {type AgentRuntimeConfigure} from "./plugins/agent/runtime";
 const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
 
@@ -20,12 +18,12 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     await fastify.register( import('./plugins/agent/collection') , { doc: fastify.doc})
     await fastify.register( import('./plugins/agent/agent'))
     // await fastify.register( import('./plugins/agent/vm'))
-    await fastify.register( import('./plugins/agent/source'))
-    await fastify.register( import('./plugins/agent/vm') , { doc: fastify.doc})
+    await fastify.register( import('./plugins/agent/repl') , {
+        auto:{ doc: fastify.doc}
+    })
     await fastify.register( import('./plugins/agent/runtime'),{
         auto:{ doc: fastify.doc}
     })
-    // await fastify.register( import('./plugins/agent/ide') , { doc: fastify.doc})
 
 
 

@@ -2,9 +2,8 @@ import {FastifyPluginAsyncJsonSchemaToTs, JsonSchemaToTsProvider} from "@fastify
 import type {FastifyInstance, FastifyPluginAsync} from "fastify";
 
 import '../plugins/agent/runtime'
-import '../plugins/agent/source'
+import '../plugins/agent/repl'
 
-import {Code} from "../plugins/agent";
 const routes: FastifyPluginAsync = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
     
@@ -120,15 +119,15 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         },
         async handler(request, reply) { 
             const {code, id}= request.body  as {code: string, id: string}
-            const {vm,src}= fastify.agent(id);
-            src.set("src", code);
+            const agent= fastify.agent(id);
+            agent.src.set("src", code);
             reply.type('application/json');
             return reply.send(JSON.stringify({
                 id: id,
-                ...src.toJSON(),
+                ...agent.toJSON(),
                 links: {
                     self: request.originalUrl,
-                    worker: vm.properties.get("href")
+                    worker: agent.properties.get("href")
                 }
             }));
 
@@ -190,7 +189,7 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
                 vm: agent.toJSON(),
                 links: {
                     self: request.originalUrl,
-                    worker: agent.vm.properties.get("href")
+                    worker: agent.properties.get("href")
                 }
             }));
         }
@@ -275,20 +274,13 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             reply.type('application/json');
             return reply.send(JSON.stringify({
                 id: id,
-                ...src.toJSON(),
-                vm:agent.vm?.properties?.toJSON(),
-                agent:agent.toJSON(),
-                // vm: vm.properties.toJSON(),
+                // ...src.toJSON(),
+                vm:agent.latest()?.properties?.toJSON(),
+                // agent:agent.toJSON(),
                 links: {
                     self: request.originalUrl,
                     worker: agent.properties.get("href")
-                }
-                // doc:doc.toJSON(),
-                // isLoaded:doc.isLoaded,
-                // isSynced:doc.isSynced,
-                // shouldLoad:doc.shouldLoad,
-                // ...doc.getMap("vm").toJSON(),
-                // meta:doc.meta
+                } 
             }));
             
         }
