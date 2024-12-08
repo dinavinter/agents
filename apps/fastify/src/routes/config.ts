@@ -1,9 +1,11 @@
 import {FastifyPluginAsyncJsonSchemaToTs, JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
 import type {FastifyInstance, FastifyPluginAsync} from "fastify";
 
-import '../plugins/agent'
+import '../plugins/agent/runtime'
+import '../plugins/agent/source'
+
 import {Code} from "../plugins/agent";
-const routes: FastifyPluginAsync = async function (instance, options) {
+const routes: FastifyPluginAsync = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
     
     const  example=` createMachine({
@@ -68,7 +70,14 @@ const routes: FastifyPluginAsync = async function (instance, options) {
         async handler(request, reply) {
              reply.type('application/json');
             return reply.send({
-                agents: fastify.agents()
+                agents: fastify.agents.list.map(({id, meta, vm}) => ({
+                    id: id,
+                    version: meta.rev,
+                    links: {
+                        self: `/agents/${id}`,
+                        workers: vm.href
+                    }
+                }))
             });
         }
     })
@@ -109,29 +118,20 @@ const routes: FastifyPluginAsync = async function (instance, options) {
                 }
             }
         },
-        async handler(request, reply) {
+        async handler(request, reply) { 
             const {code, id}= request.body  as {code: string, id: string}
-            
-            const {src, vm}= fastify.agent(id);
-            const codeItem=new Code(code);
-            src.push([{
-                ...codeItem
-            }]);
-            const{rev, timestamp, href, version, session} =await vm()  ;
-            console.log(`Listening at ${href}.`) 
+            const {vm,src}= fastify.agent(id);
+            src.set("src", code);
             reply.type('application/json');
             return reply.send(JSON.stringify({
                 id: id,
-                rev: rev,
-                timestamp: timestamp,
-                session: session,
-                version: version ?? '0.0.0',
-                code: code,
+                ...src.toJSON(),
                 links: {
-                    self: `/agents/${id}`,
-                    worker: href
-                 }
+                    self: request.originalUrl,
+                    worker: vm.properties.get("href")
+                }
             }));
+
         }
     })
     
@@ -141,6 +141,12 @@ const routes: FastifyPluginAsync = async function (instance, options) {
         schema: {
             summary: 'Post Specific Agent Code',
             description: 'This route is to create an agent definition',
+            // params:{
+            //     type: 'object',
+            //     properties: {
+            //         agent: {type: 'string' , examples: ['emit']}
+            //     }
+            // },
             body: {
                 type: 'object',
                 description: 'The agent javascript code',
@@ -172,32 +178,67 @@ const routes: FastifyPluginAsync = async function (instance, options) {
         },
         async handler(request, reply) {
             const {code}= request.body as {code: string}
-             const {agent} = request.params as { agent: string };
-            
-            const {src, vm}= fastify.agent(agent);
-            const codeItem=new Code(code);
-            src.push([{
-                ...codeItem
-            }]);
-           const{rev, timestamp, href, version,id, session} =await vm()  ;
-            // const server = await runServer({runtime , host: 'local.zon.cx'})
-            console.log(`Listening at ${href}.`) 
+            const {agent:id} = request.params as { agent: string }; 
+            const agent= fastify.agent(id);
+            const {src} =agent;
+            src.set("src", code); 
+            // console.log(`Listening at ${agent.vm.properties.get("href")}.`) 
+            reply.type('application/json');
+            return reply.send(JSON.stringify({
+                id: agent,
+                src:src.toJSON(),
+                vm: agent.toJSON(),
+                links: {
+                    self: request.originalUrl,
+                    worker: agent.vm.properties.get("href")
+                }
+            }));
+        }
+    })
+    fastify.route({
+        method: 'post',
+        url: '/agents/:agent/start',
+        schema: {
+            summary: 'Post Specific Agent Code',
+            description: 'This route is to create an agent definition',
+            params:{
+                type: 'object',
+                properties: {
+                    agent: {type: 'string' , examples: ['emit']}
+                }
+            }, 
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+            const {agent:id} = request.params as { agent: string };
+            const {href}= fastify.agent(id).vm.start();
+            console.log(`Listening at ${href}.`)
             reply.type('application/json');
             return reply.send(JSON.stringify({
                 id: id,
-                rev: rev,
-                timestamp: timestamp,
-                session: session,
-                version: version ?? '0.0.0',
-                code: code,
                 links: {
                     self: request.originalUrl,
                     worker: href
                 }
             }));
         }
-    }) 
-
+    })
     fastify.route({
         method: 'get',
         url: '/agents/:agent',
@@ -226,27 +267,30 @@ const routes: FastifyPluginAsync = async function (instance, options) {
             }
         },
         async handler(this,request, reply) {
-            const {agent} = request.params as { agent: string };
-            // const{href, version, rev} =await fastify.agent(agent).vm();  
-            const {doc} = fastify.agent(agent);
-            doc.on("load", e=> console.log("load", e));
-            doc.on("sync",  e=> console.log("sync", e));
-            doc.on("subdocs",  e=> console.log("subdocs", e));
-            doc.whenLoaded.then(e=> console.log("whenLoaded", e));
-            doc.whenSynced.then(e=> console.log("whenSynced", e));
-            doc.load();
-
-
+            const {agent:id} = request.params as { agent: string };
+            const agent = fastify.agent(id); 
+            const {src} =agent;
+            
+            // const vm=agent.vm;
             reply.type('application/json');
             return reply.send(JSON.stringify({
-                id: agent,
-                doc:doc.toJSON(),
-                isLoaded:doc.isLoaded,
-                isSynced:doc.isSynced,
-                shouldLoad:doc.shouldLoad,
-                ...doc.getMap("vm").toJSON(),
-                meta:doc.meta
+                id: id,
+                ...src.toJSON(),
+                vm:agent.vm?.properties?.toJSON(),
+                agent:agent.toJSON(),
+                // vm: vm.properties.toJSON(),
+                links: {
+                    self: request.originalUrl,
+                    worker: agent.properties.get("href")
+                }
+                // doc:doc.toJSON(),
+                // isLoaded:doc.isLoaded,
+                // isSynced:doc.isSynced,
+                // shouldLoad:doc.shouldLoad,
+                // ...doc.getMap("vm").toJSON(),
+                // meta:doc.meta
             }));
+            
         }
     })
 
