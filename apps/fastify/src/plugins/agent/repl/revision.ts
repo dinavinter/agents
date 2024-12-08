@@ -1,11 +1,11 @@
 import fp from "fastify-plugin";
 import * as Y from "yjs";
 import {createHash} from "node:crypto";
-import './yjs.type'
-import {t, YTMap} from "./yjs.type";
-import './agent'
-import {Properties} from "./agent";
+import {t, YTMap} from "../yjs.type";
+import '../agent'
+import {Properties} from "../agent";
 
+type VMCollectionId<TAgent extends string> = `${TAgent}/vm`; 
 
 export type Meta = {
     type: string,
@@ -18,7 +18,7 @@ export type Meta = {
  declare module "fastify" {
     interface Agent {
         src: YTMap<Code>, 
-        get vm(): VMDoc ,
+        latest(): VMDoc ,
         revision(rev?: string): VMDoc,
         rev: string
     }
@@ -94,8 +94,7 @@ function syncRev(code:  YTMap<Properties>):YTMap<Properties> & {
     return Object.assign(code,{
         rev(){
             return code.get("rev") ??  code.set("rev", revision(code)) 
-        },
-        updateRev,
+        }, 
         sync(){ 
             function callback(e: Y.YMapEvent<any>) {
                 if (e.keysChanged.has("src")) {
@@ -124,8 +123,8 @@ export const sourceManagementPlugin = fp( async (fastify) => {
         }
         return {
             src: code,
-            get rev( ) {return code.rev()},
-            get vm(){
+            get rev( ) {return code.rev()}, 
+            latest(){
                 return revisionDoc(code.rev())
             },
             revision: revisionDoc
