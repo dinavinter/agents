@@ -1,10 +1,11 @@
 import {FastifyPluginAsyncJsonSchemaToTs, JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
-import type {FastifyInstance} from "fastify";
+import type {FastifyInstance, FastifyPluginAsync} from "fastify";
 
 import '../plugins/agent'
 import {Code} from "../plugins/agent";
-const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: FastifyInstance, options) {
+const routes: FastifyPluginAsync = async function (instance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
+    
     const  example=` createMachine({
                     id: 'emit-example',
                     initial: 'emit',
@@ -109,7 +110,7 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
             }
         },
         async handler(request, reply) {
-            const {code, id}= request.body 
+            const {code, id}= request.body  as {code: string, id: string}
             
             const {src, vm}= fastify.agent(id);
             const codeItem=new Code(code);
@@ -117,8 +118,7 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
                 ...codeItem
             }]);
             const{rev, timestamp, href, version, session} =await vm()  ;
-            console.log(`Listening at ${href}.`)
- 
+            console.log(`Listening at ${href}.`) 
             reply.type('application/json');
             return reply.send(JSON.stringify({
                 id: id,
@@ -134,6 +134,7 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
             }));
         }
     })
+    
     fastify.route({
         method: 'post',
         url: '/agents/:agent',
@@ -170,10 +171,10 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
             }
         },
         async handler(request, reply) {
-            const {code}= request.body
-
+            const {code}= request.body as {code: string}
+             const {agent} = request.params as { agent: string };
             
-            const {src, vm}= fastify.agent(request.params.agent);
+            const {src, vm}= fastify.agent(agent);
             const codeItem=new Code(code);
             src.push([{
                 ...codeItem
@@ -206,11 +207,13 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
                 200: {
                     description: 'Successful response',
                     type: 'object',
+                    additionalProperties: true,
                     properties: {
                         id: {type: 'string'},
                         version: {type: 'string'},
                         config: {type: 'object'},
                         definition: {type: 'object'},
+                        src: {type: 'string'},
                         links: {
                             type: 'object',
                             properties: {
@@ -222,21 +225,27 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance: Fasti
                 }
             }
         },
-        async handler(request, reply) {
+        async handler(this,request, reply) {
             const {agent} = request.params as { agent: string };
-            const{rev, timestamp, href, version, session, id} =await fastify.agent(agent).vm()  ;
+            // const{href, version, rev} =await fastify.agent(agent).vm();  
+            const {doc} = fastify.agent(agent);
+            doc.on("load", e=> console.log("load", e));
+            doc.on("sync",  e=> console.log("sync", e));
+            doc.on("subdocs",  e=> console.log("subdocs", e));
+            doc.whenLoaded.then(e=> console.log("whenLoaded", e));
+            doc.whenSynced.then(e=> console.log("whenSynced", e));
+            doc.load();
+
+
             reply.type('application/json');
             return reply.send(JSON.stringify({
-                id: id,
-                rev: rev,
-                timestamp: timestamp,
-                session: session,
-                version: version ?? '0.0.0',
-                code: code,
-                links: {
-                    self: request.originalUrl,
-                    worker: href
-                }
+                id: agent,
+                doc:doc.toJSON(),
+                isLoaded:doc.isLoaded,
+                isSynced:doc.isSynced,
+                shouldLoad:doc.shouldLoad,
+                ...doc.getMap("vm").toJSON(),
+                meta:doc.meta
             }));
         }
     })
