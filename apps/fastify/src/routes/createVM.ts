@@ -1,22 +1,28 @@
-import {createYjsHub, type serviceHub} from "agent/stream/hub";
+/// <reference types="@edge-runtime/types" />
+
+import {type serviceHub} from "agent/stream/hub";
 import {serviceMachine} from "agent/inspect/inspector";
-import {FastifyPluginAsyncJsonSchemaToTs, JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
-import type {FastifyInstance} from "fastify";
-import xstateSchema from "../plugins/doc/xstate.schema.json";
 import {
-    ActorRefFrom,
-    AnyActorRef,
+    ActorRefFrom, AnyActorLogic,
     AnyStateMachine,
     assign,
     createActor,
     createMachine,
-    emit, Snapshot,
+    emit,
     StateMachine
 } from "xstate";
 import {EdgeRuntime, runServer} from 'edge-runtime'
+import {fileURLToPath} from "node:url";
+import path from "node:path";
+import {HocuspocusProvider} from "@hocuspocus/provider";
+import {env} from "node:process"; 
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the directory
+globalThis.__filename = __filename;
+globalThis.__dirname = __dirname;
 
 
-function router(hub:Y.Doc) {
+function router(hub:serviceHub) {
     return (event: FetchEvent) => {
         const request = event.request;
         if (request.url.includes('/sse')) {
@@ -36,7 +42,7 @@ function router(hub:Y.Doc) {
         function yjsSseRouter(event: FetchEvent) {
             const request = event.request;
             const slug = request.url.split('/').pop() || 'emitted';
-            return event.respondWith(new Response(encodeSse(hub[slug].readableStream()), {
+            return event.respondWith(new Response(encodeSse(hub.array(slug).readableStream(event.request.signal)), {
                 headers: {
                     'Content-Type': 'text/event-stream',
                     'Cache-Control': 'no-cache',
@@ -78,26 +84,34 @@ function router(hub:Y.Doc) {
 }
 
 
-export async function vm(code:string, hub:serviceHub) {
+export async function createVM(code:string, hub:serviceHub) {
     const machineCode = (code: string) => ` 
                const logic = ${code}; 
                 const actor = createActor(logic, hub).start(); 
+                // provider.connect();
                 ${router} 
                addEventListener('fetch', router(hub))
+             
             `
+    // const provider = new HocuspocusProvider({
+    //     url: env.YJS_URL!,
+    //     name: hub.doc.guid,
+    //     preserveConnection: true,
+    //     document: hub.doc, 
+    // })
     const runtime = new EdgeRuntime({
         initialCode: machineCode(code),
         extend: (context) => Object.assign(context, {
             process: {env: {NODE_ENV: 'development'}},
             emit,
+            // provider,
             createMachine,
             assign,
-            createActor(machine: StateMachine<any, any, any>) {
+            createActor(logic: AnyActorLogic) {
                 return createActor(serviceMachine, {
-                    logic: machine,
                     id: 'service',
                     input: {
-                        logic: machine,
+                        logic: logic,
                         hub: hub,
                     },
                     inspect: {
@@ -107,7 +121,9 @@ export async function vm(code:string, hub:serviceHub) {
                     }
                 });
             },
-            hub
+            hub,
+            __filename,
+            __dirname
         })
     })
     const server = await runServer({runtime, host: 'local.zon.cx'})
@@ -121,9 +137,10 @@ export async function vm(code:string, hub:serviceHub) {
         actor,
         server,
         hub,
-        href: server.url
+        href: server.url,
+        // provider
     }
 }
 
 type InferFromPromise<T> = T extends Promise<infer U> ? U : never
-export type ActorVm = InferFromPromise<ReturnType<typeof vm>>
+export type ActorVm = InferFromPromise<ReturnType<typeof createVM>>

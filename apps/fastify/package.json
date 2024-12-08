@@ -18,11 +18,16 @@
     "start": "node ./dist/index.mjs"
   },
   "dependencies": {
+    "@edge-runtime/types": "^3.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
-    "@hocuspocus/provider": "^2.13.7",
+    "@hocuspocus/provider": "^2.14.0",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
-    "fastify-sse-v2": "^4.0.0"
+    "fastify-sse-v2": "^4.0.0",
+    "ws": "^8.18.0",
+    "y-partykit": "^0.0.32",
+    "y-websocket": "^2.0.4",
+    "yjs": "^13.6.20"
   },
   "devDependencies": {
     "@ai-sdk/openai": "^0.0.54",
@@ -44,7 +49,6 @@
     "js-beautify": "^1.15.1",
     "tsx": "^4.18.0",
     "typescript": "^5.5.4",
-    "yjs": "^13.6.20",
     "zod": "^3.23.8"
   },
   "main": "./dist/index.cjs",
@@ -82,5 +86,17 @@
     "node": "22.8.0",
     "yarn": "1.22.19",
     "npm": "10.7.0"
+  },
+  "overrides": {
+    "yjs": {
+      "dependencies": {
+        "y-protocols": "^1.0.6"
+      },
+      "main": "./dist/yjs.cjs",
+      "module": "./dist/yjs.mjs",
+      "exports": {
+        ".": {}
+      }
+    }
   }
 }
