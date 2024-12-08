@@ -126,12 +126,13 @@ export async function createVM(code:string, hub:serviceHub) {
             __dirname
         })
     })
-    const server = await runServer({runtime, host: 'local.zon.cx'})
+    const server = await runServer({runtime, host: '0.0.0.0'})
+    hub.doc.getMap().set("href", server.url)
     console.log(`Listening at ${server.url}.`)
     const logic = runtime.evaluate('logic') as AnyStateMachine
     const actor = runtime.evaluate('actor') as ActorRefFrom<AnyStateMachine>
     // const hub = runtime.evaluate('hub') as serviceHub
-
+    
     return {
         logic,
         actor,
