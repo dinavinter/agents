@@ -1,0 +1,17 @@
+{
+  "node": {
+    "4023174112c3b93f9b555f62e282fbb6d6b38ee9f8": {
+      "workers": {
+        "app/[doc]/page": {
+          "moduleId": "(rsc)/../../../node_modules/.pnpm/next@15.1.0_@babel+core@7.26.0_@opentelemetry+api@1.9.0_react-dom@18.2.0_react@18.2.0__react@18.2.0/node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2FI347305%2FSrc%2Fsap-ai%2Fapps%2Fysweet%2Fnext%2Fapp%2F%5Bdoc%5D%2Fpage.tsx%22%2C%5B%5B%224023174112c3b93f9b555f62e282fbb6d6b38ee9f8%22%2C%22%24%24RSC_SERVER_ACTION_0%22%5D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/[doc]/page": "rsc"
+      }
+    }
+  },
+  "edge": {},
+  "encryptionKey": "ES9gwmW+Fg4QYkj/ibVSfmjPh9hvmobFiJ6BJ/RZy5I="
+}
