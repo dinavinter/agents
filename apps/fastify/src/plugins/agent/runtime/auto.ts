@@ -1,8 +1,6 @@
 import fp from "fastify-plugin";
 import * as Y from "yjs";
-import {Agent} from "fastify";
-import {syncVmMachines} from "./sync";
- 
+  
 
 export const autoSyncAgents = fp(async function (fastify ) {
     function callback({keys}: Y.YEvent<Y.Map<typeof fastify.agents>>) {

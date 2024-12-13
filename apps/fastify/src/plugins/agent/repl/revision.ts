@@ -6,18 +6,14 @@ import '../agent'
 import {Properties} from "../agent";
 import {VM} from "./auto";
  
-type VMCollectionId<TAgent extends string> = `${TAgent}/vm`; 
-
+ 
 export type Meta = {
     type: string,
     name: string,
     latest: string,
     src: string
 }
-
-
-
-
+ 
  declare module "fastify" {
     
     interface FastifyInstance {
@@ -50,25 +46,7 @@ export type Code ={
 
 
 
-function vmDoc(agent: Y.Doc) {
-    const source = t<Code>(agent.getMap());
-    const code = source.toJSON();
-    const {rev, timestamp, src} = code;
-    const doc = new Y.Doc({
-        guid: `${agent.guid}/${rev}`,
-        collectionid: "vm",
-        meta: {
-            rev: rev,
-            timestamp: timestamp
-        },
-        gc:false
-    });
-    doc.getMap().set("src", src);
-    doc.getMap().set("rev", rev);
-    doc.getMap().set("timestamp", timestamp);
-    return doc;
-}
- 
+  
 function syncRev(code:  YTMap<Properties>):YTMap<Properties> & {
     rev(): string,
     sync:()=>{
@@ -77,7 +55,7 @@ function syncRev(code:  YTMap<Properties>):YTMap<Properties> & {
     
     function revision(code:  YTMap<Properties>) {
         return revisionHash(code.get("src") || code.set("src", `createMachine({
-              id: ${code.doc?.guid}
+              id: "${code.doc?.guid}"
         })`));
     }
     
@@ -118,47 +96,7 @@ function syncRev(code:  YTMap<Properties>):YTMap<Properties> & {
         }
     });
 }
-
-/*
-const vmId = (agent: Agent) => `${agent.guid}`;
-
-function createSyncedDoc(doc: Y.Doc) {
-    
-    const newDoc = new Y.Doc({
-        guid: doc.guid,
-        collectionid: doc.collectionid,
-        meta: doc.meta
-    });
-    const map= newDoc.getMap().toJSON();
-    for(const key in Object.keys(map)) {
-        newDoc.getMap().set(key, map[key]); 
-    }
-    
-    return newDoc;
-     
-}
-
-function syncLatest(agents:Y.Map<Y.Doc>,agent:Agent, vmMap: Y.Map<Y.Doc>) {
-    vmMap.observe(()=>{ 
-        const latest = Array.from(vmMap.values()).sort((a, b) => a.meta.timestamp - b.meta.timestamp).pop();
-         if(latest && agents.get(vmId(agent))?.meta.rev !== latest.meta.rev) {
-            agents.set(vmId(agent), createSyncedDoc(latest));
-         }
-    });
-}
-
-    const revisionDoc=(rev: string) => {
-            if(rev === latestMap.get(vmId(agent))?.meta?.rev) {
-                return latestMap.get(vmId(agent))
-            }
-            const doc= vmMap.get(rev) || vmMap.set(rev, vmDoc(agent))
-            return Object.assign(doc, {
-                properties:t<Code & {href:string}>(doc.getMap())
-            });
-        }
-
-*/
-
+ 
 export const srcPlugin = fp( async (fastify) => {
     fastify["agent.extensions"].push(function (agent, store) {
         // const vmMap = agent.getMap<Y.Doc>(`vm`);
@@ -193,13 +131,29 @@ export const sourceManagementPlugin = fp( async (fastify) => {
             const code = source.toJSON();
             const {rev, timestamp, src} = code;
             const id = `${agent.guid}:${rev}`;
-            const doc = fastify.docs.getOrCreate(id, ()=>vmDoc( ));
+            const doc = fastify.docs.getOrCreate(id ,function () {
+                const doc = new Y.Doc({
+                    guid: id,
+                    collectionid: "vm",
+                    meta: {
+                        type: "vm",
+                        agent: agent.guid,
+                    }
+                })
+                doc.getMap().set("src", src);
+                doc.getMap().set("rev", rev);
+                doc.getMap().set("timestamp", timestamp);
+                return doc;
+            });
+            doc.getMap().set("src", src);
+            doc.getMap().set("rev", rev);
+            doc.getMap().set("timestamp", timestamp);
+
             agent.getMap<Revision>("revisions").set(rev, {
                 id,
                 rev,
                 timestamp
-            });
-
+            }); 
             revisions.getMap<Revision>().set(id, {
                 id,
                 rev,
@@ -207,25 +161,14 @@ export const sourceManagementPlugin = fp( async (fastify) => {
             });
             
             return doc;
-            function vmDoc() {
-                const doc = new Y.Doc({
-                    guid: id,
-                    collectionid: "vm",
-                    meta: {
-                        rev: rev,
-                        timestamp: timestamp
-                    },
-                    gc:false
-                });
-                doc.getMap().set("src", src);
-                doc.getMap().set("rev", rev);
-                doc.getMap().set("timestamp", timestamp);
-                return doc;
-            }
+           
         }
         
         return {
-            latest: createSnapshot,
+            latest() {
+                const latest = agent.getMap<Revision>("revisions").get(agent.rev);
+                return latest && fastify.docs.getOrCreate(latest.id)
+            },
             createSnapshot: createSnapshot,
             revision(rev: string) {
                 const revision = agent.getMap<Revision>("revisions").get(rev);

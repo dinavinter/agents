@@ -1,10 +1,9 @@
 import fp from "fastify-plugin";
-import {syncVmMachines} from "./sync";
 import * as Y from "yjs";
-import {ActorVm, createVM} from "../../../routes/createVM";
+import {ActorVm, createVM} from "./vm.ts";
 import {t} from "../yjs.type";
 import type {Code} from "../repl/revision";
-import {createYjsHub} from "../../../stream/hub";
+import {createYjsHub} from "@/stream/hub.ts";
 
 declare module "fastify" {
     interface VMI{
@@ -43,7 +42,7 @@ export const agentRunnerPlugin = fp(async (fastify) => {
         return {
             start() {
                 return getOrCreate(observers, id, async function () {
-                    const vm = await createVM(t<Code>(doc.getMap()).get("src"), createYjsHub(doc));
+                    const vm = await createVM(t<Code>(doc.getMap()).get("src"), id);
 
                     discovery.getMap().set(id, {
                         href: vm.href,
@@ -74,7 +73,7 @@ export const agentRunnerPlugin = fp(async (fastify) => {
         return {
 
             start: async function () {
-                const snapshot = agent.createSnapshot();
+                const snapshot = createSnapshot();
                 return fastify.vm(snapshot).start()
             },
             stop: async function () {
@@ -83,7 +82,7 @@ export const agentRunnerPlugin = fp(async (fastify) => {
                     await fastify.vm(key).stop()
                 }
             },
-            createSnapshot: async function () {
+            createSnapshot: function () {
                 const snapshot = createSnapshot();
                 return Object.assign(snapshot, fastify.vm(snapshot))
             },

@@ -1,7 +1,7 @@
 import { Subscribable, toObserver } from "xstate";
 import * as Y from "yjs";
 
-export type YIterator<T> = AsyncIterable<T> & Subscribable<T> & { push(e: T): any, raw: Y.Array<T> };
+export type YIterator<T> = AsyncIterable<T> & Subscribable<T> & { push(e: T): any, raw: Y.Array<T> , readableStream: (abortSignal: AbortSignal) => ReadableStream<T>};
 
 export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
 
@@ -35,11 +35,38 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
     async function* iterator() {
         yield* iterateArrayItems();
     }
-
+    
+    
+    
+ 
     return {
         raw: array,
         push: (e: T) => array.push([e]),
         [Symbol.asyncIterator]: iterator,
+        readableStream: (abortSignal) => {
+            const abortController =  new AbortController()
+            function abort() {
+                abortController.abort();
+                abortSignal.removeEventListener('abort', abort);
+            }
+            abortSignal.addEventListener('abort', abort);
+            
+            
+            return new ReadableStream<T>({
+                async start(controller) { 
+                    for await (const event of iterateArrayItems()) {
+                        if (abortController.signal.aborted) {
+                            return;
+                        }
+                        controller.enqueue(event);
+                    } 
+                },
+                cancel() {
+                    abortController.abort();
+                }
+            })
+        },
+                    
         subscribe: (observerOrCallback) => {
             const observer = toObserver(observerOrCallback);
             const callback = (event: Y.YArrayEvent<T>) => {
@@ -55,3 +82,4 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
         }
     };
 }
+ 

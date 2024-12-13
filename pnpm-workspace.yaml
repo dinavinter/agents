@@ -1,3 +1,6 @@
 packages:
   - apps/*
   - libs/*
+  - apps/ysweet/app
+  - apps/ysweet/debugger
+  - apps/ysweet/next

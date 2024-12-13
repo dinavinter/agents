@@ -26,7 +26,6 @@ export const yjsProviderPlugin = fp(async (fastify, options: { doc?: Y.Doc; yjsU
 
      })
 
-    
  
     provider.connect();
     

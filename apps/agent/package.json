@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "type": "module",
-  "packageManager": "pnpm@9.6.0",
+  "packageManager": "pnpm@9.12.3",
   "scripts": {
-    "dev": "pnpm tsx-env ./fastify.ts --watch",
+    "dev": "pnpm tsx-env ./server/dev.ts --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "pnpm tsx-env ./index.ts",
     "git": "pnpm tsx-env  ./agents/git.ts",
@@ -33,10 +33,12 @@
     "@xstate/graph": "^2.0.0",
     "ai": "^3.3.19",
     "atomico": "^1.79.2",
+    "cf-nodejs-logging-support": "^7.4.0",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "fastify-sse": "^1.0.0",
     "fastify-sse-v2": "^4.0.0",
+    "fastify-type-provider-zod": "^2.0.0",
     "it-pushable": "^3.2.3",
     "json-schema-to-zod": "^2.3.1",
     "morphdom": "^2.7.4",
@@ -61,6 +63,10 @@
     "tslib": "^2.6.3",
     "tsx": "^4.16.3",
     "typescript": "~5.5.2",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@fastify/one-line-logger": "^1.4.0",
+    "@fastify/swagger": "^8.15.0",
+    "@scalar/fastify-api-reference": "^1.25.7"
+
   }
 }

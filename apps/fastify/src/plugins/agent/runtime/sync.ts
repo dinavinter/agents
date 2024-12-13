@@ -1,7 +1,7 @@
 import * as Y from "yjs";
-import {ActorVm, createVM} from "../../../routes/createVM";
+import {ActorVm, createVM} from "./vm.ts";
 import {Agent} from "fastify"; 
-import {createYjsHub} from "../../../stream/hub";
+import {createYjsHub} from "@/stream/hub.ts";
 import fp from "fastify-plugin";
 import { t } from "../yjs.type";
 import {type Code} from "../repl/revision";
