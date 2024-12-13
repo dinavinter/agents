@@ -1,11 +1,11 @@
 import * as Y from "yjs";
 import {ActorVm, createVM} from "../../../routes/createVM";
 import {Agent} from "fastify"; 
-import {createYjsHub} from "agent/stream/hub";
+import {createYjsHub} from "../../../stream/hub";
 import fp from "fastify-plugin";
 import { t } from "../yjs.type";
-import {Code} from "../source";
-
+import {type Code} from "../repl/revision";
+ 
 declare module "fastify" { 
     interface Agent{
         sync: ()=> {
@@ -15,10 +15,14 @@ declare module "fastify" {
 }
 
 
-function syncVmMachines(agent: Agent) {
+export function syncVmMachines(agent: Y.Doc) {
     const observers = new Map<Y.Doc, ActorVm>(); 
     const callback = async ({added, removed, loaded}: {added:Set<Y.Doc>,removed:Set<Y.Doc>,loaded:Set<Y.Doc>} ) => {
-        for (const vm of Array.from(new Set([...loaded, ...added]))) {
+        function isVm(doc: Y.Doc) {
+            return doc.collectionid === "vm" 
+        }
+
+        for (const vm of Array.from(new Set([...loaded, ...added])).filter(isVm)) {
             observers.set(vm, await createVM(t<Code>(vm.getMap()).get("src"), createYjsHub(vm)));
         }
         for (const vm of Array.from(removed)) {
@@ -40,7 +44,8 @@ export const agentRunnerPlugin = fp(async (fastify) => {
          return { 
             sync:syncVmMachines.bind(null, agent)
         }
-    }) 
+    })
+    
  });
 
 

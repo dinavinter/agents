@@ -21,6 +21,7 @@
     "@edge-runtime/types": "^3.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
     "@hocuspocus/provider": "^2.14.0",
+    "@y-sweet/client": "^0.6.3",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
     "fastify-sse-v2": "^4.0.0",
@@ -41,6 +42,7 @@
     "@types/node": "^22.5.0",
     "@vercel/functions": "^1.4.1",
     "@vercel/node": "^3.2.10",
+    "@y-sweet/sdk": "^0.6.0",
     "ai": "^3.3.19",
     "ajv": "^8.17.1",
     "cf-nodejs-logging-support": "^7.3.0",
@@ -83,7 +85,6 @@
     }
   },
   "engines": {
-    "node": "22.8.0",
     "yarn": "1.22.19",
     "npm": "10.7.0"
   },

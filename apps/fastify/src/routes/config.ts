@@ -1,12 +1,12 @@
 import {FastifyPluginAsyncJsonSchemaToTs, JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
-import type {FastifyInstance, FastifyPluginAsync} from "fastify";
-
+import type {Agent, FastifyInstance, FastifyPluginAsync} from "fastify";
+import * as Y from "yjs";
 import '../plugins/agent/runtime'
 import '../plugins/agent/repl'
 
 const routes: FastifyPluginAsync = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
-    
+
     const  example=` createMachine({
                     id: 'emit-example',
                     initial: 'emit',
@@ -69,12 +69,12 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         async handler(request, reply) {
              reply.type('application/json');
             return reply.send({
-                agents: fastify.agents.list.map(({id, meta, vm}) => ({
-                    id: id,
-                    version: meta.rev,
+                agents: Array.from(fastify.doc.subdocs).map(({guid, meta})=>({
+                    id: guid,
+                    meta, 
                     links: {
-                        self: `/agents/${id}`,
-                        workers: vm.href
+                        self: `${request.originalUrl}/${guid}`,
+                        workers: `${request.originalUrl}/${guid}/workers`
                     }
                 }))
             });
@@ -122,15 +122,7 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             const agent= fastify.agent(id);
             agent.src.set("src", code);
             reply.type('application/json');
-            return reply.send(JSON.stringify({
-                id: id,
-                ...agent.toJSON(),
-                links: {
-                    self: request.originalUrl,
-                    worker: agent.properties.get("href")
-                }
-            }));
-
+            return reply.send(agentJson(agent)); 
         }
     })
     
@@ -183,15 +175,7 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             src.set("src", code); 
             // console.log(`Listening at ${agent.vm.properties.get("href")}.`) 
             reply.type('application/json');
-            return reply.send(JSON.stringify({
-                id: agent,
-                src:src.toJSON(),
-                vm: agent.toJSON(),
-                links: {
-                    self: request.originalUrl,
-                    worker: agent.properties.get("href")
-                }
-            }));
+            return reply.send(agentJson(agent));
         }
     })
     fastify.route({
@@ -238,6 +222,7 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             }));
         }
     })
+
     fastify.route({
         method: 'get',
         url: '/agents/:agent',
@@ -267,24 +252,87 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         },
         async handler(this,request, reply) {
             const {agent:id} = request.params as { agent: string };
-            const agent = fastify.agent(id); 
-            const {src} =agent;
-            
+            const agent = fastify.agent(id);
             // const vm=agent.vm;
             reply.type('application/json');
-            return reply.send(JSON.stringify({
-                id: id,
-                // ...src.toJSON(),
-                vm:agent.latest()?.properties?.toJSON(),
-                // agent:agent.toJSON(),
-                links: {
-                    self: request.originalUrl,
-                    worker: agent.properties.get("href")
-                } 
-            }));
-            
+            return reply.send(agentJson(agent));
         }
     })
+
+    fastify.route({
+        url: '/agents/:agent/latest',
+        method: 'get',
+        handler(request, reply) {
+            const {agent:id}= request.params as { agent: string };
+            const vmDoc= fastify.agent(id).latest()
+            if(!vmDoc) {
+                reply.status(404);
+                return reply.send({error: 'Not Found'})
+            }
+            vmDoc.load()
+            reply.type('application/json');
+            return reply.send(vmJson(vmDoc));
+        }
+    })
+
+
+    fastify.route({
+        url: '/agents/:agent/:vm',
+        method: 'get',
+        handler(request, reply) {
+            const {agent:id, vm}= request.params as { agent: string, vm: string };
+            const agent= fastify.agent(id);
+            const vmDoc= agent.revision(vm);
+            vmDoc.load()
+            reply.type('application/json');
+            return reply.send(vmJson(vmDoc));
+        }
+    })
+        
+
+
+
+    function agentJson( agent:Agent  ) {
+        const vm=agent.latest();
+        return JSON.stringify({
+            id: agent.guid,
+            debug: fastify.debug,
+            href: agent.properties.get("href"),
+            rev: agent.rev,
+            doc: {
+                guid: agent.guid,
+                collectionid: agent.collectionid
+            },
+            meta: agent.meta,
+            latest: vm && {
+                id: vm.guid,
+                ...vm.meta,
+                rev: vm.getMap().get("rev"),
+                timestamp: vm.getMap().get("timestamp"),
+                src: vm.getMap().get("src"),
+                href: vm.getMap().get("href")
+            },
+            subdocs: Array.from(agent.subdocs).map(({guid, collectionid, meta}) => ({guid, collectionid, meta})),
+            // doc: fastify.doc.guid,
+            // room: fastify.room, 
+            links: {
+                self: '/',
+                worker: agent.getMap().get("href")
+            }
+        });
+    }
+    function vmJson(vmDoc: Y.Doc) {
+        return JSON.stringify({
+            id: vmDoc.guid,
+            rev: vmDoc.getMap().get("rev"),
+            timestamp: vmDoc.getMap().get("timestamp"),
+            src: vmDoc.getMap().get("src"),
+            href: vmDoc.getMap().get("href"),
+            json: vmDoc.toJSON(),
+            ...vmDoc.meta
+        });
+    }
+
 
 }
 

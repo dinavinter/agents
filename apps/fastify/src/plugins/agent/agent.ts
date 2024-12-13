@@ -1,10 +1,9 @@
 import fp from "fastify-plugin";
 import * as Y from "yjs"; 
 import './yjs.type'
-import {FastifyInstance, AgentFactory, Agent} from "fastify";
-import './collection'
+import {FastifyInstance, Agent} from "fastify";
 import {t, YTMap} from "./yjs.type";
-import {Code} from "./source";
+import {string} from "zod";
 
 export type Properties ={
     rev: string;
@@ -12,10 +11,14 @@ export type Properties ={
     src: string;
     href?: string;
 }
+export type AgentProps = {
+    id: string,  collection: string, meta: any
+}
 
 declare module "fastify" { 
     
     interface FastifyInstance   {
+        agents: YTMap<AgentProps>
         agent: AgentFactory
         "agent.register": (plugin:plugin)=> void
         "agent.extensions": Parameters<FastifyInstance["agent.register"]>[0][]
@@ -32,7 +35,7 @@ declare module "fastify" {
         properties:YTMap<Properties>
     } 
 
-    type plugin = (agent: Agent )=> any;
+    type plugin = (agent: Agent , store: Y.Doc)=> any;
 
     interface AgentFactory  {
         <TId extends string, TMeta extends {[key:string]: any}>(id: TId, meta?: TMeta): Agent & {
@@ -49,6 +52,7 @@ declare module "fastify" {
 
 export  type agent<T> = <TId extends string, TMeta extends {[key:string]: any}>(id: TId, meta?: TMeta) => Y.Doc & {
     guid: typeof id;
+    collectionid: "agent";
     meta: {
         type: "agent";
     } & TMeta 
@@ -60,7 +64,7 @@ export  type agent<T> = <TId extends string, TMeta extends {[key:string]: any}>(
 
 
 
-async function  agentCreatorPlugin<TFastifyInstance extends FastifyInstance>(fastify:TFastifyInstance) {
+async function agentCreatorPlugin<TFastifyInstance extends FastifyInstance>(fastify:TFastifyInstance) {
     fastify.decorate("agent.extensions", [
         function (agent:Agent) {
             return {
@@ -70,35 +74,57 @@ async function  agentCreatorPlugin<TFastifyInstance extends FastifyInstance>(fas
             }
         }
     ]);
+    
     fastify.decorate("agent.register", function (ext){
          fastify["agent.extensions"].push(ext)
     })
-    
-     
-    
-    
-    fastify.decorate("agent",function  (id, meta) {
-        const doc = fastify.agents.get(id) || fastify.agents.set(id, new Y.Doc({
-            guid: id,
-            collectionid: "agents",
-            gc: false,
-            autoLoad: true,
-            meta: {
-                type: 'agent',
-                name: id,
-                ...meta
-            }
-        }))
 
+
+    const agents= fastify.docs.getOrCreate(":agents", ()=> new Y.Doc({
+        guid: ":agents",
+        collectionid: "agents",
+        gc: false,
+        autoLoad: true
+    }));
+    
+   
+    fastify.decorate("agents",  t<AgentProps>(agents.getMap()));
+      
+
+    fastify.decorate("agent",function  (id, meta) {
+        function create() {
+            const doc= new Y.Doc({
+                guid: id,
+                collectionid: "agent",
+                gc: false,
+                autoLoad: true,
+                meta: {
+                    type: 'agent',
+                    name: id,
+                    ...meta
+                }
+            });
+            
+           agents.getMap().set(id, {
+                id: doc.guid,
+                meta: doc.meta,
+               collection: doc.collectionid
+           });
+           
+           return doc
+        }
+
+        const doc = fastify.docs.getOrCreate(id, create) ; 
+        
         return  fastify["agent.extensions"].reduce(((acc, e) => {
-            return Object.assign(acc, e(acc))
+             return Object.assign(acc, e(acc, agents))
         }), doc as Agent)
 
      } );
     
     fastify.decorate("agent.fromDoc", function (doc:Y.Doc) {
         return fastify["agent.extensions"].reduce(((acc, e) => {
-            return Object.assign(acc, e(acc))
+            return Object.assign(acc, e(acc, agents))
         }), doc as Agent)
     });
 }

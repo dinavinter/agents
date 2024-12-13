@@ -8,6 +8,7 @@ export type AgentRuntimePluginOptions = {
 
 export const agentRunnerPlugin = fp<AgentRuntimePluginOptions>(async (fastify, options:AgentRuntimePluginOptions ) => {
     fastify.register(import('./revision'));
+    fastify.register(import('./sync'));
     // fastify.register(import('./iterate'));
 
     if(options.auto){

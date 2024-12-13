@@ -555,6 +555,13 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.18.11.tgz#cbb15c12ca7c16c85a72b6bdc4d4b01151bb3cae"
   integrity sha512-3oJbGBUWuS6ahSnEq1eN2XrCyf4YsWI8OyCvo7c64zQJNplk3mO84t53o8lfTk+2ji59g5ycfc6qQ3fdHliHuA==
 
+"@types/node@^20.5.9":
+  version "20.17.10"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.10.tgz#3f7166190aece19a0d1d364d75c8b0b5778c1e18"
+  integrity sha512-/jrvh5h6NXhEauFFexRin69nA0uHJ5gwk4iDivp/DeoEua3uwCUto6PC86IpRITBOs4+6i2I56K5x5b6WYGXHA==
+  dependencies:
+    undici-types "~6.19.2"
+
 "@types/node@^22.5.0":
   version "22.9.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.9.0.tgz#b7f16e5c3384788542c72dc3d561a7ceae2c0365"
@@ -642,6 +649,21 @@
     ajv "8.6.3"
     json-schema-to-ts "1.6.4"
     ts-morph "12.0.0"
+
+"@y-sweet/client@^0.6.3":
+  version "0.6.3"
+  resolved "https://registry.yarnpkg.com/@y-sweet/client/-/client-0.6.3.tgz#3f7ddffbc167737d4be73e3f7054cc10e9e84bf4"
+  integrity sha512-NQ2vRPJBtc6e6MZkbcKGDflMTkFLosACak3JhPTK9Jhzt/ihg6DwDIMNqj6tdT9nhCCvwOT36XwcS2QIjhOG4g==
+  dependencies:
+    "@y-sweet/sdk" "0.6.3"
+    y-protocols "^1.0.5"
+
+"@y-sweet/sdk@0.6.3", "@y-sweet/sdk@^0.6.0":
+  version "0.6.3"
+  resolved "https://registry.yarnpkg.com/@y-sweet/sdk/-/sdk-0.6.3.tgz#dd3e054a835e3eaac03d8bb86d19f91a43d6ad38"
+  integrity sha512-Gtd4oujr8hf9YceB9rcTd5iRshFzdh46Urk59IS+O0ICOFDH7FY6SSIUz7i+XYRLThywvdzw7P64ykJJH30Ufg==
+  dependencies:
+    "@types/node" "^20.5.9"
 
 abbrev@1:
   version "1.1.1"
@@ -2669,7 +2691,7 @@ typescript@^5.5.4:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.6.3.tgz#5f3449e31c9d94febb17de03cc081dd56d81db5b"
   integrity sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==
 
-undici-types@~6.19.8:
+undici-types@~6.19.2, undici-types@~6.19.8:
   version "6.19.8"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.19.8.tgz#35111c9d1437ab83a7cdc0abae2f26d88eda0a02"
   integrity sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==

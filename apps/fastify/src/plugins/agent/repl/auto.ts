@@ -15,7 +15,22 @@ export type VM= {
 }
 
 
+export const autoSync = fp(async function (fastify ) {
+    function callback({keys}: Y.YEvent<Y.Map<typeof fastify.agents>>) {
+        Array.from(keys.entries()).filter(([, {action}]) => action === "add" ).forEach(([ key, {newValue: agent}]) => {
+                fastify.agent(key).liveSnapshot()
+            }
+        )
+    }
 
+    fastify.agents.observe(callback)
+})
+
+
+
+export default autoSync;
+
+/*
 export const autoVmToLatestCodePlugin= fp(async function (fastify, {doc}: {doc:Y.Doc}) {
 
     function syncSrcToVm(agent: Agent) {
@@ -41,17 +56,18 @@ export const autoVmToLatestCodePlugin= fp(async function (fastify, {doc}: {doc:Y
     const agentMap= new Map<string, ReturnType<typeof syncSrcToVm>>;
 
     doc.on("subdocs", async ({added, removed, loaded}) => {
-        for (const agent of Array.from(new Set<Y.Doc>([...loaded, ...added]))) {
+        for (const agent of Array.from(new Set<Y.Doc>([...loaded, ...added])).filter((doc) => doc.collectionid === "agent")) {
             agentMap.set(agent.guid, syncSrcToVm(fastify["agent.fromDoc"](agent)));
         }
-        for (const agent of Array.from(removed)) {
+        for (const agent of Array.from(removed).filter((doc) => doc.collectionid === "agent")) {
             agentMap.get(agent.guid)?.unsubscribe();
             agentMap.delete(agent?.guid);
         }
     });
 });
- 
+ export default autoVmToLatestCodePlugin;
 
+*/
 
  /*
         function callback(e: Y.YMapEvent<any>) {
@@ -117,6 +133,5 @@ function iterateMap<T extends  Y.Doc>(map: Y.Map<T>, sort: (a: any, b: any) => n
  
 
 
-export default autoVmToLatestCodePlugin;
 
 
