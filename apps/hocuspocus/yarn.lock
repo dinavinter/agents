@@ -132,52 +132,52 @@
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.3.tgz#555193ab2e3bb3b6adc3d551c9c030d9e860daf6"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
-"@hocuspocus/common@^2.13.7":
-  version "2.13.7"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.13.7.tgz#fe5530757f0937865e6188c633c9e52f997a1485"
-  integrity sha512-ROqYfW15XlAGd+qb/FVyp0zUC9Rosv7kdcck9LRMdfW3jT66wK9pDDWL2ily4Qj/zhbLCFtjAUPB4UKln/GYNQ==
+"@hocuspocus/common@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.14.0.tgz#3da9ce0f2d179a83ffba36f7cededcc9c96de991"
+  integrity sha512-ACtaKxfpf9p5GkrAHn3/lkD/evLAMkud1EZo3T2VTEDORqj2Es8MKx2QwhdY+PyGUlWZFKhgQrshWnzJmnCQDA==
   dependencies:
     lib0 "^0.2.87"
 
-"@hocuspocus/extension-database@^2.13.7":
-  version "2.13.7"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/extension-database/-/extension-database-2.13.7.tgz#d71aee885a91a050efacf85c2fec763c8dae65db"
-  integrity sha512-GMSnluhmfpy3V+P8uCyR/dwh7nNqIERSAf+Jpkg0GVSeOuGdDuoWTJr+gkQWTAVDVMwNAqlp+ZLpzc0Y/L34mg==
+"@hocuspocus/extension-database@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/extension-database/-/extension-database-2.14.0.tgz#47a43f06c414555f988f8ec5fa879ec4f741e58e"
+  integrity sha512-6lz75I4F84rkITrl6gk3w4BqQAZwlJEiYSkJ54c20yepFX+c1NICmbq/TKRaTJRbmzrWkBu9CQRhPGBt9lrVAQ==
   dependencies:
-    "@hocuspocus/server" "^2.13.7"
+    "@hocuspocus/server" "^2.14.0"
 
-"@hocuspocus/extension-logger@^2.13.7":
-  version "2.13.7"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/extension-logger/-/extension-logger-2.13.7.tgz#22443cc4df445b923416e168633636ef5978943a"
-  integrity sha512-mjlY0RjocWg4Qe1uVVL5lYXQs9yy80/5vrSuHMh9oFaXGGBOiVM7sOoM2IWl9k3ehBvlCid1xgNnNkNIJKDOPw==
+"@hocuspocus/extension-logger@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/extension-logger/-/extension-logger-2.14.0.tgz#35d0caa04356291cd1fd46d5d6c6f64f1b9f493b"
+  integrity sha512-Z6kffQK/wO+JW43UzfDXkFl5s+3eNc92ReDz8nayByjSOAAXz5EZ/e/YWhrwU+ViwONQ4yLyx2x/lmxDA8lZ5g==
   dependencies:
-    "@hocuspocus/server" "^2.13.7"
+    "@hocuspocus/server" "^2.14.0"
 
-"@hocuspocus/extension-sqlite@^2.13.7":
-  version "2.13.7"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/extension-sqlite/-/extension-sqlite-2.13.7.tgz#21b3c7f3a45b59b847b84f34080b3d1a1c2d8296"
-  integrity sha512-2KGj9RAB51GUn+gnH4I+aSYf5lPklAoDGKxDR7cY06ScXNcE34ORvRIEIyjujW2bfnSh+cG3IfAKXCt6TGWlJw==
+"@hocuspocus/extension-sqlite@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/extension-sqlite/-/extension-sqlite-2.14.0.tgz#0d73fe583391c720c3416d5af448eaa37416f69a"
+  integrity sha512-7JqLEInoT/Xm8D6MMhyizoNNEtAogdJpryZMorfzTB3zoCpX1sfwrwNHiceelAG4FCS/H0f3UB63a57rEK32jg==
   dependencies:
-    "@hocuspocus/extension-database" "^2.13.7"
+    "@hocuspocus/extension-database" "^2.14.0"
     kleur "^4.1.4"
     sqlite3 "^5.0.11"
 
-"@hocuspocus/provider@^2.13.7":
-  version "2.13.7"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.13.7.tgz#2595a85b78318bf6f927247d9d76f18ee6bbcec1"
-  integrity sha512-BjZIIV8tWf/MD/8IcEMSFA+sW4wtR/M9MmhN+XSssYJOZxnszw44Gdwda23TmhsXvCV+qggS8lGEs+SfZSzEag==
+"@hocuspocus/provider@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.14.0.tgz#4c71bc8f3ca088ad0be062a7cb649932eee2d24d"
+  integrity sha512-RvluPeNSJH+AkAAYz76DsBxMKQJBp+UQh1qRPtjbHy7QtqnBX/xiCDw1g/FIdphWY+uH0vHTpnohjUPDDhcauw==
   dependencies:
-    "@hocuspocus/common" "^2.13.7"
+    "@hocuspocus/common" "^2.14.0"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.87"
     ws "^8.17.1"
 
-"@hocuspocus/server@^2.13.7":
-  version "2.13.7"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-2.13.7.tgz#e794382952337110c3283ee31bbf2db610b33596"
-  integrity sha512-D9juGX9NZoKT9/Ty/HGhaimHJe71DyKbYssC831oetYF33x3WSYV6GY82RhHo9xjKZE6r0Le7jgxgQb+u08slw==
+"@hocuspocus/server@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-2.14.0.tgz#c227448ff4ad07626837a8a48b0c464d0be47228"
+  integrity sha512-8ol/g9+M4fAgJOvHSp83gLyTKe95oMnBZaY7FtT2beTOFzDNGdpOJEZX7PIMSY7vGZlT8pOYAauOdpCtBpkz7w==
   dependencies:
-    "@hocuspocus/common" "^2.13.7"
+    "@hocuspocus/common" "^2.14.0"
     async-lock "^1.3.1"
     kleur "^4.1.4"
     lib0 "^0.2.47"
