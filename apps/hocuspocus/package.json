@@ -16,10 +16,10 @@
     "test": "node --import=tsx  --experimental-vm-modules --env-file=.env ./src/test.ts"
   },
   "dependencies": {
-    "@hocuspocus/extension-logger": "^2.13.7",
-    "@hocuspocus/extension-sqlite": "^2.13.7",
-    "@hocuspocus/provider": "^2.13.7",
-    "@hocuspocus/server": "^2.13.7",
+    "@hocuspocus/extension-logger": "^2.14.0",
+    "@hocuspocus/extension-sqlite": "^2.14.0",
+    "@hocuspocus/provider": "^2.14.0",
+    "@hocuspocus/server": "^2.14.0",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.8"
   },
