@@ -1,7 +1,7 @@
 /// <reference types="@edge-runtime/types" />
 
-import {type serviceHub} from "agent/stream/hub";
-import {serviceMachine} from "agent/inspect/inspector";
+import {type serviceHub} from "../plugins/agent/stream/hub";
+import {serviceMachine} from "../inspect/inspector";
 import {
     ActorRefFrom, AnyActorLogic,
     AnyStateMachine,
@@ -23,6 +23,7 @@ globalThis.__dirname = __dirname;
 
 
 function router(hub:serviceHub) {
+   
     return (event: FetchEvent) => {
         const request = event.request;
         if (request.url.includes('/sse')) {
@@ -30,6 +31,9 @@ function router(hub:serviceHub) {
         }
         if (request.url.includes('/json')) {
             return jsonRouter(event)
+        }
+        if (request.url.includes('/doc')) {
+            return docRouter(event)
         }
         return event.respondWith(new Response(JSON.stringify(hub.state), {
             headers: {
@@ -62,6 +66,17 @@ function router(hub:serviceHub) {
             }));
 
         }
+
+        function docRouter(event: FetchEvent) {
+            return event.respondWith(new Response(JSON.stringify({guid: hub.doc.guid , collectionid:hub.doc.collectionid, synced: hub.doc.isSynced}), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            }));
+        }
+
 
     }
 

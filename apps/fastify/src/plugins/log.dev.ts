@@ -11,8 +11,12 @@ const logPlugin: FastifyPluginAsyncZod = async function (fastify ) {
         try {
             const parsed = JSON.parse(message);
             const reduced = {
+                type: parsed.type,
                 msg: parsed.msg,
-                level: parsed.level
+                level: parsed.level,
+                timestamp: parsed.timestamp,
+                correlation_id: parsed.correlation_id,
+                stacktrace: parsed.stacktrace,
             }
             console.info(JSON.stringify(reduced, undefined, 2));
         } catch (e) {

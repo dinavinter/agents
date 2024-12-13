@@ -2,6 +2,7 @@ import Fastify, {FastifyPluginAsync} from 'fastify'
 import fp from "fastify-plugin";
 import {JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
 import './plugins/yjs';
+import * as Y from "yjs";
 const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
 
@@ -11,18 +12,21 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     // await fastify.register(import('./plugins/zod'))
     await fastify.register( import('./plugins/doc'))
 
-    await fastify.register( import('./plugins/yjs'))
 
+    const doc = new Y.Doc({guid: "catalog", collectionid: "agents", gc: false, autoLoad: true})
 
+    await fastify.register( import('./plugins/yjs/party'), {
+        doc: doc
+    })
 
-    await fastify.register( import('./plugins/agent/collection') , { doc: fastify.doc})
+    // await fastify.register( import('./plugins/agent/collection') , { doc: doc})
     await fastify.register( import('./plugins/agent/agent'))
     // await fastify.register( import('./plugins/agent/vm'))
     await fastify.register( import('./plugins/agent/repl') , {
-        auto:{ doc: fastify.doc}
+        auto:{ doc: doc}
     })
     await fastify.register( import('./plugins/agent/runtime'),{
-        auto:{ doc: fastify.doc}
+        auto:{ doc: doc}
     })
 
 
