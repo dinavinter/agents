@@ -1,0 +1,23 @@
+applications:
+  -   name: yjs-router
+      command: yarn run start
+      
+      routes:
+        - route: 'https://yjs-router.cfapps.us10-001.hana.ondemand.com'
+      stack: cflinuxfs4
+      memory: 256M
+      instances: 1
+      env:
+        NODE_OPTIONS: --max-http-header-size=80000
+        NODE_ENV: production
+        LOG_SENSITIVE_CONNECTION_DATA: true
+        LOG_REMOTE_USER: true
+        LOG_REFERER: true
+        NITRO_PRESET: digital_ocean
+      
+      
+      buildpacks:
+        - https://github.com/cloudfoundry/nodejs-buildpack
+      services:
+        - log
+ 
