@@ -40,6 +40,7 @@
     "@tsconfig/node22": "^22.0.0",
     "@types/js-beautify": "^1.14.3",
     "@types/node": "^22.5.0",
+    "@types/ws": "^8.5.13",
     "@vercel/functions": "^1.4.1",
     "@vercel/node": "^3.2.10",
     "@y-sweet/sdk": "^0.6.0",

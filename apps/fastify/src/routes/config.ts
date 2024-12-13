@@ -32,11 +32,12 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
                         }
                     }
                 })`
+   
     fastify.log.info('example', example)
     
     fastify.route({
-        method: 'GET',
         url: '/agents',
+        method: 'GET',
         schema: {
             summary: 'Get all agents',
             response: {
@@ -69,12 +70,12 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         async handler(request, reply) {
              reply.type('application/json');
             return reply.send({
-                agents: Array.from(fastify.doc.subdocs).map(({guid, meta})=>({
-                    id: guid,
-                    meta, 
+                agents: Array.from(fastify.agents).map(([key, agent])=>({
+                    id: key,
+                    ...agent, 
                     links: {
-                        self: `${request.originalUrl}/${guid}`,
-                        workers: `${request.originalUrl}/${guid}/workers`
+                        self: `${request.originalUrl}/${key}`,
+                        workers: `${request.originalUrl}/${key}/workers`
                     }
                 }))
             });
@@ -82,8 +83,8 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
     })
     
     fastify.route({
-        method: 'post',
         url: '/agents',
+        method: 'post',
         schema: {
             summary: 'New Agent',
             description: 'This route is to create an agent definition',
@@ -127,8 +128,8 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
     })
     
     fastify.route({
-        method: 'post',
         url: '/agents/:agent',
+        method: 'post',
         schema: {
             summary: 'Post Specific Agent Code',
             description: 'This route is to create an agent definition',
@@ -178,54 +179,10 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             return reply.send(agentJson(agent));
         }
     })
-    fastify.route({
-        method: 'post',
-        url: '/agents/:agent/start',
-        schema: {
-            summary: 'Post Specific Agent Code',
-            description: 'This route is to create an agent definition',
-            params:{
-                type: 'object',
-                properties: {
-                    agent: {type: 'string' , examples: ['emit']}
-                }
-            }, 
-            response: {
-                200: {
-                    description: 'Successful response',
-                    type: 'object',
-                    properties: {
-                        id: {type: 'string'},
-                        version: {type: 'string'},
-                        links: {
-                            type: 'object',
-                            properties: {
-                                self: {type: 'string'},
-                                workers: {type: 'string'}
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        async handler(request, reply) {
-            const {agent:id} = request.params as { agent: string };
-            const {href}= fastify.agent(id).vm.start();
-            console.log(`Listening at ${href}.`)
-            reply.type('application/json');
-            return reply.send(JSON.stringify({
-                id: id,
-                links: {
-                    self: request.originalUrl,
-                    worker: href
-                }
-            }));
-        }
-    })
 
     fastify.route({
-        method: 'get',
         url: '/agents/:agent',
+        method: 'get',
         schema: {
             summary: 'Get an agent definition',
             response: {
@@ -257,7 +214,52 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             reply.type('application/json');
             return reply.send(agentJson(agent));
         }
-    })
+    }) 
+
+    fastify.route({
+        url: '/agents/:agent/start', method: 'post',
+        schema: {
+            summary: 'Start Agent',
+            description: 'This route is to create an agent definition',
+            params:{
+                type: 'object',
+                properties: {
+                    agent: {type: 'string' , examples: ['emit']}
+                }
+            }, 
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+            const {agent:id} = request.params as { agent: string };
+           
+            const {href}=  await fastify.vm(fastify.agent(id).createSnapshot()).start();
+            console.log(`Listening at ${href}.`)
+            reply.type('application/json');
+            return reply.send(JSON.stringify({
+                id: id,
+                links: {
+                    self: request.originalUrl,
+                    worker: href
+                }
+            }));
+        }
+    }) 
 
     fastify.route({
         url: '/agents/:agent/latest',
@@ -273,8 +275,7 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             reply.type('application/json');
             return reply.send(vmJson(vmDoc));
         }
-    })
-
+    }) 
 
     fastify.route({
         url: '/agents/:agent/:vm',
@@ -286,6 +287,21 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             vmDoc.load()
             reply.type('application/json');
             return reply.send(vmJson(vmDoc));
+        }
+    })
+    
+    
+    fastify.route({
+        url: '/docs/:doc',
+        method: 'get',
+        handler(request, reply) {
+            const {doc} = request.params as { doc: string };
+            const docInstance = fastify.docs.getOrCreate(doc);
+            reply.type('application/json');
+            return reply.send(JSON.stringify(Array.from(docInstance.share.entries()).reduce((acc, [key, value]) => {
+                acc[key] = value.toJSON();
+                return acc
+            }, {} as Record<string, any>)));
         }
     })
         

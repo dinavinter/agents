@@ -36,7 +36,7 @@ export const serviceMachine = setup({
             ...options,
             inspect: {
                 next:(e) => {
-                    e.type === '@xstate.event' && hub.inspected.push(e)
+                    // e.type === '@xstate.event' && hub.inspected.push(e)
                 } 
             }
         }); 
@@ -77,10 +77,11 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
     actorLogic.transition = (state, event, actorCtx) => {
         // hub.inspected.push(event);
         const newState= transition(state, event, actorCtx);
+        // return newState;
         const snapshot = actorCtx.self.getSnapshot();
-        hub.snapshot.push(snapshot);
+        // hub.snapshot.push(snapshot);
         hub.state = {
-            next: getAllOwnEventDescriptors(snapshot),
+            next: getAllOwnEventDescriptors(snapshot).join(","),
             state: snapshot.value,
             event: event?.type
         };

@@ -115,7 +115,7 @@ async function agentCreatorPlugin<TFastifyInstance extends FastifyInstance>(fast
         }
 
         const doc = fastify.docs.getOrCreate(id, create) ; 
-        
+        doc.guid = id;
         return  fastify["agent.extensions"].reduce(((acc, e) => {
              return Object.assign(acc, e(acc, agents))
         }), doc as Agent)

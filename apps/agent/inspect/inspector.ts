@@ -10,7 +10,7 @@ import * as Y from "yjs";
 type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
     logic: TLogic,
     name?: string,
-    doc: Y.Doc,
+    doc?: Y.Doc,
     hub?: serviceHub
 } & Parameters<typeof createActor<TLogic>>[1]
     & Record<string, any>

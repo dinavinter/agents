@@ -3,10 +3,11 @@ import {  FastifySSEPlugin} from "fastify-sse-v2";
 import {sendHtml} from "./htmx";
 import {delayAsync, filterEventAsync, mapAsync} from "./stream";
 import {getOrCreateWorkflow} from "./agents/agent-store";
+import fp from "fastify-plugin";
 
-export function routes(fastify: FastifyInstance) {
-    fastify.register(FastifySSEPlugin);
-    fastify.register(import('@fastify/formbody'))
+export async function routes(fastify: FastifyInstance) {
+    // fastify.register(FastifySSEPlugin);
+    // fastify.register(import('@fastify/formbody'))
 
     fastify.get('/', async function handler(_, reply) {
         reply.redirect('/agents/agent-catalog/index');
@@ -80,3 +81,4 @@ export function routes(fastify: FastifyInstance) {
 
 }
  
+export default routes;
