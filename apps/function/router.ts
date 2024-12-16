@@ -11,7 +11,6 @@ const flags = parseArgs(Deno.args, {
 import * as Y from "yjs";
 import { EventMessage } from "./stream/sse.ts";
 
-const docs= new Map<string, YDocSse>();
 function docHandler(hub:serviceHub) {
     hub.doc.shouldLoad && hub.doc.load();
     const doc = hub.doc;
