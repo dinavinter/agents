@@ -2,10 +2,10 @@ import {pushable, Pushable} from "it-pushable";
 import {EventObject} from "xstate";
 
 
-export async function * mapAsync<T, U>(stream: AsyncIterable<T>, mapFn: (value: T) => U): AsyncGenerator<U> {
+export async function * mapAsync<T, U>(stream: AsyncIterable<T>, mapFn: (value: T) => U | PromiseLike<U>): AsyncGenerator<U> {
     for await (const event of stream) {
-        yield mapFn(event);
-    }
+        yield await mapFn(event);
+     }
 }
 
 export async function * cloneAsync<T>(stream: AsyncIterable<T>, target: Pushable<T>): AsyncGenerator<T> {
@@ -93,5 +93,20 @@ export  function concatAsync<T>(...streams: AsyncIterable<T>[]): AsyncGenerator<
     for (const stream of streams) {
         cloneAsync(stream, p);
     }
+    return p;
+}
+
+
+export  function  flatAsync<T>(composed:AsyncGenerator<AsyncGenerator<T>>): AsyncGenerator<T> {
+    const p = pushable<T>({objectMode: true});
+    (async () => {
+        for await (const stream of composed) {
+            (async () => {
+                for await (const value of stream) {
+                    p.push(value);
+                }
+            })().catch(console.error);
+        }
+    })();
     return p;
 }
