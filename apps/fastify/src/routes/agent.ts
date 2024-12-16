@@ -5,6 +5,32 @@ import '../plugins/agent/runtime'
 import '../plugins/agent/repl'
 import {revisionHash} from "@/plugins/agent/repl/revision.ts";
 
+function updateAgentSrc(docs: FastifyInstance["docs"], id: string, code: string) {
+    const agent = docs.getOrCreate(id);
+    
+    const rev = revisionHash(code);
+    agent.transact(() => {
+        if (agent.getMap().get("rev") !== rev) {
+            agent.getMap().set("src", code);
+            agent.getMap().set("rev", revisionHash(code));
+            agent.getMap().set("timestamp", Date.now());
+        }
+    });
+    
+    const agents = docs.getOrCreate(":agents");
+
+    agents.transact(() => {
+        // agents.getMap().set(id, {
+        //     rev: agent.getMap().get("rev"),
+        //     timestamp: agent.getMap().get("timestamp")
+        // })
+        agents.getMap(id).set("rev", agent.getMap().get("rev"))
+        agents.getMap(id).set("timestamp", agent.getMap().get("timestamp"))
+    });
+    console.log(`Updated agent ${JSON.stringify(agents.getMap(id).toJSON())} `)
+    return agent;
+}
+
 const routes: FastifyPluginAsync = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
 
@@ -70,16 +96,21 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         },
         async handler(request, reply) {
             reply.type('application/json');
-            return reply.send({
-                agents: Array.from(fastify.agents).map(([key, agent])=>({
-                    id: key,
-                    ...agent,
-                    links: {
-                        self: `${request.originalUrl}/${key}`,
-                        workers: `${request.originalUrl}/${key}/workers`
-                    }
-                }))
-            });
+            const agents = fastify.docs.getOrCreate(":agents");
+
+            agents.shouldLoad && agents.load();
+            console.log(`Agents ${agents.guid} ${agents.isLoaded} ${agents.isSynced} ${agents.shouldLoad} `, Array.from(agents.share.keys()))
+            const json= Array.from(agents.share.keys()).filter(id=> id !== "").reduce((acc, id) => ({
+                ...acc,
+                [id]: {
+                    id,
+                    ...agents.getMap(id).toJSON()
+                }
+            }), {} as Record<string, any>)
+            console.log(`Agents ${JSON.stringify(json)}`)
+            reply.type('application/json');
+            return reply.send(JSON.stringify(json, null, 2));
+            
         }
     })
 
@@ -121,16 +152,9 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         },
         async handler(request, reply) {
             const {code, id}= request.body  as {code: string, id: string}
-            const agent= fastify.docs.getOrCreate(id);
-            agent.transact(()=> {
-                agent.getMap().set("src", code);
-                agent.getMap().set("rev", revisionHash(code));
-            });
-            fastify.docs.getOrCreate(":agents").getMap().set(id, {
-                id: agent.guid,
-                rev: agent.getMap().get("rev")
-            })
-            
+           const agent= updateAgentSrc(fastify.docs, id, code);
+
+
             reply.type('application/json');
             return reply.send(agentJson(agent));
         }
@@ -180,16 +204,9 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         async handler(request, reply) {
             const {code}= request.body as {code: string}
             const {agent:id} = request.params as { agent: string };
-            const agent= fastify.docs.getOrCreate(id);
-            agent.transact(()=> {
-                agent.getMap().set("src", code);
-                agent.getMap().set("rev", revisionHash(code));
-            });
-            fastify.docs.getOrCreate(":agents").getMap().set(id, {
-                id: agent.guid,
-                rev: agent.getMap().get("rev")
-            })
-             // console.log(`Listening at ${agent.vm.properties.get("href")}.`) 
+            const agent= updateAgentSrc(fastify.docs, id, code);
+
+            // console.log(`Listening at ${agent.vm.properties.get("href")}.`) 
             reply.type('application/json');
             return reply.send(agentJson(agent));
         }
