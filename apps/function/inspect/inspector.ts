@@ -1,11 +1,11 @@
 import {
-    Actor, ActorRefFrom, AnyActorLogic,
+    Actor, AnyActorLogic,
     AnyActorRef, AnyStateMachine, createActor,
-    enqueueActions, EventDescriptor, EventFrom, EventFromLogic, EventObject, InspectionEvent, log,
-    setup, SnapshotFrom
+    enqueueActions, EventDescriptor, EventFromLogic, EventObject, InspectionEvent, setup, SnapshotFrom
 } from "xstate";
-import {createYjsHub, serviceHub, type EventMessage} from "../stream/hub.ts";
+import {createYjsHub, type serviceHub} from "../stream/hub.ts";
 import * as Y from "yjs";
+import {EventMessage} from "../stream/sse.ts";
 type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
     logic: TLogic,
     name?: string,
@@ -78,13 +78,17 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
     actorLogic.transition = (state, event, actorCtx) => {
         // hub.inspected.push(event);
         const newState= transition(state, event, actorCtx);
-        const snapshot = actorCtx.self.getSnapshot();
-        // hub.snapshot.push(snapshot);
+        const snapshotMap = hub.doc.getMap('state');
+        Object.entries(actorCtx.self.getPersistedSnapshot()).forEach(([key, value]) => {
+            snapshotMap.set(key, value);
+        })
 
+        const snapshot = actorCtx.self.getSnapshot();
         hub.state = {
-            next: getAllOwnEventDescriptors(snapshot),
+            next: getAllOwnEventDescriptors(snapshot).join(","),
             state: snapshot.value,
-            event: event?.type
+            event: event?.type,
+            context: snapshot.context
         };
         Object.entries(newState.children)?.forEach(([service, ref]) => {
             const {isNew, hub: serviceHub} = hub.child(service)

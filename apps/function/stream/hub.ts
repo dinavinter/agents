@@ -2,10 +2,7 @@ import {
     AnyStateMachine,
     EventObject,
     InspectedEventEvent,
-    Snapshot,
-    SnapshotFrom,
-    Subscribable,
-    toObserver
+    SnapshotFrom
 } from "https://esm.sh/xstate";
 import * as Y from "yjs";
 import {yArrayIterator} from "./yjs.ts";
@@ -34,13 +31,15 @@ export function createYjsHub(doc?:Y.Doc  | null) {
                 next: doc.getMap('current').get('next') as string,
                 state: doc.getMap('current').get('state')as string,
                 event: doc.getMap('current').get('event')as string,
+                context: doc.getMap('current').get('context')as string,
             }
         } ,
-        set state(value: {next: string, state: string, event: string}) {
+        set state(value: {next: string, state: string, event: string , context: string}) {
             doc?.transact(() => {
                 doc.getMap('current').set('next', value.next);
                 doc.getMap('current').set('state', value.state);
                 doc.getMap('current').set('event', value.event);
+                doc.getMap('current').set('context', value.context);
             })
         },
         children: doc.getMap<Y.Doc>('children'),
