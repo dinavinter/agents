@@ -3,6 +3,7 @@ import type {Agent, FastifyInstance, FastifyPluginAsync} from "fastify";
 import * as Y from "yjs";
 import '../plugins/agent/runtime'
 import '../plugins/agent/repl'
+import {revisionHash} from "@/plugins/agent/repl/revision.ts";
 
 const routes: FastifyPluginAsync = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
@@ -121,7 +122,15 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         async handler(request, reply) {
             const {code, id}= request.body  as {code: string, id: string}
             const agent= fastify.docs.getOrCreate(id);
-            agent.getMap().set("src", code);
+            agent.transact(()=> {
+                agent.getMap().set("src", code);
+                agent.getMap().set("rev", revisionHash(code));
+            });
+            fastify.docs.getOrCreate(":agents").getMap().set(id, {
+                id: agent.guid,
+                rev: agent.getMap().get("rev")
+            })
+            
             reply.type('application/json');
             return reply.send(agentJson(agent));
         }
@@ -172,7 +181,14 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             const {code}= request.body as {code: string}
             const {agent:id} = request.params as { agent: string };
             const agent= fastify.docs.getOrCreate(id);
-            agent.getMap().set("src", code);
+            agent.transact(()=> {
+                agent.getMap().set("src", code);
+                agent.getMap().set("rev", revisionHash(code));
+            });
+            fastify.docs.getOrCreate(":agents").getMap().set(id, {
+                id: agent.guid,
+                rev: agent.getMap().get("rev")
+            })
              // console.log(`Listening at ${agent.vm.properties.get("href")}.`) 
             reply.type('application/json');
             return reply.send(agentJson(agent));
@@ -248,6 +264,7 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
             const {agent:id} = request.params as { agent: string };
 
             const agent= fastify["agent.fromDoc"](fastify.docs.getOrCreate(id)); 
+            console.log(`Starting agent ${id} ${agent.getMap().get("rev")}  ${agent.getMap().get("src")}`)
             const {href}=  await fastify.vm(agent.createSnapshot()).start();
             console.log(`Listening at ${href}.`)
             reply.type('application/json');
@@ -267,7 +284,7 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         handler(request, reply) {
             const {agent:id}= request.params as { agent: string };
             const agent= fastify["agent.fromDoc"](fastify.docs.getOrCreate(id)); 
-            const vmDoc= agent.latest()
+            const vmDoc= agent.createSnapshot()
             if(!vmDoc) {
                 reply.status(404);
                 return reply.send({error: 'Not Found'})

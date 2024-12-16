@@ -13,7 +13,14 @@ export type Meta = {
     latest: string,
     src: string
 }
- 
+export function revisionHash(src: string): string  {
+    return revisionHash(Buffer.from(src))
+
+    function revisionHash(data: Uint8Array): string {
+        return createHash('md5').update(data).digest('hex').slice(0, 10);
+    }
+
+}
  declare module "fastify" {
     
     interface FastifyInstance {
