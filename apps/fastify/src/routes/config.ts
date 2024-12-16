@@ -297,11 +297,20 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
         handler(request, reply) {
             const {doc} = request.params as { doc: string };
             const docInstance = fastify.docs.getOrCreate(doc);
+            docInstance.load()
             reply.type('application/json');
-            return reply.send(JSON.stringify(Array.from(docInstance.share.entries()).reduce((acc, [key, value]) => {
+            return reply.send(JSON.stringify({
+                id: docInstance.guid,
+                collection: docInstance.collectionid,
+                loaded: docInstance.isLoaded,
+                synced: docInstance.isSynced ,
+                should_load: docInstance.shouldLoad,
+                meta: docInstance.meta,
+                ...Array.from(docInstance.share.entries()).reduce((acc, [key, value]) => {
                 acc[key] = value.toJSON();
                 return acc
-            }, {} as Record<string, any>)));
+            }, {} as Record<string, any>)
+            }));
         }
     })
         
@@ -310,16 +319,22 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
 
     function agentJson( agent:Agent  ) {
         const vm=agent.latest();
+        agent.shouldLoad && agent.load();
         return JSON.stringify({
             id: agent.guid,
             debug: fastify.debug,
-            href: agent.properties.get("href"),
-            rev: agent.rev,
+            href: agent.getMap().get("href"),
+            rev: agent.getMap().get("rev"),
             doc: {
-                guid: agent.guid,
-                collectionid: agent.collectionid
+                id: agent.guid,
+                collection: agent.collectionid,
+                loaded: agent.isLoaded,
+                synced: agent.isSynced ,
+                should_load: agent.shouldLoad,
             },
+            
             meta: agent.meta,
+            src: agent.getMap().get("src"),
             latest: vm && {
                 id: vm.guid,
                 ...vm.meta,
@@ -340,6 +355,11 @@ const routes: FastifyPluginAsync = async function (instance: FastifyInstance, op
     function vmJson(vmDoc: Y.Doc) {
         return JSON.stringify({
             id: vmDoc.guid,
+            collection: vmDoc.collectionid,
+            loaded: vmDoc.isLoaded,
+            synced: vmDoc.isSynced ,
+            should_load: vmDoc.shouldLoad,
+            meta: vmDoc.meta,
             rev: vmDoc.getMap().get("rev"),
             timestamp: vmDoc.getMap().get("timestamp"),
             src: vmDoc.getMap().get("src"),

@@ -1,136 +1,81 @@
 import fp from "fastify-plugin";
 import * as Y from "yjs";
 import YProvider from "y-partykit/provider";
-// import ws from "ws";
 import {env} from "node:process";
-import {HocuspocusProvider} from "@hocuspocus/provider";
+import {type FastifyBaseLogger} from "fastify";
+import {HocuspocusProvider, HocuspocusProviderWebsocket} from "@hocuspocus/provider";
+import ws from "ws";
 
-declare module "fastify"{
-    interface FastifyInstance {
-        doc: Y.Doc ,
-        room: string
+ 
+
+const defaults= {yjsUrl: env.YJS_URL! || "ws://0.0.0.0:1234" , room:"main" , doc: new Y.Doc({guid: "main", collectionid: "agents", gc: false, autoLoad: true})};
+
+
+type Logger = Pick<Console, "log" | "debug" | "trace" | "info"> | FastifyBaseLogger;
+export class YjsDocManager {
+    providers = new Map<string, HocuspocusProvider>();
+
+    constructor(private yjsUrl: string, private log:Logger = console) {
+        console.log("Yjs docs manager created", yjsUrl);
+
     }
-}
 
-const defaults= {yjsUrl: env.YJS_URL! || "ws://localhost:1999" , room:"index" , mainDoc: new Y.Doc({guid: "catalog", collectionid: "agents", gc: false, autoLoad: true})};
-export const yjsProviderPlugin = fp(async (fastify, options: { mainDoc?: Y.Doc; yjsUrl: string , room?:string}) => {
-    const { mainDoc, yjsUrl, room } = {...defaults, ...(options ||{})}
+    create(id: string, doc: Y.Doc |undefined = undefined,connect:boolean=false):  HocuspocusProvider {
 
-    // Store providers for subdocuments
-    const subDocProviders = new Map<string, HocuspocusProvider>();
-
-    // Create a new provider for a subdocument
-    function createSubDocProvider(doc: Y.Doc, parent:Y.Doc): HocuspocusProvider {
+        doc = doc || new Y.Doc({guid: id});
         
-        const provider = new HocuspocusProvider({
-            name: "yjs",
-            url: yjsUrl,
-            broadcast:false,
-            document: new Y.Doc({
-                guid: doc.guid,
-                collectionid: doc.collectionid,
-                gc: false,
-                autoLoad: true,
-                meta: {
-                    ...doc.meta,
-                    parent: parent.guid
-                }
-            }) 
-        })
-        
-         
-        
-        console.log(`Yjs subdoc provider created:  ${yjsUrl}\t \t doc: ${provider.document.guid}\t connected: ${provider.isConnected} `);
-        provider.on("wsconnected", () => {
-            fastify.log.info(`Yjs subdoc provider connected: ${yjsUrl}\t \t doc: ${provider.document.guid}\t connected: ${provider.isConnected} `);
-        })
-        
-        provider.document.on("subdocs", onSubdocs);
-
-        // // Sync changes between the main doc and the subdoc
-        // provider.doc.on("update", () => {
-        //     const stateVector = Y.encodeStateVector(doc);
-        //     const diff = Y.encodeStateAsUpdate(provider.doc, stateVector);
-        //     Y.applyUpdate(doc, diff);
-        // });
-
-        doc.on("update", () => {
-            const stateVector = Y.encodeStateVector(provider.document);
-            const diff = Y.encodeStateAsUpdate(doc, stateVector);
-            Y.applyUpdate(provider.document, diff);
+        const provider= new HocuspocusProvider( {
+            url: this.yjsUrl,
+            name: id,
+            document: doc,
+            
+            websocketProvider:new HocuspocusProviderWebsocket({
+                url: this.yjsUrl,
+                WebSocketPolyfill: ws,
+                 
+            }),
+            connect:connect
         });
-        
-        provider.connect();
-        
-        
+
+        this.log.debug(`Yjs main provider created: ${this.yjsUrl}\t room: '${id}'\t doc: '${provider.document.guid}'\t connected: '${provider.isConnected}'`);
+
+        provider.on("wsconnected", () => {
+            this.log.info(`Connected!: ${this.yjsUrl}\t room: ${id}\t doc: ${provider.document.guid}\t synced: ${provider.synced}`);
+        })
+ 
+        provider.document.load()
 
         return provider;
     }
 
-    const mainProvider =  new HocuspocusProvider({
-        name: "yjs",
-        url: yjsUrl,
-        broadcast:false,
-        document: mainDoc
-    });
+    getOrCreate(id: string, doc:Y.Doc |undefined =  undefined,  connect:boolean=true) {
+        if (!this.providers.has(id)) {
+            this.providers.set(id, this.create(id, doc,connect));
 
-    function onSubdocs({ loaded, added, removed }: { loaded: Set<Y.Doc>, added: Set<Y.Doc>, removed: Set<Y.Doc> }, doc: Y.Doc) {
-        // Handle newly added subdocuments
-        for (const subDoc of added) {
-
-            const id=`${doc.guid}/${subDoc.collectionid}/${subDoc.guid}`;
-            if (!subDocProviders.has(id)) {
-                const provider = createSubDocProvider(subDoc, doc);
-                subDocProviders.set(id, provider);
-            }
         }
+        return this.providers.get(id)!.document
 
-        // Cleanup removed subdocuments
-        for (const subDoc of removed) {
-            const id=`${doc.guid}/${subDoc.collectionid}/${subDoc.guid}`;
-
-            const provider = subDocProviders.get(id)
-            if (provider) {
-                provider.disconnect();
-                subDocProviders.delete(id);
-                fastify.log.info(`Subdoc disconnected: ${id}`);
-            }
-        }
     }
 
-  // Observe for subdocuments and create providers for new ones
-    mainProvider.document.on("subdocs", onSubdocs);
+    get(id: string) {
+        return this.providers.get(id)?.document
+    }
+}
 
-    // Create the main provider
+export const yjsPartyProviderPlugin = fp(async (fastify, options: { doc?: Y.Doc; yjsUrl?: string }) => {
+    const {doc, yjsUrl} = {...defaults, ...(options || {})}
 
-    fastify.log.info(`Yjs main provider created: ${yjsUrl} doc: ${mainProvider.document.guid} connected: ${mainProvider.isConnected}`);
-
-    mainProvider.on("wsconnected", () => {
-        fastify.log.info(`Yjs main provider connected: ${yjsUrl} ${mainProvider.document.guid} connected: ${mainProvider.isConnected}`);
-    })
-    
-    mainProvider.connect().catch((e) => {
-        fastify.log.error(`Yjs main provider connect error: ${e}`);
-    });
-
+    fastify.decorate("docs", new YjsDocManager(yjsUrl, fastify.log));
 
     fastify.decorate("doc", {
-        getter(){
-            return mainProvider.document
+        getter() {
+            return fastify.docs.getOrCreate(doc?.guid, doc)
         }
     });
 
-    fastify.decorate("room", {
-        getter(){
-            return mainProvider.document.guid
-        }
-    });
+    fastify.decorate("yjsUrl", yjsUrl);
 
-    fastify.decorate("awareness", {
-        getter(){
-            return mainProvider.awareness
-        }
-    });
- });
+});
 
-export default yjsProviderPlugin;
+
+export default yjsPartyProviderPlugin;
