@@ -42,7 +42,7 @@ export class YDocSse {
         const p = pushable<EventMessage>({objectMode: true});
  
         for  (const [key,value] of Array.from(this.docStream.doc.share.entries()).sort(([a], [b]) => a.localeCompare(b))) { 
-            console.log("entry", key, value.toJSON()); 
+            // console.log("entry", key, value.toJSON()); 
     
               const iterator =this.component(key, value);
              
@@ -63,16 +63,22 @@ export class YDocSse {
 
     async * component(component: string, type: Y.AbstractType<YEvent<any>>): ComponentIterator {
         const doc=this.doc;
-        
+        console.log(`***************************************${component}***************************************`);
+         console.log("length", type._length);
+        const abstract= doc.get(component);
+        const value = abstract.toJSON();
+        console.log("value", value);
+
+
         const path =    `${doc.guid}-${component === "" ? "root" : component}`;
             yield {
-                data: `<div id="${path}" hx-swap="beforeend" sse-swap="${path}" hx-ext="sse"  class="bg-gray-50 rounded-lg shadow-inner *:m-3 pt-3 "/>`,
+                data: `<div id="${path}" hx-swap="beforeend" sse-swap="${path}" hx-ext="sse"  class="snap-both  bg-gray-50 rounded-lg shadow-inner *:m-3 pt-3   scroll-smooth	focus:scroll-auto  overflow-scroll	max-h-96"/>`,
                 event: `${doc.guid}`,
                 id: path,
             }
         if(component && component !== "") { 
             yield {
-                data: `<span class="h-6 text-blue-900 font-mono">${component}:</span>`,
+                data: `<span class="h-6 text-blue-900 font-mono  sticky top-0">${component}:</span>`,
                 event: path,
                 id: `${path}:label`
             }
@@ -81,15 +87,17 @@ export class YDocSse {
         
         async function* toHtmxArray(stream: ReturnType<typeof yArrayIterator>): ComponentIterator {
          
+            console.log("toHtmxArray", stream.raw.length);
              let i = 0;
             for await (const item of stream) {
                 yield {
-                    data: `<div id="${path}-${i++}"    >
-                                ${item}
+                    data: `<div id="${path}-${i++}" sse-swap="${path}-${i}" hx-ext="sse" >
+                                ${item instanceof String ? item as string : JSON.stringify(item) }
                            </div>`,
                     event: path,
                     id: `${path}-${i}`
                 }
+              
             }
         }
 
@@ -100,7 +108,7 @@ export class YDocSse {
                 if (action === "add") {
                     yield {
                         data: `<pre id="${entry}"  
-                                    class="map-entry bg-gray-50 rounded-lg shadow-inner pt-2"
+                                    class="map-entry bg-gray-50 rounded-lg shadow-inner pt-2 snap-center"
                                     hx-ext="sse"
                                     hx-swap="outerHTML" 
                                     sse-swap="${entry}"
@@ -135,9 +143,8 @@ export class YDocSse {
             }
         }
 
-        const value= type.toJSON();
 
-        if (value instanceof Array) {
+        if (type._length || value instanceof Array) {
             yield* toHtmxArray(yArrayIterator(type.doc!.getArray(component)));
         }
         else {

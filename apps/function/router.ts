@@ -10,11 +10,18 @@ const flags = parseArgs(Deno.args, {
 
 import * as Y from "yjs";
 import { EventMessage } from "./stream/sse.ts";
+import {yArrayIterator} from "./yjs/array.ts";
 
-function docHandler(hub:serviceHub) {
-    hub.doc.shouldLoad && hub.doc.load();
-    const doc = hub.doc;
+function docHandler(doc:Y.Doc) {
+    // hub.doc.shouldLoad && hub.doc.load();
+    // const doc = hub.doc;
     return (request: Request): Response => {
+        const abortController = new AbortController();
+        if(request.signal){
+            request.signal.addEventListener('abort', () => {
+                abortController.abort();
+            });
+        }
         const path = new URL(request.url).pathname.split('/');
         const type = path.pop();
         if (type=="html") {
@@ -25,7 +32,7 @@ function docHandler(hub:serviceHub) {
                 <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
             </head>
             <body>  
-                 <div hx-ext="sse" sse-connect="htmx" sse-close="done" hx-ext="sse" sse-swap="${doc.guid}" hx-swap="beforeend" class="h-screen w-screen grid grid-flow-row-dense *:m-3.5"/>
+                 <div hx-ext="sse" sse-connect="htmx" sse-close="done" hx-ext="sse" sse-swap="${doc.guid}" hx-swap="beforeend" class="h-screen w-screen flex  justify-evenly flex-col  *:m-3.5 overscroll-y-auto"/>
             </body>
             </html> `, {
                 headers: {
@@ -34,7 +41,6 @@ function docHandler(hub:serviceHub) {
             })
         }
         if (type=="htmx") { 
-            const abortController = new AbortController();
                 return new Response(sseReadableStream(mapAsync(new YDocSse(doc.guid, doc).docSse(),async (chunk:EventMessage)=> {
                 await new Promise((resolve) => setTimeout(resolve, 200));
                 return chunk;
@@ -65,7 +71,7 @@ function docHandler(hub:serviceHub) {
             should_load: doc.shouldLoad,
             meta: doc.meta,
             subdocs: Array.from(doc.subdocs).map(({guid, collectionid, meta}) => ({guid, collectionid, meta})),
-            ...Array.from(hub.doc.share.entries()).reduce((acc, [key, value]) => {
+            ...Array.from(doc.share.entries()).reduce((acc, [key, value]) => {
                 acc[key] = value.toJSON();
                 return acc
             }, {} as Record<string, any>)
@@ -78,10 +84,23 @@ function docHandler(hub:serviceHub) {
         });
          function yjsSseRouter() {
             const slug = path.pop() || 'emitted';
-            return new Response(encodeSse(readableStream(mapAsync(hub.array(slug),async (chunk:unknown)=> {
+            console.log("slug", slug);
+            const array = doc.getArray(slug);
+            console.log("array", array.toJSON());
+            const toEventMessage = (value: any): EventMessage => {
+                if ("data" in value) {
+                    const {data, ...rest}   = value;
+                      return {
+                       data: data?.toString() || "",
+                      ...rest 
+                    }
+                }
+                return {data: typeof value=== "string" ? value : JSON.stringify(value) || ""};
+            }
+            return new Response(sseReadableStream(mapAsync(mapAsync(yArrayIterator(array),toEventMessage),async (chunk)=> {
                 await new Promise((resolve) => setTimeout(resolve, 200));
                 return chunk;
-            }),request.signal)), {
+            }),abortController.signal), {
                 headers: {
                     'Content-Type': 'text/event-stream',
                     'Cache-Control': 'no-cache',
@@ -104,9 +123,9 @@ function docHandler(hub:serviceHub) {
                 Y.Map;
 
             console.log("json", part, type);
-           console.log("json", hub.doc.get(part,component).toJSON());
+           console.log("json", doc.get(part,component).toJSON());
 
-            return new Response(JSON.stringify(hub.doc.getMap(part).toJSON()), {
+            return new Response(JSON.stringify(doc.getMap(part).toJSON()), {
                 headers: {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-cache',
@@ -118,9 +137,9 @@ function docHandler(hub:serviceHub) {
 
         function docRouter() {
             return new Response(JSON.stringify({
-                guid: hub.doc.guid,
-                collectionid: hub.doc.collectionid,
-                synced: hub.doc.isSynced
+                guid: doc.guid,
+                collectionid: doc.collectionid,
+                synced: doc.isSynced
             }), {
                 headers: {
                     'Content-Type': 'application/json',
@@ -151,7 +170,7 @@ function docRouter(request: Request) {
         return new Response("not found", {status: 404});
     }
     const doc  =docManager.getOrCreate(room );
-    const router=docHandler(createYjsHub(doc));
+    const router=docHandler(doc);
     return router({
         ...request,
         url: request.url.replace(`/${room}`, '')
