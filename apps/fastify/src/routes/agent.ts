@@ -1,25 +1,105 @@
-import {FastifyPluginAsyncZod, jsonSchemaTransform} from "fastify-type-provider-zod";
-import {AnyStateMachine, createMachine, EventObject, StateMachine} from "xstate";
-import {z} from "zod";
-import {statechartSchema} from '../plugins/doc/xstate.zod'
 import {FastifyPluginAsyncJsonSchemaToTs, JsonSchemaToTsProvider} from "@fastify/type-provider-json-schema-to-ts";
- 
-import xstateSchema from '../plugins/doc/xstate.schema.json'
-import {yArrayIterator} from "agent/stream/yjs";
-import {EventMessage} from "fastify-sse-v2";
-import "../plugins/xstate";
-import type {FastifyInstance} from "fastify";
-import {fileURLToPath} from "node:url";
-import path from "node:path";
-const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance:FastifyInstance, options) {
+import type {Agent, FastifyInstance, FastifyPluginAsync} from "fastify";
+import * as Y from "yjs";
+import '../plugins/agent/runtime'
+import '../plugins/agent/repl'
+
+const routes: FastifyPluginAsync = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
+
+    const  example=` createMachine({
+                    id: 'emit-example',
+                    initial: 'emit',
+                    context:{
+                        index: 0
+                    },
+                    states: {
+                        emit: {
+                            entry: assign({
+                                index: ({context: {index}}) => index + 1
+                            }),
+                            after: {
+                                1000: {
+                                    target: 'emit',
+                                    reenter: true,
+                                    actions: emit(({context: {index}}) => ({
+                                        type: 'EMIT',
+                                        data: index,
+                                        event: 'emit'
+                                    }))
+                                }
+                            },
+                        }
+                    }
+                })`
+
+    fastify.log.info('example', example)
+
     fastify.route({
-        method: 'post',
-        url: '/agents/json',
+        url: '/agents',
+        method: 'GET',
         schema: {
-            summary: 'Post Agent',
+            summary: 'Get all agents',
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        agents: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                additionalProperties: true,
+                                properties: {
+                                    id: {type: 'string'},
+                                    version: {type: 'string'},
+                                    links: {
+                                        type: 'object',
+                                        properties: {
+                                            self: {type: 'string'},
+                                            workers: {type: 'string'}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+            reply.type('application/json');
+            return reply.send({
+                agents: Array.from(fastify.agents).map(([key, agent])=>({
+                    id: key,
+                    ...agent,
+                    links: {
+                        self: `${request.originalUrl}/${key}`,
+                        workers: `${request.originalUrl}/${key}/workers`
+                    }
+                }))
+            });
+        }
+    })
+
+    fastify.route({
+        url: '/agents',
+        method: 'post',
+        schema: {
+            summary: 'New Agent',
             description: 'This route is to create an agent definition',
-            body: xstateSchema,
+            body: {
+                type: 'object',
+                description: 'The agent javascript code',
+                properties: {
+                    id: {type: 'string' , examples: ['emit']},
+                    code: {
+                        type: 'string',
+                        description: 'The agent javascript code',
+                        examples: [example]
+                    }
+                }
+            },
             response: {
                 201: {
                     description: 'Successful response',
@@ -37,52 +117,51 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance:Fastif
                     }
                 }
             }
-
-
         },
         async handler(request, reply) {
-            const config = request.body as AnyStateMachine["config"];
-            const {id, version} = instance.agent(config.id).configure(request.body)
+            const {code, id}= request.body  as {code: string, id: string}
+            const agent= fastify.docs.getOrCreate(id);
+            agent.getMap().set("src", code);
             reply.type('application/json');
-            return reply.send({
-                id,
-                version,
-                links: {
-                    self: `/agents/${id}`,
-                    workers: `/agents/${id}/workers`
-                }
-            });
+            return reply.send(agentJson(agent));
         }
     })
 
-
     fastify.route({
+        url: '/agents/:agent',
         method: 'post',
-        url: '/agents/:agent/workers',
         schema: {
-            summary: 'Create a worker instance for an agent',
+            summary: 'Post Specific Agent Code',
+            description: 'This route is to create an agent definition',
+            // params:{
+            //     type: 'object',
+            //     properties: {
+            //         agent: {type: 'string' , examples: ['emit']}
+            //     }
+            // },
             body: {
                 type: 'object',
+                description: 'The agent javascript code',
                 properties: {
-                    input: {
-                        type: 'object',
-                        description: 'The input data to the worker'
+                    code: {
+                        type: 'string',
+                        description: 'The agent javascript code',
+                        examples: [example]
                     }
                 }
             },
             response: {
-                201: {
-                    'application/json': {
-                        description: 'Successful response',
-                        type: 'object',
-                        properties: {
-                            id: {type: 'string'},
-                            _links: {
-                                type: 'object',
-                                properties: {
-                                    self: {type: 'string'},
-                                    events: {type: 'string', format: 'uri'},
-                                }
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
                             }
                         }
                     }
@@ -90,107 +169,208 @@ const routes: FastifyPluginAsyncJsonSchemaToTs = async function (instance:Fastif
             }
         },
         async handler(request, reply) {
-            const {agent} = request.params as { agent: string };
-            const {input} = request.body as { input: object };
-            const worker = await instance.agent(agent).worker(worker).start(input);
-
+            const {code}= request.body as {code: string}
+            const {agent:id} = request.params as { agent: string };
+            const agent= fastify.docs.getOrCreate(id);
+            agent.getMap().set("src", code);
+             // console.log(`Listening at ${agent.vm.properties.get("href")}.`) 
             reply.type('application/json');
-            reply.status(201);
-            reply.header('Location', `${request.originalUrl}/${worker.id}`);
-            return reply.send( {
-                id: worker.id,
-                _links: {
-                    self: `${request.originalUrl}/${worker.id}`,
-                    events: `${request.originalUrl}/${worker.id}/events`
+            return reply.send(agentJson(agent));
+        }
+    })
+
+    fastify.route({
+        url: '/agents/:agent',
+        method: 'get',
+        schema: {
+            summary: 'Get an agent definition',
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    additionalProperties: true,
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        config: {type: 'object'},
+                        definition: {type: 'object'},
+                        src: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
                 }
-            });
+            }
+        },
+        async handler(this,request, reply) {
+            const {agent:id} = request.params as { agent: string };
+            const agent = fastify.docs.getOrCreate(id);
+            // const vm=agent.vm;
+            reply.type('application/json');
+            return reply.send(agentJson(agent));
+        }
+    })
+
+    fastify.route({
+        url: '/agents/:agent/start', method: 'post',
+        schema: {
+            summary: 'Start Agent',
+            description: 'This route is to create an agent definition',
+            params:{
+                type: 'object',
+                properties: {
+                    agent: {type: 'string' , examples: ['emit']}
+                }
+            },
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+            const {agent:id} = request.params as { agent: string };
+
+            const agent= fastify["agent.fromDoc"](fastify.docs.getOrCreate(id)); 
+            const {href}=  await fastify.vm(agent.createSnapshot()).start();
+            console.log(`Listening at ${href}.`)
+            reply.type('application/json');
+            return reply.send(JSON.stringify({
+                id: id,
+                links: {
+                    self: request.originalUrl,
+                    worker: href
+                }
+            }));
+        }
+    })
+
+    fastify.route({
+        url: '/agents/:agent/latest',
+        method: 'get',
+        handler(request, reply) {
+            const {agent:id}= request.params as { agent: string };
+            const agent= fastify["agent.fromDoc"](fastify.docs.getOrCreate(id)); 
+            const vmDoc= agent.latest()
+            if(!vmDoc) {
+                reply.status(404);
+                return reply.send({error: 'Not Found'})
+            }
+            vmDoc.load()
+            reply.type('application/json');
+            return reply.send(vmJson(vmDoc));
+        }
+    })
+
+    fastify.route({
+        url: '/agents/:agent/:vm',
+        method: 'get',
+        handler(request, reply) {
+            const {agent:id, vm}= request.params as { agent: string, vm: string };
+            const agent= fastify["agent.fromDoc"](fastify.docs.getOrCreate(id));
+            const vmDoc= agent.revision(vm);
+            vmDoc.load()
+            reply.type('application/json');
+            return reply.send(vmJson(vmDoc));
         }
     })
 
 
     fastify.route({
+        url: '/docs/:doc',
         method: 'get',
-        url: '/agents/:agent/workers/:worker',
-        schema: {
-            summary: 'Get a worker instance for an agent',
-            params: {
-                agent: {type: 'string'},
-                worker: {type: 'string'}
-            },
-            response: {
-                200: {
-                    'application/json': {
-                        description: 'Successful response',
-                        type: 'object',
-                        properties: {
-                            id: {type: 'string'},
-                            version: {type: 'string'},
-                            state: {type: 'string'},
-                            session: {type: 'string'},
-                            _links: {
-                                type: 'object',
-                                properties: {
-                                    self: {type: 'string'},
-                                    events: {type: 'string', format: 'uri'},
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        async handler(request, reply) {
-            const {agent, worker} = request.params as { agent: string };
-            const logic =  instance.agent(agent).worker(worker).start();
+        handler(request, reply) {
+            const {doc} = request.params as { doc: string };
+            const docInstance = fastify.docs.getOrCreate(doc);
             reply.type('application/json');
-            reply.header('x-state', logic.getSnapshot().context.service.getSnapshot().value);
-            reply.header('x-session', logic.sessionId);
-            reply.header('x-worker', logic.id);
-            return reply.send({
-                id:  logic.id,
-                state: logic.getSnapshot().value,
-                _links: {
-                    self: request.originalUrl,
-                    events: `${request.originalUrl}/events`
-                }
-            });
+            return agentJson(docInstance);
+            // return reply.send(JSON.stringify({
+            //     id: docInstance.guid,
+            //     collection: docInstance.collectionid,
+            //     loaded: docInstance.isLoaded,
+            //     synced: docInstance.isSynced ,
+            //     should_load: docInstance.shouldLoad,
+            //     meta: docInstance.meta,
+            //     ...Array.from(docInstance.share.entries()).reduce((acc, [key, value]) => {
+            //         acc[key] = value.toJSON();
+            //         return acc
+            //     }, {} as Record<string, any>)
+            // }));
         }
     })
 
-    fastify.route( {
-        method: "get",
-        url: '/agents/:agent/workers/:worker/events',
-        schema: {
-            summary: 'SSE events of a worker',
-            params: {
-                agent: {type: 'string'},
-                worker: {type: 'string'}
+
+
+
+    function agentJson( agent:Y.Doc  ) {
+        // const vm=agent.latest();
+        agent.shouldLoad && agent.load();
+        return JSON.stringify({
+            id: agent.guid,
+            debug: fastify.debug,
+            href: agent.getMap().get("href"),
+            rev: agent.getMap().get("rev"),
+            doc: {
+                id: agent.guid,
+                collection: agent.collectionid,
+                loaded: agent.isLoaded,
+                synced: agent.isSynced ,
+                should_load: agent.shouldLoad,
             },
-            response: {
-                200: {
-                    'text/event-stream': {
-                        description: 'Successful response',
-                        type: 'string',
-                    }
-                }
-            },
-            produces: ['text/event-stream']
-        },
-        handler(request, reply) {
-            const {agent, worker} = request.params as { agent: string };
-            const {doc} = instance.agent(agent).worker(worker);
-            const events = yArrayIterator(doc.getArray<EventMessage & EventObject>('events'));
-            reply.sse(events);
-        }
-    })
+
+            meta: agent.meta,
+            src: agent.getMap().get("src"),
+            // latest: vm && {
+            //     id: vm.guid,
+            //     ...vm.meta,
+            //     rev: vm.getMap().get("rev"),
+            //     timestamp: vm.getMap().get("timestamp"),
+            //     src: vm.getMap().get("src"),
+            //     href: vm.getMap().get("href")
+            // },
+            subdocs: Array.from(agent.subdocs).map(({guid, collectionid, meta}) => ({guid, collectionid, meta})),
+            // doc: fastify.doc.guid,
+            // room: fastify.room, 
+            links: {
+                self: '/',
+                worker: agent.getMap().get("href")
+            }
+        });
+    }
+    function vmJson(vmDoc: Y.Doc) {
+        return JSON.stringify({
+            id: vmDoc.guid,
+            collection: vmDoc.collectionid,
+            loaded: vmDoc.isLoaded,
+            synced: vmDoc.isSynced ,
+            should_load: vmDoc.shouldLoad,
+            meta: vmDoc.meta,
+            rev: vmDoc.getMap().get("rev"),
+            timestamp: vmDoc.getMap().get("timestamp"),
+            src: vmDoc.getMap().get("src"),
+            href: vmDoc.getMap().get("href"),
+            json: vmDoc.toJSON(),
+            ...vmDoc.meta
+        });
+    }
 
 
 }
- 
 
-    
- 
-
-    
-    
 export default routes;

@@ -5,12 +5,7 @@ import WebSocket from "ws";
 import {env} from "node:process";
 import {type FastifyBaseLogger} from "fastify";
  
-declare module "fastify"{
-    interface FastifyInstance {
-        doc: Y.Doc , 
-        docs: YjsDocManager
-    }
-}
+ 
 
 const defaults= {yjsUrl: env.YJS_URL! || "ws://localhost:1999" , room:"main" , doc: new Y.Doc({guid: "main", collectionid: "agents", gc: false, autoLoad: true})};
 
@@ -24,9 +19,9 @@ export class YjsDocManager {
 
     }
 
-    create(id: string, createDoc:(id:string)=>Y.Doc |undefined = ()=>undefined,connect:boolean=false):  YProvider {
+    create(id: string, doc: Y.Doc |undefined = undefined,connect:boolean=false):  YProvider {
 
-        const provider= new YProvider(this.yjsUrl, id, createDoc(id),{
+        const provider= new YProvider(this.yjsUrl, id, doc,{
             disableBc: true,
             // @ts-ignore
             WebSocketPolyfill: WebSocket,
@@ -46,9 +41,9 @@ export class YjsDocManager {
         return provider;
     }
 
-    getOrCreate(id: string, createDoc:(id:string)=>Y.Doc |undefined = ()=>undefined,  connect:boolean=true) {
+    getOrCreate(id: string, doc:Y.Doc |undefined =  undefined,  connect:boolean=true) {
         if (!this.providers.has(id)) {
-            this.providers.set(id, this.create(id, createDoc,connect));
+            this.providers.set(id, this.create(id, doc,connect));
 
         }
         return this.providers.get(id)!.doc
@@ -67,7 +62,7 @@ export const yjsPartyProviderPlugin = fp(async (fastify, options: { doc?: Y.Doc;
 
     fastify.decorate("doc", {
         getter() {
-            return fastify.docs.getOrCreate(doc?.guid, ()=>doc)
+            return fastify.docs.getOrCreate(doc?.guid, doc)
         }
     });
     

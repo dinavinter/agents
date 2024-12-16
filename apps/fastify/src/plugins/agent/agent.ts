@@ -1,9 +1,8 @@
 import fp from "fastify-plugin";
-import * as Y from "yjs"; 
+import * as Y from "yjs";
 import './yjs.type'
-import {FastifyInstance, Agent} from "fastify";
+import {Agent, FastifyInstance} from "fastify";
 import {t, YTMap} from "./yjs.type";
-import {string} from "zod";
 
 export type Properties ={
     rev: string;
@@ -80,12 +79,7 @@ async function agentCreatorPlugin<TFastifyInstance extends FastifyInstance>(fast
     })
 
 
-    const agents= fastify.docs.getOrCreate(":agents", ()=> new Y.Doc({
-        guid: ":agents",
-        collectionid: "agents",
-        gc: false,
-        autoLoad: true
-    }));
+    const agents= fastify.docs.getOrCreate(":agents");
     
    
     fastify.decorate("agents",  t<AgentProps>(agents.getMap()));
@@ -93,29 +87,23 @@ async function agentCreatorPlugin<TFastifyInstance extends FastifyInstance>(fast
 
     fastify.decorate("agent",function  (id, meta) {
         function create() {
-            const doc= new Y.Doc({
-                guid: id,
-                collectionid: "agent",
-                gc: false,
-                autoLoad: true,
-                meta: {
-                    type: 'agent',
-                    name: id,
-                    ...meta
-                }
-            });
-            
-           agents.getMap().set(id, {
-                id: doc.guid,
-                meta: doc.meta,
-               collection: doc.collectionid
+            return new Y.Doc({
+               guid: id,
+               meta: {
+                   type: 'agent',
+                   name: id,
+                   ...meta,
+                   timestamp: Date.UTC(Date.now())
+               }
            });
-           
-           return doc
         }
 
-        const doc = fastify.docs.getOrCreate(id, create) ; 
-        doc.guid = id;
+        const doc = fastify.docs.getOrCreate(id);
+        agents.getMap().set(id, {
+            id: doc.guid,
+            meta: doc.meta,
+            collection: doc.collectionid
+        });
         return  fastify["agent.extensions"].reduce(((acc, e) => {
              return Object.assign(acc, e(acc, agents))
         }), doc as Agent)

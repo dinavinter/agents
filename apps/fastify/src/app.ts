@@ -13,9 +13,9 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     await fastify.register( import('./plugins/doc'))
 
 
-    const doc = new Y.Doc({guid: "catalog", collectionid: "agents", gc: false, autoLoad: true})
+    const doc = new Y.Doc({guid: "catalog", collectionid: "agents", autoLoad: true})
 
-    await fastify.register( import('./plugins/yjs/party'), {
+    await fastify.register( import('./plugins/yjs/hp'), {
         doc: doc
     })
 
@@ -28,8 +28,8 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
 
 
     //routes
-    // await fastify.register(import('./routes/agent'))
-    await fastify.register(import('./routes/config'))
+    await fastify.register(import('./routes/agent'))
+    // await fastify.register(import('./routes/config'))
     // await fastify.register(import('./routes/dom'))
     //
     //sse plugin & sse proxy 

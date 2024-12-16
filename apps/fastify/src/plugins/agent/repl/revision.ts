@@ -54,9 +54,7 @@ function syncRev(code:  YTMap<Properties>):YTMap<Properties> & {
     }} { 
     
     function revision(code:  YTMap<Properties>) {
-        return revisionHash(code.get("src") || code.set("src", `createMachine({
-              id: "${code.doc?.guid}"
-        })`));
+        return revisionHash(code.get("src") || "");
     }
     
     function updateRev(rev:string) {
@@ -131,20 +129,21 @@ export const sourceManagementPlugin = fp( async (fastify) => {
             const code = source.toJSON();
             const {rev, timestamp, src} = code;
             const id = `${agent.guid}:${rev}`;
-            const doc = fastify.docs.getOrCreate(id ,function () {
-                const doc = new Y.Doc({
-                    guid: id,
-                    collectionid: "vm",
-                    meta: {
-                        type: "vm",
-                        agent: agent.guid,
-                    }
-                })
-                doc.getMap().set("src", src);
-                doc.getMap().set("rev", rev);
-                doc.getMap().set("timestamp", timestamp);
-                return doc;
-            });
+            const doc = fastify.docs.getOrCreate(id );
+            //     ,function () {
+            //     const doc = new Y.Doc({
+            //         guid: id,
+            //         collectionid: "vm",
+            //         meta: {
+            //             type: "vm",
+            //             agent: agent.guid,
+            //         }
+            //     })
+            //     doc.getMap().set("src", src);
+            //     doc.getMap().set("rev", rev);
+            //     doc.getMap().set("timestamp", timestamp);
+            //     return doc;
+            // });
             doc.getMap().set("src", src);
             doc.getMap().set("rev", rev);
             doc.getMap().set("timestamp", timestamp);
