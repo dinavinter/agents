@@ -49,7 +49,7 @@ console.log(flags, Deno.args)
 // Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
 if (import.meta.main) {
     const docManager = new YjsDocManager(flags.url); 
-    const doc  =docManager.getOrCreate(flags.room || "test", true);
+    const doc  =docManager.getOrCreate(flags.room || "test", flags.doc ? ()=> new Y.Doc({guid: flags.doc}) : undefined);
     
     await new Promise<void>(resolve=> {
         setTimeout(() => {
@@ -68,8 +68,7 @@ if (import.meta.main) {
 async function start(doc:Y.Doc ) {
 
     const logic = await getMachine(doc.getText("src").toString());
-    const actor = createYjsActor(logic);
-    return actor;
+    return createYjsActor(logic);
 
     function createYjsActor(logic: AnyActorLogic) {
         const hub =  createYjsHub(doc);

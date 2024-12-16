@@ -9,13 +9,10 @@ import {
 } from "https://esm.sh/xstate";
 import * as Y from "yjs";
 import {yArrayIterator} from "./yjs.ts";
+import {EventMessage} from "./sse.ts";
 
 
-export type EventMessage = {
-    type: string,
-    data: any,
-    event: string,
-}
+ 
 
 export function createYjsHub(doc?:Y.Doc  | null) {
     doc = doc || new Y.Doc();
