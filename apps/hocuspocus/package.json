@@ -13,7 +13,8 @@
     "vercel:deploy": "npm run build &&  vercel deploy",
     "cf:deploy": "yarn run build && cf push ",
     "start": "node ./dist/index.mjs",
-    "test": "node --import=tsx  --experimental-vm-modules --env-file=.env ./src/test.ts"
+    "test": "node --import=tsx  --experimental-vm-modules --env-file=.env ./src/test.ts",
+    "mount": "cf bind-service yjs flit -c '{\"readonly\":false, \"mount\":\"/var/yjs\"}'"
   },
   "dependencies": {
     "@hocuspocus/extension-logger": "^2.14.0",
@@ -21,10 +22,12 @@
     "@hocuspocus/provider": "^2.14.0",
     "@hocuspocus/server": "^2.14.0",
     "y-protocols": "^1.0.6",
-    "yjs": "^13.6.8"
+    "yjs": "^13.6.8",
+    "cf-nodejs-logging-support": "^7.3.0"
+
   },
   "devDependencies": {
-    "cf-nodejs-logging-support": "^7.3.0",
+    "@types/node": "^22.10.2",
     "tsx": "^4.18.0",
     "typescript": "^5.5.4"
   },

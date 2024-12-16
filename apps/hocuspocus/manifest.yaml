@@ -2,10 +2,12 @@ applications:
   -   name: yjs
       command: yarn run start
       health-check-type: none
-      random-route: true
       stack: cflinuxfs4
       memory: 512M
       instances: 1
+      disk_quota: 2GB
+      routes:
+        - route: yjs.cfapps.us10-001.hana.ondemand.com
       env:
         NODE_OPTIONS: --max-http-header-size=80000
         NODE_ENV: production
@@ -13,9 +15,11 @@ applications:
         LOG_SENSITIVE_CONNECTION_DATA: true
         LOG_REMOTE_USER: true
         LOG_REFERER: true
+        DATABASE: /var/yjs/hp.sqlite
         
       buildpacks:
         - https://github.com/cloudfoundry/nodejs-buildpack
       services:
          - log
+         - flit
  
