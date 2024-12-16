@@ -1,11 +1,11 @@
 import * as Y from "https://esm.sh/yjs";
 import {parseArgs} from "jsr:@std/cli/parse-args";
 import {createYjsHub} from "./stream/hub.ts";
-import {createActor, waitFor} from "https://esm.sh/xstate";
+import {createActor, SnapshotFrom, waitFor} from "https://esm.sh/xstate";
 import {AnyActorLogic} from "xstate";
-import {YjsDocManager} from "./provider/party.ts";
+import {YjsDocManager} from "./provider/hp.ts";
 import {serviceMachine} from "./inspect/inspector.ts";
-
+ 
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", ],
 });
@@ -49,7 +49,7 @@ console.log(flags, Deno.args)
 // Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
 if (import.meta.main) {
     const docManager = new YjsDocManager(flags.url); 
-    const doc  =docManager.getOrCreate(flags.room || "test", flags.doc ? ()=> new Y.Doc({guid: flags.doc}) : undefined);
+    const doc  =docManager.getOrCreate(flags.room || "default");
     
     await new Promise<void>(resolve=> {
         setTimeout(() => {
@@ -66,19 +66,38 @@ if (import.meta.main) {
 
 
 async function start(doc:Y.Doc ) {
-
-    const logic = await getMachine(doc.getText("src").toString());
+    doc.shouldLoad && doc.load();
+    if(!doc.getMap().get("src")) {
+        console.log("waiting for src")
+        await new Promise<void>(resolve => {
+            doc.getMap().observe(() => {
+                if (doc.getMap().get("src")) {
+                    console.log("src loaded")
+                    resolve()
+                }
+            })
+        })
+    }
+    const state = doc.getMap("current").get("state");
+    const context = doc.getMap("current").get("context");
+    console.log("state", state, context)
+    
+    const logic = await getMachine(doc.getMap<string>().get("src")!);
     return createYjsActor(logic);
 
     function createYjsActor(logic: AnyActorLogic) {
         const hub =  createYjsHub(doc);
-
+        const snapshotMap = hub.doc.getMap('state')?.toJSON() as SnapshotFrom<typeof logic>;
+       
         return createActor(serviceMachine, {
             id: 'service',
             input: {
                 logic: logic,
                 hub: hub,
+                snapshot:  snapshotMap.status ? snapshotMap : undefined,
+
             },
+            
             inspect: {
                 next: (e: { type: string; }) => {
                     e.type === '@xstate.event' && console.debug(e)
