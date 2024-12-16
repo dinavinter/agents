@@ -38,7 +38,10 @@ async function getOrCreate<TKey, TValue>(map:Map<TKey, TValue>, key:TKey, create
     }
     return map.get(key)!;
 }
-export const agentRunnerPlugin = fp(async (fastify) => {
+
+const defaults = {handler: env.HANDLER_ID || "fastify"} 
+export const agentRunnerPlugin = fp(async (fastify, options) => {
+    const {handler} = Object.assign(defaults, options);
     const observers = new Map<string, ActorVm>();
     const discovery = fastify.docs.getOrCreate(":discovery");
  
@@ -47,20 +50,7 @@ export const agentRunnerPlugin = fp(async (fastify) => {
         const doc = docId instanceof Y.Doc ? docId : fastify.docs.getOrCreate(id);
          async function createVM(code:string, id:string) {
 
-            function createHub() {
-                // return createYjsHub(new Y.Doc({
-                //     guid: doc,
-                //     collectionid: collectionid,
-                //     gc: false,
-                // }))
-                // const provider= new YProvider(url, doc, undefined,{
-                //     disableBc: true,
-                //     WebSocketPolyfill: WebSocket,
-                //     connect:false
-                // });
-                //
-                // const hub= createYjsHub(doc);
-                // provider.connect();
+            function createHub() { 
                 const hub= createYjsHub(doc);
 
                 return Object.assign(hub, {room: doc.guid});
@@ -129,13 +119,7 @@ export const agentRunnerPlugin = fp(async (fastify) => {
                 }
 
 
-                function encodeJson   (readable: ReadableStream)   {
-                    return readable.pipeThrough(new  TransformStream({
-                        transform(chunk, controller) {
-                            controller.enqueue(JSON.stringify(chunk) + '\n');
-                        }
-                    }) ).pipeThrough(new TextEncoderStream())
-                }
+                 
 
                 function encodeSse   (readable: ReadableStream) {
                     return readable.pipeThrough(new TransformStream({
@@ -215,11 +199,12 @@ export const agentRunnerPlugin = fp(async (fastify) => {
                 return getOrCreate(observers, id, async function () {
                     const vm = await createVM(t<Code>(doc.getMap()).get("src"), id);
 
-                    discovery.getMap().set(id, {
-                        href: vm.href,
-                        rev: vm.hub.doc.getMap().get("rev"),
-                        timestamp: Date.UTC(Date.now())
-                    });
+                    discovery.transact(()=>{
+                        discovery.getMap(id).set("href", vm.href);
+                        discovery.getMap(id).set("rev", doc.getMap().get("rev"));
+                        discovery.getMap(id).set("timestamp", Date.now());
+                        discovery.getMap(id).set("handler", handler );
+                    }); 
 
                     return vm;
                 })
