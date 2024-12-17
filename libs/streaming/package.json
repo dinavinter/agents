@@ -1,0 +1,104 @@
+{
+  "name": "@cxai/stream",
+  "version": "1.0.4",
+  "description": "",
+  "packageManager": "pnpm@9.15.0",
+  
+  "scripts": {
+    "build": "npm run build:pkgroll",
+    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0   ",
+    "build:tsup": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build",
+    "publish": "npm publish --access public"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+     
+    
+   },
+  "peerDependencies": {
+    "yjs": "*",
+    "openai": "^4.76.3"
+  },
+  "peerDependenciesMeta": {
+    "yjs": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    }
+    
+  },
+  "devDependencies": {
+    "@langchain/core": "^0.2.14",
+    "@ai-sdk/openai": "^0.0.54",
+    "@ai-sdk/provider": "^1.0.2",
+    "ai": "^3.3.19",
+    "sap-ai-token": "workspace:*",
+    "xstate": "^5.16.0",
+    "it-pushable": "^3.2.3",
+    "dotenv": "^16.4.5",
+    "atomico": "^1.79.2",
+    
+    "@tsconfig/node22": "^22.0.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.2",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.3",
+    "tsup": "^8.1.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.1"
+  },
+  "default": "./dist/index.mjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./ai": {
+      "default": "./dist/ai/index.mjs",
+      "import": "./dist/ai/index.mjs",
+      "require": "./dist/ai/index.cjs",
+      "types": "./dist/ai/index.d.ts"
+    },
+    "./iterator": {
+      "default": "./dist/iterator/index.mjs",
+      "import": "./dist/iterator/index.mjs",
+      "require": "./dist/iterator/index.cjs",
+      "types": "./dist/iterator/index.d.ts"
+    },
+    "./xstate": {
+      "default": "./dist/xstate/index.mjs",
+      "import": "./dist/xstate/index.mjs",
+      "require": "./dist/xstate/index.cjs",
+      "types": "./dist/xstate/index.d.ts"
+    },
+    "./yjs": {
+      "default": "./dist/yjs/index.mjs",
+      "import": "./dist/yjs/index.mjs",
+      "require": "./dist/yjs/index.cjs",
+      "types": "./dist/yjs/index.d.ts"
+    },
+    "./ui": {
+      "default": "./dist/ui/index.mjs",
+      "import": "./dist/ui/index.mjs",
+      "require": "./dist/ui/index.cjs",
+      "types": "./dist/ui/index.d.ts"
+    },
+    "./render": {
+      "default": "./dist/ui/agent-render.mjs",
+      "import": "./dist/ui/agent-render.mjs",
+      "require": "./dist/ui/agent-render.cjs",
+      "types": "./dist/ui/agent-render.d.ts"
+    },
+    "./ui/svg": {
+      "default": "./dist/ui/components/svg.mjs",
+      "import": "./dist/ui/components/svg.mjs",
+      "require": "./dist/ui/components/svg.cjs",
+      "types": "./dist/ui/components/svg.d.ts"
+    } 
+  }
+}
