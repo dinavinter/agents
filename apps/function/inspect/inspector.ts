@@ -1,7 +1,7 @@
 import {
     Actor, AnyActorLogic,
     AnyActorRef, AnyStateMachine, createActor,
-    enqueueActions, EventDescriptor, EventFromLogic, EventObject, InspectionEvent, setup, SnapshotFrom
+    enqueueActions, EventDescriptor, EventFromLogic, EventObject, InspectionEvent, log, setup, SnapshotFrom
 } from "xstate";
 import {createYjsHub, type serviceHub} from "../stream/hub.ts";
 import * as Y from "yjs";
@@ -41,7 +41,7 @@ export const serviceMachine = setup({
         return {
             ...options,
             hub,
-            service: service.start(),
+            service: service,
          }
     },
 
@@ -51,6 +51,8 @@ export const serviceMachine = setup({
                 ...event 
             }); 
         })  
+        
+        service.start()
     }),
    
     on:{
@@ -77,6 +79,7 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
     
     actorLogic.transition = (state, event, actorCtx) => {
         // hub.inspected.push(event);
+        console.log('Inspected', event.type);
         const newState= transition(state, event, actorCtx);
         const snapshotMap = hub.doc.getMap('state');
         Object.entries(actorCtx.self.getPersistedSnapshot()).forEach(([key, value]) => {

@@ -1,10 +1,11 @@
 {
   "tasks": {
-    "actor": "deno run --watch --allow-net --allow-read --allow-env  --allow-write --reload  main.ts --room test --experimental-vm-modules",
+    "actor": "deno run --watch  --env-file=../../.env --allow-net --allow-read --allow-env  --allow-write --reload  main.ts --room test --experimental-vm-modules",
     "router": "deno run --watch --allow-net --allow-read --allow-env  --allow-write --reload  router.ts --room test --experimental-vm-modules",
-    
+    "run": "deno run --watch --allow-net --allow-read --allow-env  --allow-write --reload  run.ts --room test --experimental-vm-modules"
   },
   "imports": {
+    "@cxai/stream": "npm:@cxai/stream@1.0.4",
     "@std/assert": "jsr:@std/assert@1",
     "it-pushable": "https://esm.sh/it-pushable@^3.2.3",
     "xstate": "https://esm.sh/xstate@^5.19.0",

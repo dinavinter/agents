@@ -1,0 +1,25 @@
+{
+"extends": "@tsconfig/node22/tsconfig.json", 
+  "include": ["src/**/*" ],
+  
+"compilerOptions": {
+   "skipLibCheck": true,
+  "esModuleInterop": true,
+  "isolatedModules": true,
+  "module": "NodeNext",
+  "moduleDetection": "force",
+ 
+  "allowJs": true,
+  "lib": [
+    "ESNext.Symbol",
+    "DOM",
+    "DOM.Iterable",
+    "ESNext"
+  ],
+  "paths": {
+    "@/*": [
+      "./src/*"
+    ]
+  }
+}
+}  

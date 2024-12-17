@@ -100,7 +100,7 @@ async function start(doc:Y.Doc ) {
             
             inspect: {
                 next: (e: { type: string; }) => {
-                    e.type === '@xstate.event' && console.debug(e)
+                    e.type === '@xstate.event' && console.log("inspect", e)
                 }
             }
         })

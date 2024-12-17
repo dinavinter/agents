@@ -79,6 +79,12 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
         const newState= transition(state, event, actorCtx);
         // return newState;
         const snapshot = actorCtx.self.getSnapshot();
+
+        const snapshotMap = hub.doc.getMap('state');
+        Object.entries(actorCtx.self.getPersistedSnapshot()).forEach(([key, value]) => {
+            snapshotMap.set(key, value);
+        })
+
         // hub.snapshot.push(snapshot);
         hub.state = {
             next: getAllOwnEventDescriptors(snapshot).join(","),
