@@ -7,6 +7,7 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
 
     await fastify.register(import('./plugins/log'))
+    await fastify.register(import('@fastify/formbody'))
 
     await fastify.register(import('./routes/home')) 
     // await fastify.register(import('./plugins/zod'))
@@ -28,7 +29,9 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
 
 
     //routes
-    await fastify.register(import('./routes/agent'))
+    await fastify.register(import('./routes/agents'))
+    await fastify.register(import('./routes/runtime'))
+
     // await fastify.register(import('./routes/config'))
     // await fastify.register(import('./routes/dom'))
     //

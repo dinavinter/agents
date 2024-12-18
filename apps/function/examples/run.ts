@@ -16,9 +16,9 @@ import {generateText} from "https://esm.sh/ai";
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", ],
 });
-flags.room="37"
+flags.room="i_5"
 console.log(flags, Deno.args)
-const src = flags.src ||  "./examples/simple.ts"
+const src = flags.src ||  "./examples/withinput.ts"
 const room = flags.room || src.split("/").pop()?.split(".")[0] || src;
 // Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
 if (import.meta.main) {
@@ -35,17 +35,6 @@ if (import.meta.main) {
 
 async function start(doc:Y.Doc ) {
     doc.shouldLoad && doc.load();
-    // if(!doc.getMap().get("src")) {
-    //     console.log("waiting for src")
-    //     await new Promise<void>(resolve => {
-    //         doc.getMap().observe(() => {
-    //             if (doc.getMap().get("src")) {
-    //                 console.log("src loaded")
-    //                 resolve()
-    //             }
-    //         })
-    //     })
-    // }
     const state = doc.getMap("current").get("state");
     const context = doc.getMap("current").get("context");
     console.log("state", state, context)
@@ -56,7 +45,6 @@ async function start(doc:Y.Doc ) {
     function createYjsActor(logic: AnyActorLogic) {
         const hub =  createYjsHub(doc);
         const snapshotMap = hub.doc.getMap('state')?.toJSON() as SnapshotFrom<typeof logic>;
-        
         
       
         return createActor(serviceMachine, {
@@ -84,7 +72,7 @@ async function start(doc:Y.Doc ) {
         // await Deno.writeTextFile(tempFilePath, code);
 
         const env= Deno.env.toObject();
-        const module = await import('./simple.ts');
+        const module = await import('./withinput.ts');
 
         return module.default.provide({
             actors: {
