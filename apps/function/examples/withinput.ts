@@ -28,7 +28,7 @@ export const machine = setup({
     }
 }).createMachine({
     id:"thinker",
-    initial: 'thinking',
+    initial: 'topic',
     context: ({input}) => input,
     entry: emit({
         data: `<main class="mx-auto  bg-slate-50 h-full" >
@@ -42,6 +42,32 @@ export const machine = setup({
     }),
     
     states: {
+        topic:{
+            entry: emit({
+                data: `<div  class="flex items-start gap-2.5  p-2 m-2 w-full">
+                        <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow " >
+                                <form >
+                                   <input type="text" autocomplete="true" list="examples" class="w-full p-2 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow " name="topic" placeholder="What topic should I think of?"   />
+                                   <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" hx-post="events/topic" hx-swap="outerHTML"  >Send</button>
+                                </form>
+                                <datalist id="examples">
+                                    <option value="random topic"/>
+                                    <option value="parties"/>
+                                    <option value="songs"/>
+                                </datalist>
+                            </div>`,
+                type: 'content',
+                format: 'raw'
+            }),
+            on:{
+                'topic':{
+                    target: 'thinking',
+                    actions: assign({
+                        topic: ({event:{topic}}) => topic
+                    })
+                }
+            }
+        },
         thinking: {
             entry: emit({
                     data: `<div  class="flex items-start gap-2.5  p-2 m-2 w-full">
@@ -64,7 +90,7 @@ export const machine = setup({
                 src: 'aiStream',
                 id: 'thinker',
                 systemId: 'thinker',
-                input: 'Think about a random topic, and then share that thought.' 
+                input: 'Think about {{topic}}, and then share that thought.' 
             },
             
       

@@ -1,11 +1,23 @@
 import {
-    Actor, AnyActorLogic,
-    AnyActorRef, AnyStateMachine, createActor,
-    enqueueActions, EventDescriptor, EventFromLogic, EventObject, InspectionEvent, log, setup, SnapshotFrom
+    Actor,
+    AnyActorLogic,
+    AnyActorRef,
+    AnyStateMachine,
+    createActor,
+    enqueueActions,
+    EventDescriptor,
+    EventFromLogic,
+    EventObject, fromEventObservable,
+    fromObservable,
+    InspectionEvent,
+    log,
+    setup,
+    SnapshotFrom
 } from "xstate";
 import {createYjsHub, type serviceHub} from "../stream/hub.ts";
 import * as Y from "yjs";
 import {EventMessage} from "../stream/sse.ts";
+import {yArrayIterator} from "../stream/yjs.ts";
 type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
     logic: TLogic,
     name?: string,
@@ -17,6 +29,9 @@ type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
 
 
 export const serviceMachine = setup({
+    actors:{
+        events: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator(input.getArray<EventObject>("events")))
+    },
     types: {
         input: {} as CreateServiceMachineOptions<AnyActorLogic>,
         events: {} as InspectionEvent ,
@@ -38,25 +53,41 @@ export const serviceMachine = setup({
                 } 
             }
         }); 
+          
         return {
-            ...options,
+             ...options,
             hub,
             service: service,
          }
     },
+    invoke:{
+        src: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator(input.getArray<EventObject>("events"))), 
+        input: ({context:{hub}}) => hub.doc,
+            
+    },
 
     entry: enqueueActions(({context: {service, hub}, enqueue}) => {
+       
         service.on("*", (event: EventMessage & EventObject) => {
             hub.emitted.push({
                 ...event 
             }); 
-        })  
+        })
+
+
+        service.start();
         
-        service.start()
+        // enqueue(({context:{service, hub}}) => {
+        //         hub.doc.getArray<EventObject>("events").observe((event) => {
+        //             service.send(event);
+        //         }) 
+        //     })
     }),
    
     on:{
-       
+       "*": {
+           
+       }
         // "*" : {
         //     actions: log (({event, context: {service}}) => {
         //         return  {type: event.type, id: service.id, sessionId: service.sessionId}

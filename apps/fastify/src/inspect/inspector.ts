@@ -2,7 +2,7 @@ import {
     Actor, ActorRefFrom, AnyActorLogic,
     AnyActorRef, AnyStateMachine, createActor,
     enqueueActions, EventDescriptor, EventFrom, EventFromLogic, EventObject, InspectionEvent, log,
-    setup, SnapshotFrom
+    setup, SnapshotFrom, StateMachine
 } from "xstate";
 import {EventMessage} from "fastify-sse-v2";
 import {createYjsHub, serviceHub} from "../stream/hub";
@@ -18,7 +18,7 @@ type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
 
 
 
-export const serviceMachine = setup({
+ const machine = setup({
     types: {
         input: {} as CreateServiceMachineOptions<AnyActorLogic>,
         events: {} as InspectionEvent ,
@@ -123,3 +123,9 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
     }
 }
 
+
+export type ServiceMachine = typeof machine;
+
+export type ServiceActor = ActorRefFrom<ServiceMachine>;
+
+export const serviceMachine:ServiceMachine = machine;

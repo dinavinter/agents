@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import {type VNodeAny} from "https://esm.sh/atomico/types/vnode";
+import {type VNodeAny} from "https://esm.sh/atomico";
 /*
 const example={
     "type": "main",
