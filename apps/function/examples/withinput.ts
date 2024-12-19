@@ -1,20 +1,19 @@
 import 'https://esm.sh/atomico/ssr/load';
 import 'yjs';
 
-import {assign, emit, EventObject, setup,log, AnyEventObject} from "xstate";
+import {assign, emit, EventObject, setup, AnyEventObject, UnknownActorLogic} from "xstate";
  import {type EventMessage, fromAIEventStream} from "https://esm.sh/@cxai/stream";
 import {ChatBubble} from "https://esm.sh/@cxai/stream@1.0.4/ui";
 import type { LanguageModelV1} from "https://esm.sh/@ai-sdk/provider";
-import {html} from "https://esm.sh/atomico@latest";
-export type AIStream=ReturnType<typeof fromAIEventStream>;
+type AIStream=ReturnType<typeof fromAIEventStream<{model: LanguageModelV1}>>
 
-
+type Actors = {
+    aiStream: AIStream
+} & Record<string, UnknownActorLogic>
 
 export const machine = setup({
-    actors: {
-        //@ts-ignore Excessive stack depth comparing types 
-        aiStream: undefined as unknown as AIStream
-    },
+
+    actors:{} as Actors,
      types: {
         emitted: {} as AnyEventObject,
         input: {} as {
@@ -44,11 +43,16 @@ export const machine = setup({
     states: {
         topic:{
             entry: emit({
-                data: `<div  class="flex items-start gap-2.5  p-2 m-2 w-full">
-                        <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow " >
-                                <form >
+                data: `<div  class="flex items-start gap-2.5  p-2 m-2 w-full"  >
+                         <img class="w-12 h-12 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-4.jpg" alt="User" ></img>
+
+                        <div class="flex flex-col gap-1 w-full p-4  " > 
+                                <form hx-swap="outerHTML" sse-swap="topic"> 
+                                   <div class="flex items center space-x-2 rtl:space-x-reverse justify-items-end ">
+                                       <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white start-0.5">User</span>
+                                    </div>
                                    <input type="text" autocomplete="true" list="examples" class="w-full p-2 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow " name="topic" placeholder="What topic should I think of?"   />
-                                   <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" hx-post="events/topic" hx-swap="outerHTML"  >Send</button>
+                                   <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" hx-post="events/topic" >Send</button>
                                 </form>
                                 <datalist id="examples">
                                     <option value="random topic"/>
@@ -59,12 +63,28 @@ export const machine = setup({
                 type: 'content',
                 format: 'raw'
             }),
-            on:{
-                'topic':{
+            on: {
+                'topic': {
                     target: 'thinking',
-                    actions: assign({
-                        topic: ({event:{topic}}) => topic
-                    })
+                    actions: [
+                        assign({
+                            topic: ({event: {topic}}) => topic
+                        }),
+                        emit(({event: {topic}}) => ({
+                            data: `  <div class=" flex flex-col gap-1 w-full p-4  ">
+                                        <div class="flex items center space-x-2 rtl:space-x-reverse justify-items-end">
+                                            <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white start-0.5">User</span>
+                                           <span class="text-sm  lg:text-lg font-normal text-gray-500 dark:text-gray-400">${new Date(Date.now()).toLocaleTimeString()}</span> 
+                                    </div> 
+                                     <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
+                                        <pre class="text-lg text-slate-900 inline text-wrap">${topic}</pre>
+                                    </div>
+                                </div> 
+                            </div>`,
+                            type: 'topic',
+                            format: 'raw'
+                        }))
+                    ] 
                 }
             }
         },
@@ -72,9 +92,9 @@ export const machine = setup({
             entry: emit({
                     data: `<div  class="flex items-start gap-2.5  p-2 m-2 w-full">
                                 <img class="w-12 h-12 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="Thinker" ></img>
-                                <div class="flex flex-col gap-1 w-full">
-                                    <div class="flex items center space-x-2 rtl:space-x-reverse">
-                                        <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white">Thinker</span>
+                                <div class="flex flex-col gap-1 w-full p-4  ">
+                                    <div class="flex items center space-x-2 rtl:space-x-reverse justify-items-end">
+                                        <span class="sm:text-sm md:text-lg lg:text-2xl font-semibold text-gray-900 dark:text-white start-0.5">Thinker</span>
                                         <span class="text-sm  lg:text-lg font-normal text-gray-500 dark:text-gray-400">${new Date(Date.now()).toLocaleTimeString()}</span>
                                     </div>
                                     <div class="leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700 flex-grow ">
@@ -116,6 +136,7 @@ export const machine = setup({
     },
 });
 
+type Machine = typeof machine;
  
 export default machine;
  

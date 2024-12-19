@@ -16,7 +16,7 @@ import {generateText} from "https://esm.sh/ai";
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", ],
 });
-flags.room="i_5"
+flags.room="i_23"
 console.log(flags, Deno.args)
 const src = flags.src ||  "./examples/withinput.ts"
 const room = flags.room || src.split("/").pop()?.split(".")[0] || src;

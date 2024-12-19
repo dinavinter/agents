@@ -7,7 +7,7 @@ import {
     enqueueActions,
     EventDescriptor,
     EventFromLogic,
-    EventObject, fromEventObservable,
+    EventObject, forwardTo, fromEventObservable,
     fromObservable,
     InspectionEvent,
     log,
@@ -86,7 +86,7 @@ export const serviceMachine = setup({
    
     on:{
        "*": {
-           
+           actions:  forwardTo(({context: {service}}) => service)
        }
         // "*" : {
         //     actions: log (({event, context: {service}}) => {
