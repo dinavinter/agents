@@ -11,5 +11,18 @@
     "xstate": "https://esm.sh/xstate@^5.19.0",
     "y-partykit": "https://esm.sh/y-partykit@^0.0.32",
     "yjs": "https://esm.sh/yjs@^13.6.20"
+  },
+  "compilerOptions": {
+    "checkJs": true,
+    "strictNullChecks": true,
+
+
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "dom.asynciterable",
+      "deno.ns",
+      "deno.unstable"
+    ]
   }
 }

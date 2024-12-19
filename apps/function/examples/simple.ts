@@ -1,20 +1,20 @@
 import 'https://esm.sh/atomico/ssr/load';
 import 'yjs';
 
-import {assign, emit, EventObject, setup,log, AnyEventObject} from "xstate";
+import {assign, emit, EventObject, setup, log, AnyEventObject, UnknownActorLogic} from "xstate";
  import {type EventMessage, fromAIEventStream} from "https://esm.sh/@cxai/stream";
 import {ChatBubble} from "https://esm.sh/@cxai/stream@1.0.4/ui";
 import type { LanguageModelV1} from "https://esm.sh/@ai-sdk/provider";
 import {html} from "https://esm.sh/atomico@latest";
 export type AIStream=ReturnType<typeof fromAIEventStream>;
 
+type Actors = {
+    aiStream: AIStream
+} & Record<string, UnknownActorLogic>
 
 
 export const machine = setup({
-    actors: {
-        //@ts-ignore Excessive stack depth comparing types 
-        aiStream: undefined as unknown as AIStream
-    },
+    actors: {} as Actors,
      types: {
         emitted: {} as AnyEventObject,
         input: {} as {
