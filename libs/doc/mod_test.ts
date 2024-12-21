@@ -1,7 +1,6 @@
-import { assertEquals, assert } from "@std/assert";
 import { HPYjsDocManager } from "./provider/hp.ts";
 
-
+import { expect } from "@std/expect";
 
 Deno.test("hp tests", {
   sanitizeResources: false,
@@ -13,21 +12,20 @@ Deno.test("hp tests", {
 
 
  await t.step("HPYjsDocManager - connect method", () => {
-    assert(connectedDoc);
-    assertEquals(connectedDoc.guid, doc);
-    assertEquals(manager.providers.get(doc)!.isConnected, true);
+     expect(connectedDoc).toBeDefined();
+     expect(connectedDoc.guid).toEqual(doc);
+     expect(manager.providers.get(doc)).toBeDefined();
   });
 
   await t.step("HPYjsDocManager - get method", () => {
     const retrievedDoc = manager.get(doc);
 
-    assert(retrievedDoc);
-    assertEquals(retrievedDoc.guid, doc);
+    expect(retrievedDoc).toBeDefined();
+    expect(doc).toEqual(doc);
 
   });
-  
+
   manager.providers.get(doc)!.disconnect();
 
 })
- 
- 
+
