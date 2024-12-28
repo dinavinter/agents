@@ -1,25 +1,35 @@
-import 'https://esm.sh/atomico/ssr/load';
-import 'yjs';
-
-import {assign, emit, EventObject, setup, log, AnyEventObject, UnknownActorLogic} from "xstate";
- import {type EventMessage, fromAIEventStream} from "https://esm.sh/@cxai/stream";
-import {ChatBubble} from "https://esm.sh/@cxai/stream@1.0.4/ui";
-import type { LanguageModelV1} from "https://esm.sh/@ai-sdk/provider";
-import {html} from "https://esm.sh/atomico@latest";
-export type AIStream=ReturnType<typeof fromAIEventStream>;
+ 
+import {assign, emit, setup, AnyEventObject, UnknownActorLogic} from "https://esm.sh/xstate";
+ import { fromAIEventStream,fromEventAsyncGenerator} from "https://esm.sh/@cxai/stream";
 
 type Actors = {
-    aiStream: AIStream
+    aiStream: ReturnType<typeof fromAIEventStream>
 } & Record<string, UnknownActorLogic>
 
 
 export const machine = setup({
-    actors: {} as Actors,
+    actors: {
+        aiStream: fromEventAsyncGenerator( async function* () { 
+                  yield  await new Promise((resolve) => setTimeout(resolve, 100));
+                  yield {type: 'text-delta', data: 'Hello '}
+            yield  await new Promise((resolve) => setTimeout(resolve, 50));
+
+            yield {type: 'text-delta', data: 'World '}
+            yield  await new Promise((resolve) => setTimeout(resolve, 50));
+
+            yield {type: 'text-delta', data: '!' }
+            yield  await new Promise((resolve) => setTimeout(resolve, 50));
+            yield {type: 'output', data: 'Hello Word!' }
+            
+            yield {type: 'finish', data: 'finish' }
+            
+              
+        })
+    } as Actors,
      types: {
         emitted: {} as AnyEventObject,
         input: {} as {
             thought?: string ;
-            model?: LanguageModelV1;
         },
         context: {} as {
             thought?:  string;

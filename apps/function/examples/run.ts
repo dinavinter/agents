@@ -1,22 +1,18 @@
 import * as Y from "https://esm.sh/yjs";
 import {parseArgs} from "jsr:@std/cli/parse-args";
-// import {createYjsHub} from "https://esm.sh/@cxai/stream";
 import {createActor, SnapshotFrom, waitFor} from "xstate";
 import {AnyActorLogic} from "xstate";
 import {YjsDocManager} from "../provider/hp.ts";
 import {serviceMachine} from "../inspect/inspector.ts";
-import {createYjsHub} from "../stream/hub.ts";
-import {fromAIEventStream} from "https://esm.sh/@cxai/stream";
+import {createYjsHub,fromAIEventStream} from "https://esm.sh/@cxai/stream";
 import {azure} from "https://esm.sh/@ai-sdk/azure";
 
 import {baseUrl, sapAIFetch} from "https://esm.sh/sap-ai-token";
-import {generateText} from "https://esm.sh/ai";
-// import {createOpenAI} from "@ai-sdk/openai";
  
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", ],
 });
-flags.room="i_23"
+flags.room="i_24"
 console.log(flags, Deno.args)
 const src = flags.src ||  "./examples/withinput.ts"
 const room = flags.room || src.split("/").pop()?.split(".")[0] || src;
@@ -52,7 +48,7 @@ async function start(doc:Y.Doc ) {
             input: {
                 logic: logic,
                 hub: hub,
-                // snapshot:  snapshotMap.status ? snapshotMap : undefined, 
+                snapshot:  snapshotMap.status ? snapshotMap : undefined, 
 
             },
             
@@ -68,11 +64,11 @@ async function start(doc:Y.Doc ) {
    
     async function getMachine(code:string) {
         // code= code || example;
-        // const tempFilePath = await Deno.makeTempFile();
-        // await Deno.writeTextFile(tempFilePath, code);
+        const tempFilePath = await Deno.makeTempFile();
+        await Deno.writeTextFile(tempFilePath, code);
 
         const env= Deno.env.toObject();
-        const module = await import('./withinput.ts');
+        const module = await import(tempFilePath);
 
         return module.default.provide({
             actors: {
