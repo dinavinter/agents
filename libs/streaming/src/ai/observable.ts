@@ -2,6 +2,7 @@ import {CoreTool, streamObject, streamText, TextStreamPart} from "ai";
 import { EventObject, ObservableActorLogic} from "xstate";
 import {fromEventAsyncGenerator} from "@/xstate/generator";
 import {aiOptions, FromDefault, OneOf, StreamObjectOptions, StreamTextOptions} from "./options";
+import {LanguageModelV1} from "@ai-sdk/provider";
  
 export function fromAIEventStream<TDefaultOptions extends Partial<StreamTextOptions>, TOptions extends FromDefault<StreamTextOptions, TDefaultOptions > =FromDefault<StreamTextOptions, TDefaultOptions >, TTools extends OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool> =OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool>>( defaultOptions?: TDefaultOptions){
     
@@ -32,7 +33,7 @@ export function fromAIEventStream<TDefaultOptions extends Partial<StreamTextOpti
 
 }
 
-export type AIStream=ReturnType<typeof fromAIEventStream>;
+export type AIStream=ReturnType<typeof fromAIEventStream<{model: LanguageModelV1}>>;
 
 
 export function fromAIElementStream<OBJECT extends EventObject, TDefaultOptions extends Partial<StreamObjectOptions<OBJECT>>, TOptions extends FromDefault<StreamObjectOptions<OBJECT>, TDefaultOptions > =FromDefault<StreamObjectOptions<OBJECT>, TDefaultOptions >>( defaultOptions?: TDefaultOptions){
