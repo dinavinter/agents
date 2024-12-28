@@ -1,26 +1,25 @@
 import { defineConfig } from 'vite';
+import { comlink } from "vite-plugin-comlink";
 
 export default defineConfig({
-  envPrefix: ['VITE_', "ROOM", "YJS_URL"],
+  envPrefix: ['VITE_', "YJS_"],
+  plugins: [comlink()],
+
+  worker:{
+    plugins: () => [comlink()],
+   
+  },
   build: {
     lib: {
-      entry: 'src/typescript-editor.ts',
+      entry: 'src/index.ts',
       name: 'TypeScriptEditor',
-      formats: ['es'],
-      fileName: 'typescript-editor'
+      formats: ['es', "cjs", "iife",'umd' ],
+       
     },
     
     rollupOptions: {
-      external: [
-        '@codemirror/autocomplete',
-        '@codemirror/lang-javascript',
-        '@codemirror/lint',
-        '@codemirror/view',
-        '@typescript/vfs',
-        '@valtown/codemirror-ts',
-        'codemirror',
-        'comlink'
-      ]
+         shimMissingExports:true,
+         treeshake:"recommended"
     }
   }
 });

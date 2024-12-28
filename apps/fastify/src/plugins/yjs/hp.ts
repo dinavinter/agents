@@ -15,8 +15,8 @@ type Logger = Pick<Console, "log" | "debug" | "trace" | "info"> | FastifyBaseLog
 export class YjsDocManager {
     providers = new Map<string, HocuspocusProvider>();
 
-    constructor(private yjsUrl: string, private log:Logger = console) {
-        console.log("Yjs docs manager created", yjsUrl);
+    constructor(public url: string, private log:Logger = console) {
+        console.log("Yjs docs manager created", url);
 
     }
 
@@ -25,22 +25,22 @@ export class YjsDocManager {
         doc = doc || new Y.Doc({guid: id});
         
         const provider= new HocuspocusProvider( {
-            url: this.yjsUrl,
+            url: this.url,
             name: id,
             document: doc,
             
             websocketProvider:new HocuspocusProviderWebsocket({
-                url: this.yjsUrl,
+                url: this.url,
                 WebSocketPolyfill: ws,
                  
             }),
             connect:connect
         });
 
-        this.log.debug(`Yjs main provider created: ${this.yjsUrl}\t room: '${id}'\t doc: '${provider.document.guid}'\t connected: '${provider.isConnected}'`);
+        this.log.debug(`Yjs main provider created: ${this.url}\t room: '${id}'\t doc: '${provider.document.guid}'\t connected: '${provider.isConnected}'`);
 
         provider.on("wsconnected", () => {
-            this.log.info(`Connected!: ${this.yjsUrl}\t room: ${id}\t doc: ${provider.document.guid}\t synced: ${provider.synced}`);
+            this.log.info(`Connected!: ${this.url}\t room: ${id}\t doc: ${provider.document.guid}\t synced: ${provider.synced}`);
         })
  
         provider.document.load()

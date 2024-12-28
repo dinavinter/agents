@@ -13,7 +13,7 @@ import * as Comlink from 'comlink';
 import { containerStyles, editorTheme, tooltipStyles } from './styles';
 import {cmCollab} from "./collab"
 import * as ts from "typescript";
-const env = import.meta.env;
+import TSWorker from "./worker.ts?worker&inline"  
 export function renderDisplayParts(dp: ts.SymbolDisplayPart[]) {
     const div = document.createElement('div');
     for (const part of dp) {
@@ -30,10 +30,27 @@ export const EDITOR_READY_EVENT = "cm:ts:ready";
 export class TypeScriptEditor extends HTMLElement {
     editor: EditorView | null = null;
  
+    static get observedAttributes() {
+        return ['value' , "url", "room" , "component"];
+    }
+    
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
     
+    }
+    
+    
+    get  url() {
+        return this.getAttribute('url') || "ws://localhost:1234";
+    }
+    
+    get  room() {
+        return this.getAttribute('room') || "default";
+    }
+    
+    get component(){
+        return this.getAttribute('component') || "codemirror";
     }
 
     async connectedCallback() {
@@ -47,14 +64,26 @@ export class TypeScriptEditor extends HTMLElement {
         editorContainer.id = 'editor';
         this.shadowRoot?.appendChild(editorContainer);
  
+        
 
          const path = 'index.ts';
-        const innerWorker = new Worker(new URL('./worker.ts', import.meta.url), {
-            type: 'module',
-        });
+        // const innerWorker = new Worker(new URL('worker.ts?worker&inline', import.meta.url), {
+        //     name: "ts-worker",
+        //     type: 'module',
+        // });
+        const innerWorker= new TSWorker({
+            name:"na"
+        })
+        // const innerWorker= new ComlinkWorker<typeof import("./worker")>(new URL('./worker.ts', import.meta.url), {
+        //             type: 'module',
+        //         })
         const worker = Comlink.wrap(innerWorker) as any;
+        
         await worker.initialize();
-
+        
+        // const  worker= new ComlinkWorker<typeof import("./worker")>(new URL('./worker.ts', import.meta.url), {
+        //         type: 'module',
+        //     })
         this.editor = new EditorView({
             extensions: [
                 basicSetup,
@@ -95,8 +124,9 @@ export class TypeScriptEditor extends HTMLElement {
                 tsHoverWorker(),
                 tsGotoWorker(),
                 cmCollab({
-                  url: env.YJS_URL,
-                  room: env.ROOM
+                    url: this.url,
+                    room: this.room,
+                    component: this.component
                 })
             ],
             parent: editorContainer,

@@ -1,5 +1,6 @@
 import { EditorView } from '@codemirror/view';
-
+import type {Extension} from "@codemirror/state";
+ 
 // Base editor container styles
 export const containerStyles = `
   :host {
@@ -14,7 +15,7 @@ export const containerStyles = `
 `;
 
 // CodeMirror theme extension
-export const editorTheme = EditorView.theme({
+export const editorTheme:Extension= EditorView.theme({
   "&": {
     height: "100%"
   },
@@ -27,8 +28,7 @@ export const editorTheme = EditorView.theme({
     fontSize: "14px",
     lineHeight: "1.6"
   }
-});
-
+}) 
 // Tooltip styles
 export const tooltipStyles = `
   .cm-tooltip {

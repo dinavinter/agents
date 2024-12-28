@@ -19,5 +19,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "../../node_modules/.pnpm/vite-plugin-comlink@5.1.0_comlink@4.4.2_vite@5.4.11_@types+node@22.10.2_terser@5.37.0_/node_modules/vite-plugin-comlink/client.d.ts"
+  ]
 }

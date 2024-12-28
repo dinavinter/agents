@@ -55,21 +55,44 @@ type VNodeAny ={
         return mapAsync(yArrayIterator(doc.getArray<Emitted>("emitted")),transform )
     }
 
-     fastify.get('/runtime/agent/:agent', async function handler(request, reply: FastifyReply) {
+    
+    
+     fastify.get('/agents/:agent/view', async function handler(request, reply: FastifyReply) {
          const { agent:id} = request.params as {  agent: string };
 
          const agent = fastify.docs.getOrCreate(id);
-  
+         const map = agent.getMap<string>();
+         let rev= map.get("rev");
          if (request.headers.accept === 'text/event-stream') {
-             return reply.sse(async function* () {
-                 const map = agent.getMap("current");
-                 for await (const [key] of yMapIterate(map)) {
-                     if(key == "rev"){
-                         yield {
-                            data: `<embed class="h-screen w-screen" src="/runtime/${id}:${map.get("rev")}" ></embed>`,
-                         }
+             return reply.sse(async function* () { 
+                 const next = () => new Promise<string>((resolve) => {
+                     if (rev !== map.get("rev")) {
+                         resolve(map.get("rev") || "")
                      }
+                         function onUpdate(event: Y.YMapEvent<string>) {
+                         console.log("update", event)
+                         if (rev !== map.get("rev")) {
+                             resolve(map.get("rev") || "")
+                             map.unobserve(onUpdate);
+                         } 
+                     } 
+                     map.observe(onUpdate);
+                 })
+
+
+                 while (true) {
+                     rev = await next();
+                     yield {
+                         data: `<embed class="h-screen w-screen" src="${map.get("rev") || ""}" >`,
+                         id: `embed-${map.get("rev")}`
+                     }
+                     yield {
+                         data: map.get("rev") as string || "",
+                         event: map.get("rev") as string || ""
+                     }
+
                  }
+
              }())
 
          }
@@ -78,7 +101,7 @@ type VNodeAny ={
 
          reply.send(`<html>
       <head>
-        <title>Agent AI</title>
+        <title>Agent AI ${id}</title>
          <script type="importmap">
         {
           "imports": {
@@ -94,30 +117,33 @@ type VNodeAny ={
        <script src="https://unpkg.com/htmx.org@2.0.2"></script>
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
-        <base href="/runtime/${id}/" />
+        <base href="${request.originalUrl}/" />
  
 
        </head>
        <body> 
-        <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
-
-           <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
-              <span class="mx-2 text-gray-500">/</span> 
-              <a href="#" class="text-slate-400 hover:text-slate-300">${id}</a> 
-            </div>
-        </header> 
-            <div hx-ext="sse" sse-connect="/runtime/agent/${id}"  sse-swap="message"   hx-swap="innerHTML">
-                  <embed class="h-screen w-screen" src="/runtime/${id}:${agent.getMap("meta").get("rev")}" ></embed>
-             </div>
+        <div hx-ext="sse" sse-connect="${id}"  >
+                <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
+        
+                   <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
+                       <a href="#" class="text-slate-400 hover:text-slate-300">${id}</a> 
+                      <span class="mx-2 text-gray-500">/</span> 
+                      <a href="#" class="text-slate-400 hover:text-slate-300"  sse-swap="rev" hx-swap="innerHTML">${rev}</a> 
+                    </div>
+                </header> 
+                 <div sse-swap="message" hx-swap="innerHTML"> 
+                    <embed  class="h-screen w-screen" src="${rev}" >
+                 </div>
+           </div>
  
          </body>
  </html>`)
      })
 
 
-     fastify.get('/runtime/:workflow', async function handler(request, reply: FastifyReply) {
-        const { workflow:id} = request.params as {  workflow: string };
-      
+     fastify.get('/agents/:agent/view/:rev', async function handler(request, reply: FastifyReply) {
+        const {agent, rev} = request.params as {  rev: string ; agent :string};
+         const id= `${agent}:${rev}`
         const workflow = fastify.docs.getOrCreate(id);
        
         if (request.headers.accept === 'text/event-stream') {
@@ -128,7 +154,9 @@ type VNodeAny ={
 
         reply.send(`<html>
       <head>
-        <title>Agent AI</title>
+        <title>Agent AI ${id}</title>
+        <base href="${request.originalUrl}/" />
+
          <script type="importmap">
         {
           "imports": {
@@ -144,52 +172,51 @@ type VNodeAny ={
        <script src="https://unpkg.com/htmx.org@2.0.2"></script>
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
-        <base href="/runtime/${id}/" />
  
 
        </head>
-       <body> 
-        <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
-
-           <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
-              <span class="mx-2 text-gray-500">/</span> 
-              <a href="#" class="text-slate-400 hover:text-slate-300">${id}</a> 
+       <body>  
+            <div hx-ext="sse" sse-connect="events"   hx-swap="beforeend">
+               <div hx-ext="sse"  sse-swap="message"   hx-swap="beforeend"></div> 
             </div>
-        </header> 
-            <div hx-ext="sse" sse-connect="/runtime/${id}"  sse-swap="message"   hx-swap="beforeend">
-             </div>
  
-         </body>
+       </body>
  </html>`)
     })
 
-    fastify.get('/runtime/:workflow/events', async function handler(request, reply: FastifyReply) {
-        const { workflow:id} = request.params as {   workflow: string };
+    fastify.get('/agents/:agent/view/:rev/events', async function handler(request, reply: FastifyReply) {
+        const {agent, rev} = request.params as {  rev: string ; agent :string};
+        const id= `${agent}:${rev}` 
+
         const workflow = fastify.docs.getOrCreate(id);
-        return reply.sse(emitted(workflow))
+        return reply.sse(delayAsync(emitted(workflow)))
     })
 
-    fastify.get('/runtime/:workflow/events/:event', async function handler(request, reply: FastifyReply) {
-        const { workflow:id,event} = request.params as {  workflow: string, event:string };
+    fastify.get('/agents/:agent/view/:rev/:event', async function handler(request, reply: FastifyReply) {
+        const {agent, rev,event} = request.params as {  rev: string ; agent :string,event:string};
+        const id= `${agent}:${rev}`
+
         const workflow = fastify.docs.getOrCreate(id);
         return reply.sse(filterEventAsync(emitted(workflow), event))
     })
 
-    fastify.post('/runtime/:workflow/events/:event', async function handler(request, reply: FastifyReply) {
-        const { workflow:id, event} = request.params as {  workflow: string, event:string  };
+    fastify.post('/agents/:agent/view/:rev/events/:event', async function handler(request, reply: FastifyReply) {
+        const {agent, rev,event} = request.params as {  rev: string ; agent :string,event:string};
+        const id= `${agent}:${rev}`
         const data = request.body as object;
         const workflow = fastify.docs.getOrCreate(id);
         workflow.getArray<EventObject>("events").push([{...data, type: event}]);
         return  reply.send('sent at '+ new Date().toISOString());
     })
 
-    fastify.get('/runtime/:workflow/:service/events/:event', async function handler(request, reply: FastifyReply) {
-        const { workflow:id, service, event} = request.params as {
-            
-            workflow: string,
+    fastify.get('/agents/:agent/view/:rev/:service/events/:event', async function handler(request, reply: FastifyReply) {
+        const { agent,rev, service, event} = request.params as {
+            agent:string,
+            rev: string,
             event: string,
             service: string
         };
+        const id= `${agent}:${rev}`
         const workflow = fastify.docs.getOrCreate(id);
         
         return reply.sse(filterEventAsync(emitted(workflow), `@${service}.${event}`))
