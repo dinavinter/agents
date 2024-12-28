@@ -18,11 +18,13 @@
     "start": "node ./dist/index.mjs"
   },
   "dependencies": {
+    "@cxai/ide": "workspace:*",
     "@edge-runtime/types": "^3.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
     "@hocuspocus/provider": "^2.14.0",
     "@types/ws": "^8.5.13",
     "@y-sweet/client": "^0.6.3",
+    "edge-runtime": "^4.0.1",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
     "fastify-sse-v2": "^4.0.0",
@@ -51,9 +53,10 @@
     "ajv": "^8.17.1",
     "cf-nodejs-logging-support": "^7.3.0",
     "dotenv": "^16.4.5",
+    "esbuild": "^0.24.2",
     "fastify-type-provider-zod": "^2.0.0",
     "js-beautify": "^1.15.1",
-    "tsx": "^4.18.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.5.4",
     "zod": "^3.23.8"
   },

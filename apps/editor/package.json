@@ -1,32 +1,30 @@
 {
-  "name": "@stackblitz/typescript-editor",
-  "version": "1.0.0",
+  "name": "@cxai/ide",
+  "version": "1.0.12",
   "type": "module",
-  "main": "dist/main.mjs",
-  "types": "dist/typescript-editor.d.ts",
+  "main": "dist/ide.cjs",
+  "module": "dist/ide.js",
   "files": [
     "dist"
   ],
-  "exports": {
-    ".": {
-      "import": "./dist/main.mjs",
-      "require": "./dist/main.cjs"
-    },
-    "./worker": {
-      "import": "./dist/worker.mjs",
-      "require": "./dist/worker.cjs"
-    }
-  },
+
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run build:vite",
+    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0   ",
+    "build:vite": "tsc && vite build ",
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "typescript": "^5.2.2",
+    "yjs": "^13.6.10"
+  },
+  "devDependencies": {
     "@codemirror/autocomplete": "^6",
     "@codemirror/lang-javascript": "^6",
     "@codemirror/lint": "^6",
+    "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6",
     "@cxai/ata": "^0.0.0",
     "@hocuspocus/provider": "^2.9.0",
@@ -34,13 +32,10 @@
     "@valtown/codemirror-ts": "3.0.0-9",
     "codemirror": "^6",
     "comlink": "^4.4.1",
+    "vite": "^5.0.0",
+    "vite-plugin-comlink": "^5.1.0",
     "y-codemirror.next": "^0.3.2",
-    "y-protocols": "^1.0.6",
-    "yjs": "^13.6.10"
-  },
-  "devDependencies": {
-    "typescript": "^5.2.2",
-    "vite": "^5.0.0"
+    "y-protocols": "^1.0.6"
   },
   "publishConfig": {
     "access": "public"

@@ -368,15 +368,15 @@ export default createMachine({
     })
 
     fastify.route({
-        url: '/agents/:agent/:vm',
+        url: '/agents/:agent/:rev',
         method: 'get',
         handler(request, reply) {
-            const {agent:id, vm}= request.params as { agent: string, vm: string };
-            const agent= fastify["agent.fromDoc"](fastify.docs.getOrCreate(id));
-            const vmDoc= agent.revision(vm);
-            vmDoc.load()
+            const {agent, rev} = request.params as {  rev: string ; agent :string};
+            const id= `${agent}:${rev}` 
+            const workflow = fastify.docs.getOrCreate(id);
+            workflow.load()
             reply.type('application/json');
-            return reply.send(vmJson(vmDoc));
+            return reply.send(vmJson(workflow));
         }
     })
 
@@ -405,6 +405,35 @@ export default createMachine({
     })
 
 
+
+    fastify.route({
+        url: '/agents/:agent/ide',
+        method: 'get',
+        schema: {
+            summary: 'Get an agent ide',
+             
+        },
+        async handler(this,request, reply) {
+            const {agent:id} = request.params as { agent: string };
+            const agent = fastify.docs.getOrCreate(id);
+            // const vm=agent.vm;
+            reply.type('text/html')
+            return reply.send(`<html xmlns="http://www.w3.org/1999/html">
+              <head>
+                <title>Agent IDE</title>
+              
+                <script src="https://esm.sh/@cxai/ide"  type="module"></script>
+              
+            
+                </head>
+                <body>
+                      <ts-editor value="import { createMachine } from 'xstate';"  url="${fastify.docs.url}" room="${id}"> 
+        
+                     </ts-editor>
+                </body>
+            `);
+        }
+    })
 
 
     function agentJson( agent:Y.Doc  ) {

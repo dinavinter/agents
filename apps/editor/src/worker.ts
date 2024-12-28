@@ -1,7 +1,7 @@
 import {
   createDefaultMapFromCDN,
   createSystem,
-  createVirtualTypeScriptEnvironment,
+  createVirtualTypeScriptEnvironment, VirtualTypeScriptEnvironment,
 } from '@typescript/vfs';
 import { createWorker } from '@valtown/codemirror-ts/worker';
 import * as Comlink from 'comlink';
@@ -49,7 +49,7 @@ async function createTSEnv() {
   return {
     env,
 
-    onFileUpdated(env, path, code) {
+    onFileUpdated(_env:VirtualTypeScriptEnvironment, _path:string, code:string) {
       ata(code);
     },
   };
