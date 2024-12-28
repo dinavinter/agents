@@ -29,25 +29,36 @@ if (import.meta.main) {
     const docManager = new YjsDocManager(flags.url); 
     const doc  =docManager.getOrCreate(room);
     
-    doc.getText().observe(async (event) => {
+    doc.getText("codemirror").observe(async (event) => {
         const src = event.target.toJSON();
         const rev = revisionHash(src);
-        const revDoc=  docManager.getOrCreate(`${room}:${rev}`,  new Y.Doc({guid: `${room}:${rev}`, meta: {rev}}));
+        const revDoc= new Y.Doc({guid: `${room}:${rev}`, meta: {rev}});
         revDoc.transact(()=> {
             revDoc.getMap().set("src", src);
             revDoc.getMap().set("rev", rev);
             revDoc.getMap().set("status", "idle")
         })
-        const actor = await start(revDoc);
-         doc.getMap("current").set("rev", rev)
-        actor.start();
-        revDoc.getMap().set("status", "running")
-        
-        await waitFor(actor, () => false).then(() => {
-            console.log('done')
-            revDoc.getMap().set("status", "done")
+        try {
+            const actor = await start(revDoc);
+            doc.getMap().set("rev", rev)
+            actor.start();
+            docManager.getOrCreate(`${room}:${rev}`,  revDoc);
+            doc.getMap("revisions").set(rev, "running")
+            revDoc.getMap().set("status", "running")
+            await waitFor(actor, () => false).then(() => {
+                console.log('done')
+                revDoc.getMap().set("status", "done")
+                doc.getMap("revisions").set(rev, "done")
 
-        })
+            })
+        }
+        catch (error){
+            console.log(error)
+            revDoc.destroy()
+        }
+     
+        
+   
     })
 }
 
