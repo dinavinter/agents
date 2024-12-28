@@ -83,12 +83,13 @@ type VNodeAny ={
                  while (true) {
                      rev = await next();
                      yield {
-                         data: `<embed class="h-screen w-screen" src="${map.get("rev") || ""}" >`,
-                         id: `embed-${map.get("rev")}`
+                         data: `<embed  class="h-screen w-screen" src="${rev}/view" >`,
+                         id: `embed-${rev}`
                      }
                      yield {
-                         data: map.get("rev") as string || "",
-                         event: map.get("rev") as string || ""
+                         data: rev,
+                         event: "rev",
+                         id:rev
                      }
 
                  }
@@ -117,22 +118,26 @@ type VNodeAny ={
        <script src="https://unpkg.com/htmx.org@2.0.2"></script>
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
-        <base href="${request.originalUrl}/" />
+        <base href="${request.originalUrl}" />
  
 
        </head>
        <body> 
-        <div hx-ext="sse" sse-connect="${id}"  >
+        <div hx-ext="sse" sse-connect="view"  >
                 <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
         
                    <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
                        <a href="#" class="text-slate-400 hover:text-slate-300">${id}</a> 
                       <span class="mx-2 text-gray-500">/</span> 
-                      <a href="#" class="text-slate-400 hover:text-slate-300"  sse-swap="rev" hx-swap="innerHTML">${rev}</a> 
+                      <a href="#" class="text-slate-400 hover:text-slate-300" >
+                         <span  sse-swap="rev" hx-swap="innerHTML">
+                                ${rev}                 
+                        </span>
+                       </a> 
                     </div>
                 </header> 
                  <div sse-swap="message" hx-swap="innerHTML"> 
-                    <embed  class="h-screen w-screen" src="${rev}" >
+                    <embed  class="h-screen w-screen" src="${rev}/view" >
                  </div>
            </div>
  
@@ -141,7 +146,7 @@ type VNodeAny ={
      })
 
 
-     fastify.get('/agents/:agent/view/:rev', async function handler(request, reply: FastifyReply) {
+     fastify.get('/agents/:agent/:rev/view', async function handler(request, reply: FastifyReply) {
         const {agent, rev} = request.params as {  rev: string ; agent :string};
          const id= `${agent}:${rev}`
         const workflow = fastify.docs.getOrCreate(id);
@@ -155,7 +160,7 @@ type VNodeAny ={
         reply.send(`<html>
       <head>
         <title>Agent AI ${id}</title>
-        <base href="${request.originalUrl}/" />
+        <base href="${request.originalUrl}" />
 
          <script type="importmap">
         {
@@ -184,7 +189,7 @@ type VNodeAny ={
  </html>`)
     })
 
-    fastify.get('/agents/:agent/view/:rev/events', async function handler(request, reply: FastifyReply) {
+    fastify.get('/agents/:agent/:rev/events', async function handler(request, reply: FastifyReply) {
         const {agent, rev} = request.params as {  rev: string ; agent :string};
         const id= `${agent}:${rev}` 
 
@@ -192,7 +197,7 @@ type VNodeAny ={
         return reply.sse(delayAsync(emitted(workflow)))
     })
 
-    fastify.get('/agents/:agent/view/:rev/:event', async function handler(request, reply: FastifyReply) {
+    fastify.get('/agents/:agent/:rev/events/:event', async function handler(request, reply: FastifyReply) {
         const {agent, rev,event} = request.params as {  rev: string ; agent :string,event:string};
         const id= `${agent}:${rev}`
 
@@ -200,7 +205,7 @@ type VNodeAny ={
         return reply.sse(filterEventAsync(emitted(workflow), event))
     })
 
-    fastify.post('/agents/:agent/view/:rev/events/:event', async function handler(request, reply: FastifyReply) {
+    fastify.post('/agents/:agent/:rev/events/:event', async function handler(request, reply: FastifyReply) {
         const {agent, rev,event} = request.params as {  rev: string ; agent :string,event:string};
         const id= `${agent}:${rev}`
         const data = request.body as object;
@@ -209,7 +214,7 @@ type VNodeAny ={
         return  reply.send('sent at '+ new Date().toISOString());
     })
 
-    fastify.get('/agents/:agent/view/:rev/:service/events/:event', async function handler(request, reply: FastifyReply) {
+    fastify.get('/agents/:agent/:rev/:service/events/:event', async function handler(request, reply: FastifyReply) {
         const { agent,rev, service, event} = request.params as {
             agent:string,
             rev: string,
