@@ -8,23 +8,46 @@ import {createYjsHub,fromAIEventStream} from "https://esm.sh/@cxai/stream";
 import {azure} from "https://esm.sh/@ai-sdk/azure";
 
 import {baseUrl, sapAIFetch} from "https://esm.sh/sap-ai-token";
+import {createHash} from "node:crypto";
+import { Buffer } from "node:buffer";
  
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", ],
 });
-flags.room="i_24"
+export function revisionHash(src: string): string  {
+    return revisionHash(Buffer.from(src))
+
+    function revisionHash(data: Uint8Array): string {
+        return createHash('md5').update(data).digest('hex').slice(0, 10);
+    }
+
+}
+
 console.log(flags, Deno.args)
-const src = flags.src ||  "./examples/withinput.ts"
-const room = flags.room || src.split("/").pop()?.split(".")[0] || src;
-// Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
+const room = flags.room || Deno.env.get("ID") || "i_24";
 if (import.meta.main) {
-   const docManager = new YjsDocManager(flags.url); 
+    const docManager = new YjsDocManager(flags.url); 
     const doc  =docManager.getOrCreate(room);
     
-    const actor=await start(doc); 
-    actor.start();
-    await waitFor(actor, () =>  false).then(() => {
-        console.log('done')
+    doc.getText().observe(async (event) => {
+        const src = event.target.toJSON();
+        const rev = revisionHash(src);
+        const revDoc=  docManager.getOrCreate(`${room}:${rev}`,  new Y.Doc({guid: `${room}:${rev}`, meta: {rev}}));
+        revDoc.transact(()=> {
+            revDoc.getMap().set("src", src);
+            revDoc.getMap().set("rev", rev);
+            revDoc.getMap().set("status", "idle")
+        })
+        const actor = await start(revDoc);
+         doc.getMap("current").set("rev", rev)
+        actor.start();
+        revDoc.getMap().set("status", "running")
+        
+        await waitFor(actor, () => false).then(() => {
+            console.log('done')
+            revDoc.getMap().set("status", "done")
+
+        })
     })
 }
 

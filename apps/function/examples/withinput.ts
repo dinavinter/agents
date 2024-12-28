@@ -1,9 +1,8 @@
 import 'https://esm.sh/atomico/ssr/load';
 import 'yjs';
 
-import {assign, emit, EventObject, setup, AnyEventObject, UnknownActorLogic} from "xstate";
- import {type EventMessage, fromAIEventStream} from "https://esm.sh/@cxai/stream";
-import {ChatBubble} from "https://esm.sh/@cxai/stream@1.0.4/ui";
+import {assign, emit, setup, AnyEventObject, UnknownActorLogic} from "xstate";
+import {fromAIEventStream} from "https://esm.sh/@cxai/stream";
 import type { LanguageModelV1} from "https://esm.sh/@ai-sdk/provider";
 type AIStream=ReturnType<typeof fromAIEventStream<{model: LanguageModelV1}>>
 
