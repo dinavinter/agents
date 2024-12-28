@@ -2,7 +2,7 @@ import {FastifyInstance, FastifyReply} from "fastify";
  import {delayAsync, filterEventAsync, mapAsync} from "@/stream";
  import fp from "fastify-plugin";
 import {EventObject} from "xstate";
-import {yArrayIterator} from "@/stream/yjs.ts";
+import {yArrayIterator, yMapIterate} from "@/stream/yjs.ts";
 import {createYjsHub} from "@/stream/hub.ts";
 import * as Y from "yjs";
 
@@ -55,7 +55,67 @@ type VNodeAny ={
         return mapAsync(yArrayIterator(doc.getArray<Emitted>("emitted")),transform )
     }
 
-    fastify.get('/runtime/:workflow', async function handler(request, reply: FastifyReply) {
+     fastify.get('/runtime/agent/:agent', async function handler(request, reply: FastifyReply) {
+         const { agent:id} = request.params as {  agent: string };
+
+         const agent = fastify.docs.getOrCreate(id);
+  
+         if (request.headers.accept === 'text/event-stream') {
+             return reply.sse(async function* () {
+                 const map = agent.getMap("current");
+                 for await (const [key] of yMapIterate(map)) {
+                     if(key == "rev"){
+                         yield {
+                            data: `<embed class="h-screen w-screen" src="/runtime/${id}:${map.get("rev")}" ></embed>`,
+                         }
+                     }
+                 }
+             }())
+
+         }
+         reply.header('Cache-Control', 'no-store');
+         reply.type('text/html')
+
+         reply.send(`<html>
+      <head>
+        <title>Agent AI</title>
+         <script type="importmap">
+        {
+          "imports": {
+            "atomico": "https://unpkg.com/atomico",
+            "@atomico/hooks":"https://esm.sh/@atomico/hooks",
+            "@atomico/hooks/use-slot":"https://esm.sh/@atomico/hooks@4.4.1/use-slot",
+            "@atomico/store":"https://esm.sh/@atomico/store"
+            
+          }
+        }
+        </script> 
+
+       <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+       <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+       <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
+        <base href="/runtime/${id}/" />
+ 
+
+       </head>
+       <body> 
+        <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
+
+           <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
+              <span class="mx-2 text-gray-500">/</span> 
+              <a href="#" class="text-slate-400 hover:text-slate-300">${id}</a> 
+            </div>
+        </header> 
+            <div hx-ext="sse" sse-connect="/runtime/agent/${id}"  sse-swap="message"   hx-swap="innerHTML">
+                  <embed class="h-screen w-screen" src="/runtime/${id}:${agent.getMap("meta").get("rev")}" ></embed>
+             </div>
+ 
+         </body>
+ </html>`)
+     })
+
+
+     fastify.get('/runtime/:workflow', async function handler(request, reply: FastifyReply) {
         const { workflow:id} = request.params as {  workflow: string };
       
         const workflow = fastify.docs.getOrCreate(id);
