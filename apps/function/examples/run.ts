@@ -8,6 +8,7 @@ import {createYjsHub,fromAIEventStream} from "https://esm.sh/@cxai/stream";
 import {azure} from "https://esm.sh/@ai-sdk/azure";
 
 import {baseUrl, sapAIFetch} from "https://esm.sh/sap-ai-token";
+import {fromAIElementStream, openaiGP4o} from "../../agent/ai/index.ts";
  
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", ],
@@ -72,6 +73,10 @@ async function start(doc:Y.Doc ) {
 
         return module.default.provide({
             actors: {
+                aiElementStream: fromAIElementStream({
+                    model: openaiGP4o(),
+                    temperature: 0.9
+                }),
                 aiStream: fromAIEventStream({
                     model: azure('gpt-4o',{
                         baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),

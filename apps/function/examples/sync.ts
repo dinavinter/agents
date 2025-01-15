@@ -4,13 +4,13 @@ import {createActor, SnapshotFrom, waitFor} from "xstate";
 import {AnyActorLogic} from "xstate";
 import {YjsDocManager} from "../provider/hp.ts";
 import {serviceMachine} from "../inspect/inspector.ts";
-import {createYjsHub,fromAIEventStream} from "https://esm.sh/@cxai/stream";
+import {createYjsHub,fromAIEventStream, fromAIElementStream} from "https://esm.sh/@cxai/stream";
 import {azure} from "https://esm.sh/@ai-sdk/azure";
 
 import {baseUrl, sapAIFetch} from "https://esm.sh/sap-ai-token";
 import {createHash} from "node:crypto";
 import { Buffer } from "node:buffer";
- 
+  
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", ],
 });
@@ -24,7 +24,7 @@ export function revisionHash(src: string): string  {
 }
 
 console.log(flags, Deno.args)
-const room = flags.room || Deno.env.get("ID") || "i_24";
+const room = flags.room || Deno.env.get("ID") || "screen-set";
 if (import.meta.main) {
     const docManager = new YjsDocManager(flags.url); 
     const doc  =docManager.getOrCreate(room);
@@ -106,11 +106,17 @@ async function start(doc:Y.Doc ) {
 
         return module.default.provide({
             actors: {
-                aiStream: fromAIEventStream({
+                aiElementStream: fromAIElementStream({
                     model: azure('gpt-4o',{
                         baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
                         fetch: sapAIFetch,
-
+                    }),
+                    temperature: 0.9
+                }),
+                aiStream: fromAIEventStream({
+                    model: azure('gpt-4o',{
+                        baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
+                        fetch: sapAIFetch, 
                     }),
                     temperature: 0.9
                 })
