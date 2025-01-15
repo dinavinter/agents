@@ -165,7 +165,11 @@ function deltaReducer<T>(delta:Y.YArrayEvent<T>["delta"]) {
 
 type FromIterable<T> = T extends Iterable<infer U> ? U : never;
 type FromYMap<T extends Y.Map<any>> =   FromIterable<ReturnType<YMapEvent<T>["keys"]["entries"]>>;
-export async function * yMapIterate<T extends Y.Map<any>>(comp: T):AsyncGenerator<FromYMap<T>> {
+export async function * yMapIterate<T extends Y.Map<any>>(comp: T):AsyncGenerator<[string, {
+    oldValue: FromYMap<T> | undefined;
+    newValue: FromYMap<T>;
+    action: "add" | "update" | "delete";
+}]> {
     const entries = comp.toJSON();
     console.debug("entries", entries);
     for (const [key, value] of Object.entries(entries)) {
