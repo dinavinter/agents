@@ -1,12 +1,12 @@
 applications:
-  -   name: agent-route
+  -   name: agents
       command: yarn run start
       
       routes:
-        - route: 'https://agent-route.cfapps.us10-001.hana.ondemand.com'
+        - route: 'https://agents.cfapps.us10-001.hana.ondemand.com'
       stack: cflinuxfs4
       memory: 512M
-      instances: 1
+      instances: 2
       env:
         NODE_OPTIONS: --max-http-header-size=80000
         NODE_ENV: production

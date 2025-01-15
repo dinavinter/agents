@@ -25,7 +25,7 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     await fastify.register( import('./plugins/agent/agent'))
     // await fastify.register( import('./plugins/agent/vm'))
     await fastify.register( import('./plugins/agent/repl'))
-    await fastify.register( import('./plugins/agent/runtime'))
+    // await fastify.register( import('./plugins/agent/runtime'))
 
 
 

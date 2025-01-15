@@ -18,7 +18,8 @@
     "start": "node ./dist/index.mjs"
   },
   "dependencies": {
-    "@cxai/ide": "workspace:*",
+    "@cxai/ide": "^1.0.12",
+    "@cxai/stream": "^1.0.4",
     "@edge-runtime/types": "^3.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
     "@hocuspocus/provider": "^2.14.0",
@@ -93,7 +94,8 @@
   },
   "engines": {
     "yarn": "1.22.19",
-    "npm": "10.7.0"
+    "npm": "10.7.0",
+    "node": "22.8.0"
   },
   "overrides": {
     "yjs": {
