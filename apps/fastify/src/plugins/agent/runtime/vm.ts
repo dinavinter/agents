@@ -1,7 +1,7 @@
 /// <reference types="@edge-runtime/types" />
 
 import {type serviceHub,createYjsHub} from "@/stream/hub.ts";
-import {serviceMachine} from "@/inspect/inspector.ts";
+// import {serviceMachine} from "@/inspect/inspector.ts";
 import {
     ActorRefFrom, AnyActorLogic,
     AnyStateMachine,
@@ -156,7 +156,7 @@ export async function createVM(code:string, id:string) {
             YProvider,
             createYjsHub,
             createActor(logic: AnyActorLogic, hub: serviceHub) {
-                return createActor(serviceMachine, {
+                return createActor(logic, {
                     id: 'service',
                     input: {
                         logic: logic,
