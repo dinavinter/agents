@@ -152,13 +152,7 @@ function docHandler(doc:Y.Doc) {
 
     }
 
-    function encodeSse (readable: ReadableStream) {
-        return readable.pipeThrough(new TransformStream({
-            transform(chunk, controller) {
-                controller.enqueue(`data: ${chunk.data || chunk}\n\n`);
-            }
-        })).pipeThrough(new TextEncoderStream())
-    }
+ 
 }
 
 
