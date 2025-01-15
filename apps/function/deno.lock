@@ -36,6 +36,7 @@
     "https://esm.sh/@y-sweet/client": "https://esm.sh/@y-sweet/client@0.6.4",
     "https://esm.sh/@y-sweet/sdk": "https://esm.sh/@y-sweet/sdk@0.6.4",
     "https://esm.sh/ai": "https://esm.sh/ai@4.0.18",
+    "https://esm.sh/atomico": "https://esm.sh/atomico@1.79.2",
     "https://esm.sh/atomico/ssr/load": "https://esm.sh/atomico@1.79.2/ssr/load",
     "https://esm.sh/atomico@latest": "https://esm.sh/atomico@1.79.2",
     "https://esm.sh/it-pushable@^3.2.3": "https://esm.sh/it-pushable@3.2.3",
