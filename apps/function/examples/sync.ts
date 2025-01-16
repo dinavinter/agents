@@ -24,41 +24,60 @@ export function revisionHash(src: string): string  {
 }
 
 console.log(flags, Deno.args)
-const room = flags.room || Deno.env.get("ID") || "screen-set";
-if (import.meta.main) {
-    const docManager = new YjsDocManager(flags.url); 
-    const doc  =docManager.getOrCreate(room);
-    
-    doc.getText("codemirror").observe(async (event) => {
-        const src = event.target.toJSON();
-        const rev = revisionHash(src);
-        const revDoc= new Y.Doc({guid: `${room}:${rev}`, meta: {rev}});
-        revDoc.transact(()=> {
+const room = flags.room || Deno.env.get("ID") || "forms";
+
+function getRevDoc(rev: string, src) {
+    const revDoc = new Y.Doc({guid: `${room}:${rev}`, meta: {rev}});
+    if(revDoc.getMap().get("rev") !== rev) {
+        revDoc.transact(() => {
             revDoc.getMap().set("src", src);
             revDoc.getMap().set("rev", rev);
             revDoc.getMap().set("status", "idle")
         })
-        try {
-            const actor = await start(revDoc);
-            doc.getMap().set("rev", rev)
-            actor.start();
-            docManager.getOrCreate(`${room}:${rev}`,  revDoc);
-            doc.getMap("revisions").set(rev, "running")
-            revDoc.getMap().set("status", "running")
-            await waitFor(actor, () => false).then(() => {
-                console.log('done')
-                revDoc.getMap().set("status", "done")
-                doc.getMap("revisions").set(rev, "done")
+    }
+    return revDoc;
+}
 
-            })
-        }
-        catch (error){
-            console.log(error)
-            revDoc.destroy()
-        }
+async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Doc) {
+    if(revDoc.getMap().get("src") ) {
      
-        
-   
+    console.log("starting rev", revDoc.getMap().get("rev"))
+    
+    try {
+        const actor = await start(revDoc);
+        actor.start();
+        docManager.getOrCreate(revDoc.guid, revDoc);
+        const rev = revDoc.getMap().get("rev");
+        agentDoc.transact(() => {
+            agentDoc.getMap("revisions").set(rev,  "running");
+            agentDoc.getMap().set("rev", rev)
+        });
+        revDoc.getMap().set("status", "running")
+        await waitFor(actor, () => false).then(() => {
+            console.log('done')
+            revDoc.getMap().set("status", "done")
+            agentDoc.getMap("revisions").set(rev, "done")
+        })
+    } catch (error) {
+        console.log(error)
+        revDoc.getMap().set("status", "error")
+        revDoc.destroy()
+    }
+    }
+}
+
+if (import.meta.main) {
+    const docManager = new YjsDocManager(flags.url); 
+    const doc  =docManager.getOrCreate(room);
+    // const revDoc = getRevDoc(doc.getMap().get("rev") || revisionHash(doc.getMap().get("codemirror") || ""), doc.getMap().get("codemirror"));
+    // await tryStart(docManager, doc, revDoc);
+    doc.getText("codemirror").observe(async (event) => {
+        console.log("change", event)
+        const src = event.target.toJSON();
+        const rev = revisionHash(src);
+        const revDoc = getRevDoc(rev, src);
+        await tryStart(docManager, doc, revDoc); 
+
     })
 }
 
@@ -88,7 +107,7 @@ async function start(doc:Y.Doc ) {
             
             inspect: {
                 next: (e: { type: string; }) => {
-                    // e.type === '@xstate.event' && console.log("inspect", e)
+                  // e.type === '@xstate.event' && console.log("inspect", e)
                 }
             }
         })
@@ -108,15 +127,15 @@ async function start(doc:Y.Doc ) {
             actors: {
                 aiElementStream: fromAIElementStream({
                     model: azure('gpt-4o',{
-                        baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
-                        fetch: sapAIFetch,
+                        // baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
+                        // fetch: sapAIFetch,
                     }),
                     temperature: 0.9
                 }),
                 aiStream: fromAIEventStream({
                     model: azure('gpt-4o',{
-                        baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
-                        fetch: sapAIFetch, 
+                        // baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
+                        // fetch: sapAIFetch, 
                     }),
                     temperature: 0.9
                 })
