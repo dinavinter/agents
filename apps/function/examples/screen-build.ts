@@ -82,7 +82,7 @@ export const machine = setup({
                  </header>
                 <div class="flex flex-col items-center justify-center gap-6" hx-ext="sse" sse-swap="content" hx-swap="beforeend" ></div>
             </main>`,
-        type: "message"
+        type: "message",
     }),
 
     states: {
@@ -112,7 +112,7 @@ export const machine = setup({
                                                 </form>`}
                         />`.render()
                 }`,
-                type: "content"
+                type: "content",
             }),
 
             on: {
@@ -124,11 +124,11 @@ export const machine = setup({
                         }),
                         emit(({ event: { request } }) => ({
                             data: request,
-                            type: "request"
+                            type: "request",
                         })),
                         emit(() => ({
                             data: new Date(Date.now()).toLocaleTimeString(),
-                            type: "@request.status"
+                            type: "@request.status",
                         })),
                     ],
                 },
@@ -142,11 +142,13 @@ export const machine = setup({
                                             img="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
                                             swap="screens"/>`.render()
                     }`,
-                    type: "content"
-                }), emit({
-                    data:`Drafting &#128396; Forms`,
-                    type:'@screens.name'
-                })],
+                    type: "content",
+                }),
+                emit({
+                    data: `Drafting &#128396; Forms`,
+                    type: "@screens.name",
+                }),
+            ],
             invoke: {
                 src: "aiElementStream",
                 id: "draft",
@@ -160,15 +162,17 @@ export const machine = setup({
                             "the screen description, including the screen purpose and the required fields and actions.",
                         ),
                     }).describe(`publish a screen`),
-                    template:  `You are an helpfully assistant that helps developers to draft gigya screen sets for their applications.  Your task is to understand the user request and materialize it to a screen list with description {{request}}, split the forms to create engaging flow, be creative and help the user to accomplish his task `,
+                    template:
+                        `You are an helpfully assistant that helps developers to draft gigya screen sets for their applications.  Your task is to understand the user request and materialize it to a screen list with description {{request}}, split the forms to create engaging flow, be creative and help the user to accomplish his task `,
                 },
             },
             on: {
                 "*": {
                     actions: [
-                        emit(({ event: {name, description } }) => ({
+                        emit(({ event: { name, description } }) => ({
                             type: "screens",
-                            data:  `<div shadowDom  class="flex flex-col items-start gap-4 p-4 m-4 w-full bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
+                            data:
+                                `<div shadowDom  class="flex flex-col items-start gap-4 p-4 m-4 w-full bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
                             <style hx-ext="sse" sse-swap="@css.text-delta" hx-swap="beforeend" ></style>
                            
                             <div class="container shadow-md border-b border-gray-200 bg-white dark:bg-gray-700 bg-opacity-75 relative top-0 ">
@@ -183,7 +187,7 @@ export const machine = setup({
                         })),
                         emit(({ event: { name } }) => ({
                             type: `@screens.status`,
-                            data: `<code>${name}</code>`
+                            data: `<code>${name}</code>`,
                         })),
                     ],
                 },
@@ -197,20 +201,21 @@ export const machine = setup({
         },
         fields: {
             entry: emit({
-                data:'Build &#128221;',
-                type:'@screens.name'
+                data: "Build &#128221;",
+                type: "@screens.name",
             }),
             invoke: {
                 src: "aiElementStream",
                 id: "fields",
-                input: ({ context: { draft } }) => ({
+                input: {
                     template: `{{#draft}}
                                <form id="{{name}}"  class="shadow-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 rounded-lg ">
                                     <!-- {{description}} --> 
                                     <fieldset hx-ext="sse" sse-swap="@screen.{{name}}.input" hx-swap="beforeend" />
                              </form> 
                            {{/draft}}`,
-                    system: `You are an expert in html fields, your task is to help add the missing fields in the form drafts, go over the containers comments and instructions, and publish html fields to each screen  your code will be swapped into the appropriate screen
+                    system:
+                        `You are an expert in html fields, your task is to help add the missing fields in the form drafts, go over the containers comments and instructions, and publish html fields to each screen  your code will be swapped into the appropriate screen
                         fill the following forms with input fields, your response will be swapped into the form with the  sse-swap attribute
                         !make sure to publish fields to all screens    
                         !make sure to add submit button or link to all screans  `,
@@ -228,32 +233,46 @@ export const machine = setup({
                             'the field in a valid html. for example: <input type="text" name="email" /> or <button type="submit">Submit</button>',
                         ),
                     }).describe(`publish a field`),
-                }),
+                },
             },
             on: {
                 "*": {
                     actions: [
-                        emit(({ event: {outerHTML, screen } }) => ({
+                        emit(({ event: { outerHTML, screen } }) => ({
                             event: `@screen.${screen}`,
                             type: "field",
                             data: outerHTML,
                         })),
-                        emit(({ event: {name, screen } }) => ({
+                        emit(({ event: { name, screen } }) => ({
                             event: `@screens.status`,
                             type: "field",
-                            data: `<code class="text-1Xl">${screen}<code> &#10133;: <code>${name}</code>`,
+                            data:
+                                `<code class="text-1Xl">${screen}<code> &#10133;: <code>${name}</code>`,
                         })),
                         assign({
-                            draft: ({ event: {outerHTML, screen } , context:{draft}}) => {
-                                const screenDraft= draft?.find(({name}) => name === screen) || {};
-                                const otherDrafts =draft?.filter(({name}) => name !== screen) || []
-                                return [...otherDrafts,  {
+                            draft: (
+                                {
+                                    event: { outerHTML, screen },
+                                    context: { draft },
+                                },
+                            ) => {
+                                const screenDraft = draft?.find(({ name }) =>
+                                    name === screen
+                                ) || {};
+                                const otherDrafts = draft?.filter(({ name }) =>
+                                    name !== screen
+                                ) || [];
+                                return [...otherDrafts, {
                                     ...screenDraft,
-                                    fields: [...screenDraft.fields || [], outerHTML]
-                                }]
-                            }})
+                                    fields: [
+                                        ...screenDraft.fields || [],
+                                        outerHTML,
+                                    ],
+                                }];
+                            },
+                        }),
                     ],
-                    guard: ({ event: {outerHTML, screen } }) => !!screen
+                    guard: ({ event: { screen } }) => !!screen,
                 },
                 "output": {
                     target: "css",
@@ -264,19 +283,23 @@ export const machine = setup({
             },
         },
         css: {
-            entry: [emit({
-                data: `<code>Proccessing css in <i>global</i> scope...</code>`,
-                type: '@screens.status'
-            }), emit({
-                data:'Applying &#128396; styles',
-                type:'@screens.name'
-            })
+            entry: [
+                emit({
+                    data:
+                        `<code>Processing css in <i>global</i> scope...</code>`,
+                    type: "@screens.status",
+                }),
+                emit({
+                    data: "Applying &#128396; styles",
+                    type: "@screens.name",
+                }),
             ],
             invoke: {
                 src: "aiStream",
                 id: "css",
                 input: {
-                    template: `Your task is to help style the forms in the draft, your response will be swapped  the into the style element with the screen name you publish where swap="@css.{{screen}}" or if screen is undefiend will swap into global style where sse-swap="@css.text-delta" . make beautiful styles 
+                    template:
+                        `Your task is to help style the forms in the draft, your response will be swapped  the into the style element with the screen name you publish where swap="@css.{{screen}}" or if screen is undefiend will swap into global style where sse-swap="@css.text-delta" . make beautiful styles 
                           form: "<style hx-ext="sse" sse-swap="@css.text-delta" hx-swap="beforeend" /> 
                            {{#draft}} 
                                <form id="{{name}}" hx-ext="sse" sse-swap="@screen.{{name}}" hx-swap="beforeend" class="shadow-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 rounded-lg">
@@ -287,7 +310,8 @@ export const machine = setup({
                                      <style hx-ext="sse" sse-swap="@css.{{name}}" hx-swap="beforeend" /> 
                              </form> 
                            {{/draft}}"`,
-                    system: `You are an expert in ux of html forms and css, your task is to help style the forms in the draft, your response will be swapped into the style element with the '@css.text-delta' attribute, response only in css text .`,
+                    system:
+                        `You are an expert in ux of html forms and css, your task is to help style the forms in the draft, your response will be swapped into the style element with the '@css.text-delta' attribute, response only in css text .`,
                     schema: z.object({
                         type: z.literal("screen"),
                         screen: z.string().describe(
@@ -307,27 +331,35 @@ export const machine = setup({
                     }),
                 },
                 "screen": {
-                    actions: [emit(({ event: { data, screen } }) => ({
-                        type: `@screens.${screen}.status`,
-                        data: `<code>Proccessing css in <i>${screen || "global"}</i> scope...</code>`
-                    })), emit(({ event: { data, screen } }) => ({
-                        event: `@css.${screen}`,
-                        type: "css",
-                        data: data
-                    }))]
+                    actions: [
+                        emit(({ event: { data, screen } }) => ({
+                            type: `@screens.${screen}.status`,
+                            data: `<code>Proccessing css in <i>${
+                                screen || "global"
+                            }</i> scope...</code>`,
+                        })),
+                        emit(({ event: { data, screen } }) => ({
+                            event: `@css.${screen}`,
+                            type: "css",
+                            data: data,
+                        })),
+                    ],
                 },
             },
         },
         done: {
             type: "final",
-            entry: [emit({
-                data: `<span class="text-2xl">&#128640; &#128582;</span>`,
-                type: "@screens.status"
-            }), emit({
-                data: "Done",
-                type: "@screens.name"
-            })],
-            output: ({ context }) => context
+            entry: [
+                emit({
+                    data: `<span class="text-2xl">&#128640; &#128582;</span>`,
+                    type: "@screens.status",
+                }),
+                emit({
+                    data: "Done",
+                    type: "@screens.name",
+                }),
+            ],
+            output: ({ context }) => context,
         },
     },
 });
