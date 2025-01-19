@@ -64,7 +64,8 @@ type VNodeAny ={
          const map = agent.getMap<string>();
          let rev= map.get("rev");
          if (request.headers.accept === 'text/event-stream') {
-             return reply.sse(async function* () { 
+             return reply.sse(async function* () {
+
                  const next = () => new Promise<string>((resolve) => {
                      if (rev !== map.get("rev")) {
                          resolve(map.get("rev") || "")
@@ -83,8 +84,11 @@ type VNodeAny ={
                  while (true) {
                      rev = await next();
                      yield {
-                         data: `<embed  class="h-screen w-screen" src="${rev}/view" >`,
-                         id: `embed-${rev}`
+                         data:`<div sse-swap="embed" hx-swap="outerHTML"> 
+                                <embed  class="h-screen w-screen" src="${rev}/view" >
+                             </div>`,
+                         id: `embed-${rev}`,
+                         event: `embed`
                      }
                      yield {
                          data: rev,
@@ -124,7 +128,7 @@ type VNodeAny ={
        </head>
        <body> 
         <div hx-ext="sse" sse-connect="view"  >
-                <header class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
+                <header hx-ext="sse" sse-connect="view" class="bg-slate-50 ticky top-0 z-10 backdrop-filter backdrop-blur  border-b border-gray-200 items-start justify-start py-2 ">
         
                    <div class="text-sm breadcrumbs *:hover:text-slate-500 *:text-gray-500 *:hover:shadow-sm"> 
                        <a href="#" class="text-slate-400 hover:text-slate-300">${id}</a> 
@@ -136,7 +140,7 @@ type VNodeAny ={
                        </a> 
                     </div>
                 </header> 
-                 <div sse-swap="message" hx-swap="innerHTML"> 
+                 <div sse-swap="embed" hx-swap="outerHTML"> 
                     <embed  class="h-screen w-screen" src="${rev}/view" >
                  </div>
            </div>
@@ -182,7 +186,7 @@ type VNodeAny ={
        </head>
        <body>  
             <div hx-ext="sse" sse-connect="events"   hx-swap="beforeend">
-               <div hx-ext="sse"  sse-swap="message"   hx-swap="beforeend"></div> 
+               <div  sse-swap="message"   hx-swap="beforeend"></div> 
             </div>
  
        </body>

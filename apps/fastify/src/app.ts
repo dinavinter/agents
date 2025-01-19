@@ -32,6 +32,7 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     //routes
     await fastify.register(import('./routes/agents'))
     await fastify.register(import('./routes/runtime'))
+    await fastify.register(import('./routes/ide'))
 
     // await fastify.register(import('./routes/config'))
     // await fastify.register(import('./routes/dom'))
