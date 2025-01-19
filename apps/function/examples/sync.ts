@@ -6,8 +6,6 @@ import {YjsDocManager} from "../provider/hp.ts";
 import {serviceMachine} from "../inspect/inspector.ts";
 import {createYjsHub,fromAIEventStream, fromAIElementStream} from "https://esm.sh/@cxai/stream";
 import {azure} from "https://esm.sh/@ai-sdk/azure";
-
-import {baseUrl, sapAIFetch} from "https://esm.sh/sap-ai-token";
 import {createHash} from "node:crypto";
 import { Buffer } from "node:buffer";
   
@@ -24,9 +22,9 @@ export function revisionHash(src: string): string  {
 }
 
 console.log(flags, Deno.args)
-const room = flags.room || Deno.env.get("ID") || "forms";
+const room = flags.room || Deno.env.get("ID") || "agv";
 
-function getRevDoc(rev: string, src) {
+function getRevDoc(rev: string, src: string) {
     const revDoc = new Y.Doc({guid: `${room}:${rev}`, meta: {rev}});
     if(revDoc.getMap().get("rev") !== rev) {
         revDoc.transact(() => {
@@ -47,7 +45,7 @@ async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Do
         const actor = await start(revDoc);
         actor.start();
         docManager.getOrCreate(revDoc.guid, revDoc);
-        const rev = revDoc.getMap().get("rev");
+        const rev = revDoc.getMap<string>().get("rev")!;
         agentDoc.transact(() => {
             agentDoc.getMap("revisions").set(rev,  "running");
             agentDoc.getMap().set("rev", rev)
@@ -91,27 +89,14 @@ async function start(doc:Y.Doc ) {
     const logic = await getMachine(doc.getMap<string>().get("src")!);
     return createYjsActor(logic);
 
-    function createYjsActor(logic: AnyActorLogic) {
-        const hub =  createYjsHub(doc);
-        const snapshotMap = hub.doc.getMap('state')?.toJSON() as SnapshotFrom<typeof logic>;
-        
-      
+    function createYjsActor(logic: AnyActorLogic) { 
         return createActor(serviceMachine, {
             id: 'service',
             input: {
                 logic: logic,
-                hub: hub,
-                snapshot:  snapshotMap.status ? snapshotMap : undefined, 
-
-            },
-            
-            inspect: {
-                next: (e: { type: string; }) => {
-                  // e.type === '@xstate.event' && console.log("inspect", e)
-                }
+                doc: doc 
             }
-        })
-      
+        }) 
     }
 
    
@@ -119,7 +104,6 @@ async function start(doc:Y.Doc ) {
         // code= code || example;
         const tempFilePath = await Deno.makeTempFile();
         await Deno.writeTextFile(tempFilePath, code);
-
         const env= Deno.env.toObject();
         const module = await import(tempFilePath);
 
@@ -129,7 +113,7 @@ async function start(doc:Y.Doc ) {
                     model: azure('gpt-4o',{
                         // baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
                         // fetch: sapAIFetch,
-                    }),
+                    }), 
                     temperature: 0.9
                 }),
                 aiStream: fromAIEventStream({

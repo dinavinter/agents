@@ -8,16 +8,14 @@ import {
     EventDescriptor,
     EventFromLogic,
     EventObject, forwardTo, fromEventObservable,
-    fromObservable,
     InspectionEvent,
-    log,
-    setup,
+     setup,
     SnapshotFrom
 } from "xstate";
 import {createYjsHub, type serviceHub} from "../stream/hub.ts";
 import * as Y from "yjs";
-import {EventMessage} from "../stream/sse.ts";
-import {yArrayIterator} from "../stream/yjs.ts";
+import {EventMessage} from "https://esm.sh/@cxai/stream/iterator";
+import  {yArrayIterator} from "../stream/yjs.ts";
 type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
     logic: TLogic,
     name?: string,
@@ -43,15 +41,18 @@ export const serviceMachine = setup({
 }).createMachine({ 
     context: ({input: {logic,doc,hub, ...options}, spawn, self}) => {
         hub = hub ?? createYjsHub(doc);
+        const snapshotMap = hub.doc.getMap('state').toJSON() as SnapshotFrom<typeof logic>;
+
         const service =createActor(withInspector(logic,hub), {
             id: self.id,
             logger: (s) => {},
+            snapshot:  snapshotMap.status ? snapshotMap : undefined,
             ...options,
-            inspect: {
-                next:(e) => {
-                   // e.type === '@xstate.event' && hub.inspected.push(e)
-                } 
-            }
+            // inspect: {
+            //     next:(e) => {
+            //        // e.type === '@xstate.event' && hub.inspected.push(e)
+            //     } 
+            // }
         }); 
           
         return {
@@ -67,14 +68,11 @@ export const serviceMachine = setup({
     },
 
     entry: enqueueActions(({context: {service, hub}, enqueue}) => {
-       
         service.on("*", (event: EventMessage & EventObject) => {
             hub.emitted.push({
                 ...event 
             }); 
-        })
-
-
+        }) 
         service.start();
         
         // enqueue(({context:{service, hub}}) => {
