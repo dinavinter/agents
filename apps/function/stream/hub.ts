@@ -11,7 +11,7 @@ import {EventMessage} from "./sse.ts";
 
  
 
-export function createYjsHub(doc?:Y.Doc  | null) {
+export function createYjsHub(doc?:Y.Doc  | undefined) {
     doc = doc || new Y.Doc();
     function emit (emitted: Y.Array<EventMessage & EventObject>, event: EventMessage & EventObject){
         emitted.push([event]); 
