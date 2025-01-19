@@ -406,34 +406,6 @@ export default createMachine({
 
 
 
-    fastify.route({
-        url: '/agents/:agent/ide',
-        method: 'get',
-        schema: {
-            summary: 'Get an agent ide',
-             
-        },
-        async handler(this,request, reply) {
-            const {agent:id} = request.params as { agent: string };
-            const agent = fastify.docs.getOrCreate(id);
-            // const vm=agent.vm;
-            reply.type('text/html')
-            return reply.send(`<html xmlns="http://www.w3.org/1999/html">
-              <head>
-                <title>Agent IDE</title>
-              
-                <script src="https://esm.sh/@cxai/ide"  type="module"></script>
-              
-            
-                </head>
-                <body>
-                      <ts-editor value="import { createMachine } from 'xstate';"  url="${fastify.docs.url}" room="${id}"> 
-        
-                     </ts-editor>
-                </body>
-            `);
-        }
-    })
 
 
     function agentJson( agent:Y.Doc  ) {
