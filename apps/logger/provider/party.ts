@@ -1,4 +1,4 @@
-import YProvider from "https://esm.sh/y-partykit/provider";
+import YProvider from "y-partykit/provider";
   import * as Y from "yjs";
  
 export class YjsDocManager {

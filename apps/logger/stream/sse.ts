@@ -1,4 +1,4 @@
-import type {Pushable} from "https://esm.sh/it-pushable";
+import type {Pushable} from "it-pushable";
 
 export interface EventMessage {
     /**

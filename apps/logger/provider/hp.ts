@@ -1,7 +1,7 @@
- import * as Y from "yjs";
- import {HocuspocusProvider, HocuspocusProviderWebsocket} from "https://esm.sh/@hocuspocus/provider";
- 
- 
+import * as Y from "yjs";
+import {HocuspocusProvider, HocuspocusProviderWebsocket} from "https://esm.sh/@hocuspocus/provider";
+
+
 
 const defaults= {yjsUrl: Deno.env.get("YJS_URL") || "ws://0.0.0.0:1234" , room:"main" , doc: new Y.Doc({guid: "main", collectionid: "agents", gc: false, autoLoad: true})};
 
@@ -28,7 +28,7 @@ export class YjsDocManager {
             websocketProvider:new HocuspocusProviderWebsocket({
                 url: this.yjsUrl,
                 WebSocketPolyfill: WebSocket,
-                
+
             }),
             connect:connect
         });

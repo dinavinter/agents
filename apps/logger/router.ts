@@ -1,17 +1,12 @@
 import { parseArgs } from "jsr:@std/cli/parse-args";
-import {createYjsHub, serviceHub} from "./stream/hub.ts";
 import {YjsDocManager} from "./provider/hp.ts";
-import {YDocSse} from "./yjs/htmx.ts";
-import {mapAsync} from "./stream/monads.ts";
-import {readableStream, sseReadableStream} from "./stream/readable.ts";
+import {YDocSseHtmx} from "@cxai/stream";
+import {yArrayIterator, sseReadableStream, EventMessage, mapAsync} from "@cxai/stream"; 
+import  * as Y from "yjs";
+
 const flags = parseArgs(Deno.args, {
     string: ["url" , "room", "collection", "doc", ],
 });
-
-import * as Y from "yjs";
-import { EventMessage } from "./stream/sse.ts";
-import {yArrayIterator} from "./yjs/array.ts";
-
 function docHandler(doc:Y.Doc) {
     // hub.doc.shouldLoad && hub.doc.load();
     // const doc = hub.doc;
@@ -41,7 +36,7 @@ function docHandler(doc:Y.Doc) {
             })
         }
         if (type=="htmx") { 
-                return new Response(sseReadableStream(mapAsync(new YDocSse(doc.guid, doc).docSse(),async (chunk:EventMessage)=> {
+                return new Response(sseReadableStream(mapAsync(new YDocSseHtmx(doc.guid, doc).docSse(),async (chunk:EventMessage)=> {
                 await new Promise((resolve) => setTimeout(resolve, 200));
                 return chunk;
             }),abortController.signal), {
@@ -70,11 +65,11 @@ function docHandler(doc:Y.Doc) {
             synced: doc.isSynced ,
             should_load: doc.shouldLoad,
             meta: doc.meta,
-            subdocs: Array.from(doc.subdocs).map(({guid, collectionid, meta}) => ({guid, collectionid, meta})),
-            ...Array.from(doc.share.entries()).reduce((acc, [key, value]) => {
-                acc[key] = value.toJSON();
-                return acc
-            }, {} as Record<string, any>)
+            // subdocs: Array.from(doc.subdocs).map(({guid, collectionid, meta}) => ({guid, collectionid, meta})),
+            // ...Array.from(doc.share.entries()).reduce((acc, [key, value]) => {
+            //     acc[key] = value.toJSON();
+            //     return acc
+            // }, {} as Record<string, any>)
         }), {
             headers: {
                 'Content-Type': 'application/json',
@@ -164,6 +159,8 @@ function docRouter(request: Request) {
         return new Response("not found", {status: 404});
     }
     const doc  =docManager.getOrCreate(room );
+    doc.shouldLoad && doc.load();
+    console.log("doc", doc.guid, doc.collectionid, doc.isSynced, doc.isLoaded);
     const router=docHandler(doc);
     return router({
         ...request,
