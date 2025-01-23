@@ -42,6 +42,7 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
     return {
         raw: array,
         push: (e: T) => array.push([e]),
+        pop: () => array.get(array.length - 1),
         [Symbol.asyncIterator]: iterator,
         readableStream: (abortSignal) => {
             const abortController =  new AbortController()

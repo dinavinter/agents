@@ -121,6 +121,7 @@ function docJSON(doc: Y.Doc) {
         synced: doc.isSynced ,
         should_load: doc.shouldLoad,
         meta: doc.meta,
+        content: doc.toJSON(),
         subdocs: Array.from(doc.subdocs).map(({guid, collectionid, meta}) => ({guid, collectionid, meta})),
         ...Array.from(doc.share.entries()).reduce((acc, [key, value]) => {
             acc[key] = value.toJSON();
