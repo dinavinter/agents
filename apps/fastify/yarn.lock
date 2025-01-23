@@ -98,10 +98,25 @@
   dependencies:
     regenerator-runtime "^0.14.0"
 
+"@bufbuild/protobuf@^1.10.0":
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.10.0.tgz#1a67ac889c2d464a3492b3e54c38f80517963b16"
+  integrity sha512-QDdVFLoN93Zjg36NoQPZfsVH9tZew7wKDKyV5qRdj8ntT4wQCOradQjRaTdwMhWUYsgKsvCINKKm87FdEk96Ag==
+
 "@colors/colors@1.6.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.6.0.tgz#ec6cd237440700bc23ca23087f513c75508958b0"
   integrity sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA==
+
+"@connectrpc/connect-web@^1.4.0":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect-web/-/connect-web-1.6.1.tgz#71db9e54c8902fc83e4a25736e6e5f96f4941d55"
+  integrity sha512-GVfxQOmt3TtgTaKeXLS/EA2IHa3nHxwe2BCHT7X0Q/0hohM+nP5DDnIItGEjGrGdt3LTTqWqE4s70N4h+qIMlQ==
+
+"@connectrpc/connect@^1.4.0":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@connectrpc/connect/-/connect-1.6.1.tgz#58578c459fed91677bc799d2ce5200d3bd22b07e"
+  integrity sha512-KchMDNtU4CDTdkyf0qG7ugJ6qHTOR/aI7XebYn3OTCNagaDYWiZUVKgRgwH79yeMkpNgvEUaXSK7wKjaBK9b/Q==
 
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
@@ -110,18 +125,19 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@cxai/ide@^1.0.12":
-  version "1.0.12"
-  resolved "https://registry.yarnpkg.com/@cxai/ide/-/ide-1.0.12.tgz#755d7518585551629bcefa680a47032cec74e3f6"
-  integrity sha512-jeWYE9FSJLSHLYtxJ3OLxrblXQb7cVkWcqmkJg8hTuNhDsXt3cugqQaVys+hrC96McKU5aTLhY6RPHciJ/8Ptg==
+"@cxai/ide@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@cxai/ide/-/ide-1.0.13.tgz#556a8aa561e3507786cf18bc30b25d4499f9059e"
+  integrity sha512-XPMRB/fA8E0sV4cWyXe2k0OptzlDVAZekcxqZnsWfTTdXczSsu914ZGnPwz8GLip3FpvSZw7bZT95RLzr7ejUQ==
   dependencies:
+    "@valtown/codemirror-codeium" "^1.1.1"
     typescript "^5.2.2"
     yjs "^13.6.10"
 
 "@cxai/stream@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@cxai/stream/-/stream-1.0.4.tgz#796b145678ce2855014de6427d73c39ab6275d33"
-  integrity sha512-MXzH5EwW/XFTHPwwF+qA/ddO7x8Xdvqef3hnC4xZZ+/QpJwHaqYrYZIaEZOQen0OO9DueEbZvIOvy+UQWr7okA==
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@cxai/stream/-/stream-1.0.6.tgz#4bfadef3aea863a66e3dd636a0c38fa9925f485d"
+  integrity sha512-5ZrpS9boWRVRIC9IcGpqLifCQedpwRxhP3eE+Z1ES9LNOC/0qaEH852NHGVzQrzPykKHHsPNYZD3LPYAbksPUw==
 
 "@edge-runtime/format@2.2.1":
   version "2.2.1"
@@ -640,24 +656,24 @@
     picomatch "^2.2.2"
 
 "@scalar/fastify-api-reference@^1.25.7":
-  version "1.25.103"
-  resolved "https://registry.yarnpkg.com/@scalar/fastify-api-reference/-/fastify-api-reference-1.25.103.tgz#c1a26afa72713400a2933f182168c1aa56d19d8e"
-  integrity sha512-I6cIZ1tZde9vMucOGlVUsDgF0+gK0CFx0+zuRr+dFW+yIWIcmHJc85jQxo4msj4TsQU8e+Ov/hh38yj9BXwPSg==
+  version "1.25.106"
+  resolved "https://registry.yarnpkg.com/@scalar/fastify-api-reference/-/fastify-api-reference-1.25.106.tgz#cab2590d8ce81d22009bda1776641c1354891bf0"
+  integrity sha512-6BbqE4eHJLe8f/m3AePT/p0MulD/aipSAuhPxQl8SQmaiUlePcukruo72KhoyqVPO0WEoE1haE8SvRLJpAgzww==
   dependencies:
-    "@scalar/types" "0.0.25"
+    "@scalar/types" "0.0.27"
     fastify-plugin "^4.5.1"
 
-"@scalar/openapi-types@0.1.5":
-  version "0.1.5"
-  resolved "https://registry.yarnpkg.com/@scalar/openapi-types/-/openapi-types-0.1.5.tgz#77e01b88c691a08ed8cbc5a1e4f22c84f4d6c2f8"
-  integrity sha512-6geH9ehvQ/sG/xUyy3e0lyOw3BaY5s6nn22wHjEJhcobdmWyFER0O6m7AU0ZN4QTjle/gYvFJOjj552l/rsNSw==
+"@scalar/openapi-types@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/@scalar/openapi-types/-/openapi-types-0.1.6.tgz#c0b71fe89c67c7a8ed8b847f683cf7d4d6c9d5e3"
+  integrity sha512-V+KnESyVJqorJzEN0QFlu3tAImCHjnvPov6QcQvjfY7s0+CjrI3rRO3oVIRlXURTQrQGrnhxvK0SkXGAZ+dxvw==
 
-"@scalar/types@0.0.25":
-  version "0.0.25"
-  resolved "https://registry.yarnpkg.com/@scalar/types/-/types-0.0.25.tgz#20187e3bb293af6e2803eea26654487d97dbc13d"
-  integrity sha512-sGnOFnfiSn4o23rklU/jrg81hO+630bsFIdHg8MZ/w2Nc6IoUwARA2hbe4d4Fg+D0KBu40Tan/L+WAYDXkTJQg==
+"@scalar/types@0.0.27":
+  version "0.0.27"
+  resolved "https://registry.yarnpkg.com/@scalar/types/-/types-0.0.27.tgz#062e33330e1f11c901aad9e6e35b6a03979456c8"
+  integrity sha512-5f293PX78gwE3NwcBNXf7+qc9OIB6lYsRpzGZts7eaN3aN9i23ysWewF76DOs74oARRP5LgNBMC7JCo9dIxM1Q==
   dependencies:
-    "@scalar/openapi-types" "0.1.5"
+    "@scalar/openapi-types" "0.1.6"
     "@unhead/schema" "^1.11.11"
 
 "@ts-morph/common@~0.11.0":
@@ -711,9 +727,9 @@
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
 "@types/node@*", "@types/node@^22.5.0":
-  version "22.10.6"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.10.6.tgz#5c6795e71635876039f853cbccd59f523d9e4239"
-  integrity sha512-qNiuwC4ZDAUNcY47xgaSuS92cjf8JbSUoaKS77bmLG1rU7MlATVSiw/IlrjtIyyskXBZ8KkNfjK/P5na7rgXbQ==
+  version "22.10.7"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.10.7.tgz#14a1ca33fd0ebdd9d63593ed8d3fbc882a6d28d7"
+  integrity sha512-V09KvXxFiutGp6B7XkpaDXlNadZxrzajcY50EuoLIpQ6WWYCSvf19lVIazzfIzQvhUN2HjX12spLojTnhuKlGg==
   dependencies:
     undici-types "~6.20.0"
 
@@ -723,9 +739,9 @@
   integrity sha512-3oJbGBUWuS6ahSnEq1eN2XrCyf4YsWI8OyCvo7c64zQJNplk3mO84t53o8lfTk+2ji59g5ycfc6qQ3fdHliHuA==
 
 "@types/node@^20.5.9":
-  version "20.17.13"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.13.tgz#26a7d3e72724ed73bc2fd39a66a2ab17e6e19a00"
-  integrity sha512-RNf+4dEeV69PIvyp++4IKM2vnLXtmp/JovfeQm5P5+qpKb6wHoH7INywLdZ7z+gVX46kgBP/fwJJvZYaHxtdyw==
+  version "20.17.14"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.14.tgz#579e7d75eeb5d46b75c73c98821639e64b689608"
+  integrity sha512-w6qdYetNL5KRBiSClK/KWai+2IMEJuAj+EujKCumalFOwXtvOXaEan9AuwcRID2IcOIAWSIfR495hBtgKlx2zg==
   dependencies:
     undici-types "~6.19.2"
 
@@ -748,6 +764,15 @@
   dependencies:
     hookable "^5.5.3"
     zhead "^2.2.4"
+
+"@valtown/codemirror-codeium@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@valtown/codemirror-codeium/-/codemirror-codeium-1.1.1.tgz#1f1e1fa7418e349ea66f2b62220b3b18c8173e9c"
+  integrity sha512-J/LcCiHAhqcqTFjxAFYtUIxSPXY1cdhANsJ8HWqb4wIRengcigBC0r8psZOaVdFHrky4p56q+sJL1Wnsd0Xsug==
+  dependencies:
+    "@bufbuild/protobuf" "^1.10.0"
+    "@connectrpc/connect" "^1.4.0"
+    "@connectrpc/connect-web" "^1.4.0"
 
 "@vercel/build-utils@8.7.0":
   version "8.7.0"
@@ -1760,9 +1785,9 @@ get-iterator@^1.0.2:
   integrity sha512-v+dm9bNVfOYsY1OrhaCrmyOcYoSeVvbt+hHZ0Au+T+p1y+0Uyj9aMaGIeUTT6xdpRbWzDeYKvfOslPhggQMcsg==
 
 get-tsconfig@^4.7.5:
-  version "4.8.1"
-  resolved "https://registry.yarnpkg.com/get-tsconfig/-/get-tsconfig-4.8.1.tgz#8995eb391ae6e1638d251118c7b56de7eb425471"
-  integrity sha512-k9PN+cFBmaLWtVz29SkUoqU5O0slLuHJXt/2P+tMVFT+phsSGXGkp9t3rQIqdz0e+06EHNGs3oM6ZX1s2zHxRg==
+  version "4.9.0"
+  resolved "https://registry.yarnpkg.com/get-tsconfig/-/get-tsconfig-4.9.0.tgz#704ae2ce2a94935921675dd19c05508b713a405d"
+  integrity sha512-52n24W52sIueosRe0XZ8Ex5Yle+WbhfCKnV/gWXpbVR8FXNTfqdKEKUSypKso66VRHTvvcQxL44UTZbJRlCTnw==
   dependencies:
     resolve-pkg-maps "^1.0.0"
 
@@ -3090,9 +3115,9 @@ yaml@^2.2.2:
   integrity sha512-+hSoy/QHluxmC9kCIJyL/uyFmLmc+e5CFR5Wa+bpIhIj85LVb9ZH2nVnqrHoSvKogwODv0ClqZkmiSSaIH5LTA==
 
 yjs@^13.6.10, yjs@^13.6.20:
-  version "13.6.22"
-  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.22.tgz#f42218d8a9cd598fc10bd99763d07c3ef5c1053e"
-  integrity sha512-+mJxdbmitioqqsql1Zro4dqT3t9HgmW4dxlPtkcsKFJhXSAMyk3lwawhQFxZjj2upJXzhrTUDsaDkZgJWnv3NA==
+  version "13.6.23"
+  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.23.tgz#62358dfa52e92dc870b8a0bedcf0d4cbd4c5ffa8"
+  integrity sha512-ExtnT5WIOVpkL56bhLeisG/N5c4fmzKn4k0ROVfJa5TY2QHbH7F0Wu2T5ZhR7ErsFWQEFafyrnSI8TPKVF9Few==
   dependencies:
     lib0 "^0.2.99"
 

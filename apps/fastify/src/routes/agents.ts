@@ -31,6 +31,10 @@ function updateAgentSrc(docs: FastifyInstance["docs"], id: string, code: string)
     return agent;
 }
 
+function delay(number: number) {
+    return new Promise(resolve => setTimeout(resolve, number))
+}
+
 const routes: FastifyPluginAsync = async function (instance: FastifyInstance, options) {
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
 
@@ -297,11 +301,52 @@ export default createMachine({
         async handler(this,request, reply) {
             const {agent:id} = request.params as { agent: string };
             const agent = fastify.docs.getOrCreate(id);
+            agent.load()
             // const vm=agent.vm;
             reply.type('application/json');
             return reply.send(agentJson(agent));
         }
     })
+
+    fastify.route({
+        url: '/agents/:agent/src',
+        method: 'get',
+        schema: {
+            summary: 'Get an agent definition',
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'string' 
+                }
+            }
+        },
+        async handler(this,request, reply) {
+            const {agent:id} = request.params as { agent: string };
+            const agent = fastify.docs.getOrCreate(id);
+            agent.load()
+            console.log(`Agent ${id} ${agent.getMap().get("rev")}`) 
+            // const vm=agent.vm;
+            
+            if(!agent.isLoaded){
+                console.log(`Waiting ${id} ${agent.getMap().get("rev")} }`)
+                agent.load()
+                await Promise.race([agent.whenSynced, agent.whenLoaded, delay(2000)])
+            }
+            const rev= agent.getMap().get("rev");
+            console.log(`Agent  ${id} ${agent.getMap().get("rev")}` , agent.getMap().get("src"))
+
+            const revDoc = fastify.docs.getOrCreate(`${id}:${rev}`);
+            revDoc.load()
+            if(!revDoc.isLoaded){
+                console.log(`Waiting rev ${revDoc.guid} }`)
+                revDoc.load()
+                await Promise.race([revDoc.whenSynced, revDoc.whenLoaded, delay(2000)])
+            }
+            console.log(`Agent REV ${id} ${rev} ${revDoc.getMap().get("src")}`)
+            return reply.send(revDoc.getMap().get("src"));
+        }
+    })
+
 
     fastify.route({
         url: '/agents/:agent/start', method: 'post',
@@ -380,27 +425,55 @@ export default createMachine({
         }
     })
 
+    fastify.route({
+        url: '/agents/:agent/:rev/src',
+        method: 'get',
+        schema: {
+            summary: 'Get an agent definition',
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'string'
+                }
+            }
+        },
+        async handler(this,request, reply) {
+            const {agent, rev} = request.params as { agent: string ,rev: string};
+            const revDoc = fastify.docs.getOrCreate(`${agent}:${rev}`);
+            if(!revDoc.isLoaded){
+                console.log(`Waiting rev ${revDoc.guid} }`)
+                revDoc.load()
+                await Promise.race([revDoc.whenSynced, revDoc.whenLoaded, delay(2000)])
+            }          
+            console.log(`Agent REV ${agent} ${rev} ${revDoc.getMap().get("src")}`)
+            return reply.send(revDoc.getMap().get("src"));
+        }
+    })
 
     fastify.route({
         url: '/docs/:doc',
         method: 'get',
-        handler(request, reply) {
+        async handler(request, reply) {
             const {doc} = request.params as { doc: string };
             const docInstance = fastify.docs.getOrCreate(doc);
+            if(!docInstance.isLoaded){
+                console.log(`Waiting rev ${docInstance.guid} }`)
+                docInstance.load()
+                await Promise.race([docInstance.whenSynced, docInstance.whenLoaded, delay(2000)])
+            }
             reply.type('application/json');
-            return agentJson(docInstance);
-            // return reply.send(JSON.stringify({
-            //     id: docInstance.guid,
-            //     collection: docInstance.collectionid,
-            //     loaded: docInstance.isLoaded,
-            //     synced: docInstance.isSynced ,
-            //     should_load: docInstance.shouldLoad,
-            //     meta: docInstance.meta,
-            //     ...Array.from(docInstance.share.entries()).reduce((acc, [key, value]) => {
-            //         acc[key] = value.toJSON();
-            //         return acc
-            //     }, {} as Record<string, any>)
-            // }));
+            return reply.send(JSON.stringify({
+                id: docInstance.guid,
+                collection: docInstance.collectionid,
+                loaded: docInstance.isLoaded,
+                synced: docInstance.isSynced ,
+                should_load: docInstance.shouldLoad,
+                meta: docInstance.meta,
+                ...Array.from(docInstance.share.entries()).reduce((acc, [key, value]) => {
+                    acc[key] = value.toJSON();
+                    return acc
+                }, {} as Record<string, any>)
+            }));
         }
     })
 
@@ -416,6 +489,9 @@ export default createMachine({
             debug: fastify.debug,
             href: agent.getMap().get("href"),
             rev: agent.getMap().get("rev"),
+            timestamp: agent.getMap().get("timestamp"),
+            src: agent.getMap().get("src"),
+
             doc: {
                 id: agent.guid,
                 collection: agent.collectionid,
@@ -425,7 +501,6 @@ export default createMachine({
             },
 
             meta: agent.meta,
-            src: agent.getMap().get("src"),
             // latest: vm && {
             //     id: vm.guid,
             //     ...vm.meta,

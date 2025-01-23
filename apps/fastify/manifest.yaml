@@ -6,7 +6,7 @@ applications:
         - route: 'https://agents.cfapps.us10-001.hana.ondemand.com'
       stack: cflinuxfs4
       memory: 512M
-      instances: 2
+      instances: 3
       env:
         NODE_OPTIONS: --max-http-header-size=80000
         NODE_ENV: production
@@ -14,7 +14,7 @@ applications:
         LOG_SENSITIVE_CONNECTION_DATA: true
         LOG_REMOTE_USER: true
         LOG_REFERER: true
-        YJS_URL: 'https://hp.cfapps.us10-001.hana.ondemand.com:'
+        YJS_URL: 'https://yjs.cfapps.us10-001.hana.ondemand.com:'
         
       buildpacks:
         - https://github.com/cloudfoundry/nodejs-buildpack

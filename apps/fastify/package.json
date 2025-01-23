@@ -18,7 +18,7 @@
     "start": "node ./dist/index.mjs"
   },
   "dependencies": {
-    "@cxai/ide": "^1.0.12",
+    "@cxai/ide": "^1.0.13",
     "@cxai/stream": "^1.0.4",
     "@edge-runtime/types": "^3.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
