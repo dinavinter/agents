@@ -1,22 +1,21 @@
 {
   "name": "@cxai/ide",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "type": "module",
   "main": "dist/ide.cjs",
   "module": "dist/ide.js",
   "files": [
     "dist"
   ],
-
   "scripts": {
     "dev": "vite",
     "build": "npm run build:vite",
     "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0   ",
     "build:vite": "tsc && vite build ",
-    "preview": "vite preview",
-    "prepublishOnly": "npm run build"
+    "preview": "vite preview"
   },
   "dependencies": {
+    "@valtown/codemirror-codeium": "^1.1.1",
     "typescript": "^5.2.2",
     "yjs": "^13.6.10"
   },
