@@ -1,23 +1,22 @@
 applications:
-  -   name: yjs-router
+  -   name: yjs-test
       command: yarn run start
-      
-      routes:
-        - route: 'https://yjs-router.cfapps.us10-001.hana.ondemand.com'
+      health-check-type: none
       stack: cflinuxfs4
-      memory: 256M
+      memory: 512M
       instances: 1
+      disk_quota: 2GB
+      routes:
+        - route: yjs-test.cfapps.us10-001.hana.ondemand.com
       env:
         NODE_OPTIONS: --max-http-header-size=80000
         NODE_ENV: production
+        UAA_SERVICE: fastify-uaa-service
         LOG_SENSITIVE_CONNECTION_DATA: true
         LOG_REMOTE_USER: true
         LOG_REFERER: true
-        NITRO_PRESET: digital_ocean
-      
-      
+        DATABASE: hp.sqlite
+        
       buildpacks:
         - https://github.com/cloudfoundry/nodejs-buildpack
-      services:
-        - log
  

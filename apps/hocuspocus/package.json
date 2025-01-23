@@ -12,9 +12,10 @@
     "vercel:dev": "npm run build && vercel dev --listen 5005",
     "vercel:deploy": "npm run build &&  vercel deploy",
     "cf:deploy": "yarn run build && cf push ",
+    "cf:deploy:test": "yarn run build && cf target -o gengig -s test && cf push -f ./manifest-test.yaml",
     "start": "node ./dist/index.mjs",
     "test": "node --import=tsx  --experimental-vm-modules --env-file=.env ./src/test.ts",
-    "mount": "cf bind-service yjs flit -c '{\"readonly\":false, \"mount\":\"/var/yjs\"}'"
+    "cf:mount": "cf bind-service yjs flit -c '{\"readonly\":false, \"mount\":\"/var/yjs\"}'"
   },
   "dependencies": {
     "@hocuspocus/extension-logger": "^2.14.0",

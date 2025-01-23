@@ -8,19 +8,26 @@ import * as Y from "yjs";
 import {yArrayIterator} from "./yjs.ts";
 import {EventMessage} from "./sse.ts";
 
+export type Emitted= {
+    format?: string,
+    data?: any,
+    type: string,
+    offset?: number // milliseconds after start
+    timestamp: number //actual time of event, milliseconds since epoch
+    defer?: number // milliseconds to defer event
+} & EventObject
 
- 
 
 export function createYjsHub(doc?:Y.Doc  | undefined) {
     doc = doc || new Y.Doc();
-    function emit (emitted: Y.Array<EventMessage & EventObject>, event: EventMessage & EventObject){
+    function emit (emitted: Y.Array<Emitted>, event: Emitted){
         emitted.push([event]); 
     }
     return {
         doc: doc,
-        emit: emit.bind(null, doc.getArray<EventMessage & EventObject>('emitted')),
+        emit: emit.bind(null, doc.getArray<Emitted>('emitted')),
         inspected: yArrayIterator(doc.getArray<InspectedEventEvent>('inspection')),
-        emitted: yArrayIterator(doc.getArray<EventMessage & EventObject>('emitted')),
+        emitted: yArrayIterator(doc.getArray<Emitted>('emitted')),
         snapshot: yArrayIterator(doc.getArray<SnapshotFrom<AnyStateMachine>>('snapshot')),
         array (key: string) {
             return yArrayIterator(doc.getArray(key));
@@ -44,14 +51,14 @@ export function createYjsHub(doc?:Y.Doc  | undefined) {
         },
         children: doc.getMap<Y.Doc>('children'),
         child(id: string) {
-            if (doc?.getMap<Y.Doc>('children').get(id)) {
+            if (doc?.getMap<Y.Doc>('services').get(id)) {
                 return {
                     isNew: false,
-                    hub: createYjsHub(doc?.getMap<Y.Doc>('children').get(id)!)
+                    hub: createYjsHub(doc?.getMap<Y.Doc>('services').get(id)!)
                 }
             }
             return {
-                hub: createYjsHub(doc?.getMap<Y.Doc>('children').set(id, new Y.Doc())),
+                hub: createYjsHub(doc?.getMap<Y.Doc>('services').set(id, new Y.Doc())),
                 isNew: true
             }
         }  
