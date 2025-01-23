@@ -13,7 +13,12 @@ import * as Comlink from 'comlink';
 import { containerStyles, editorTheme, tooltipStyles } from './styles';
 import {cmCollab} from "./collab"
 import * as ts from "typescript";
-import TSWorker from "./worker.ts?worker&inline"  
+import TSWorker from "./worker.ts?worker&inline"
+import {codeiumCopilot, copilotStyle} from "./copilot.ts";
+// import {classHighlighter} from '@lezer/highlight';
+// import {syntaxHighlighting} from '@codemirror/language';
+// import {tsxLanguage} from '@codemirror/lang-javascript';
+
 export function renderDisplayParts(dp: ts.SymbolDisplayPart[]) {
     const div = document.createElement('div');
     for (const part of dp) {
@@ -56,7 +61,7 @@ export class TypeScriptEditor extends HTMLElement {
     async connectedCallback() {
         // Add styles
         const style = document.createElement('style');
-        style.textContent = containerStyles + tooltipStyles;
+        style.textContent = containerStyles + tooltipStyles +copilotStyle;
         this.shadowRoot?.appendChild(style);
 
         // Create editor container
@@ -93,6 +98,7 @@ export class TypeScriptEditor extends HTMLElement {
                     jsx: true,
                 }),
                 tsFacetWorker.of({ worker, path }),
+                // syntaxHighlighting(classHighlighter),
                 tsSyncWorker(),
                 tsLinterWorker(),
                 autocompletion({
@@ -127,7 +133,8 @@ export class TypeScriptEditor extends HTMLElement {
                     url: this.url,
                     room: this.room,
                     component: this.component
-                })
+                }),
+                codeiumCopilot()
             ],
             parent: editorContainer,
         });
