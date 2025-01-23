@@ -1,5 +1,4 @@
 import * as Y from "yjs";
-import {YMapEvent} from "yjs";
 export interface Subscribable<T> {
     subscribe(observer: Observer<T>): Subscription;
     subscribe(next: (value: T) => void, error?: (error: any) => void, complete?: () => void): Subscription;

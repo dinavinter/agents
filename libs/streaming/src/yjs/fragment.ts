@@ -1,8 +1,7 @@
 import {EventObject} from "xstate";
-import {AtomicoElement} from "https://esm.sh/atomico";
-import * as Y from "yjs";
-import {VNodeAny} from "https://esm.sh/atomico/types/vnode";
-/*
+ import * as Y from "yjs";
+import type {VNodeAny} from "atomico/types/vnode";
+ /*
 const example={
     "type": "main",
     "props": {

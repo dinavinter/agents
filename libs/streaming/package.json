@@ -1,8 +1,7 @@
 {
   "name": "@cxai/stream",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "",
-  "packageManager": "pnpm@9.15.0",
   
   "scripts": {
     "build": "npm run build:pkgroll",
@@ -32,6 +31,7 @@
     }
     
   },
+  
   "devDependencies": {
     "@langchain/core": "^0.2.14",
     "@ai-sdk/openai": "^0.0.54",

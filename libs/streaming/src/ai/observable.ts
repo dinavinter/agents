@@ -41,7 +41,7 @@ export function fromAIElementStream<OBJECT extends EventObject, TDefaultOptions 
 
     return fromEventAsyncGenerator( async function * ({input, self, emit}):AsyncGenerator<TContext>{
         const resolvedOptions = await aiOptions<StreamObjectOptions<OBJECT>>(self._parent?.getSnapshot()?.context, defaultOptions, input);
-        console.log('Resolved Options', resolvedOptions.prompt);
+        console.log('Resolved Options', "system:",resolvedOptions.system ,"prompt",resolvedOptions.prompt  );
         const {elementStream, object} = await streamObject({ 
             ...resolvedOptions,
             output: 'array'  

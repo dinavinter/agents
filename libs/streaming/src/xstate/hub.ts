@@ -31,7 +31,7 @@ export function createYjsHub(doc?:Y.Doc  | null) {
                 next: doc.getMap('current').get('next') as string,
                 state: doc.getMap('current').get('state')as string,
                 event: doc.getMap('current').get('event')as string,
-                context: doc.getMap('current').get('context')as string,
+                context: doc.getMap('current').get('context')as string
             }
         } ,
         set state(value: {next: string, state: string, event: string , context: string}) {
