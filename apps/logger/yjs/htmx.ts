@@ -1,11 +1,12 @@
 import * as Y from 'yjs';
 import {YEvent} from "yjs";
-import {yArrayIterator, yMapIterate} from "./array.ts";
+import {yArrayIterator} from "./array.ts";
 import {transformAsyncIterable} from "../stream/sse.ts";
  
 import {YDocStream} from "./ydoc.ts";
 import {EventMessage} from "../stream/sse.ts";
 import {pushable} from "it-pushable";
+import  { yMapIterate } from "./map.ts";
 
 type SSEIterator = AsyncGenerator<EventMessage>;
 type ComponentIterator = SSEIterator
@@ -128,7 +129,7 @@ export class YDocSse {
                 }
                 if (action === "update") {
                     yield {
-                        data: newValue,
+                        data: newValue?.toString(),
                         event: `${path}-${key}-value`,
                     }
                 }

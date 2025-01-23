@@ -1,7 +1,8 @@
 type WithAction<T> = T & { action: "add" | "delete" };
 import * as Y from "yjs";
-import { YEvent } from "yjs";
-export class YDocStream {
+
+
+ export class YDocStream {
     constructor(public doc: Y.Doc) {}
 
     async * subdocs(abortSignal?: AbortSignal) :AsyncGenerator<WithAction<Y.Doc>>{
@@ -47,11 +48,11 @@ export class YDocStream {
         }
     }
 
-    async * componentsAsync(abortSignal?: AbortSignal): AsyncGenerator<[string, Y.AbstractType<YEvent<any>>]> {
-        const components = new Map<string, Y.AbstractType<YEvent<any>>>();
+    async * componentsAsync(abortSignal?: AbortSignal): AsyncGenerator<[string, Y.AbstractType<Y.YEvent<any>>]> {
+        const components = new Map<string, Y.AbstractType<Y.YEvent<any>>>();
         const doc= this.doc;
 
-        function waitForNewComponents(): Promise<[string, Y.AbstractType<YEvent<any>>][]> {
+        function waitForNewComponents(): Promise<[string, Y.AbstractType<Y.YEvent<any>>][]> {
             return new Promise((resolve) => {
                 const newComponents = getNewEntries();
                 if (newComponents.length) {
@@ -60,8 +61,9 @@ export class YDocStream {
                     doc.on('update', onDocUpdate);
                 }
 
-                function getNewEntries() {
-                    return Array.from(doc.share.entries()).filter(([name]) => !components.has(name));
+                function getNewEntries(){
+                    const share:Map<string, Y.AbstractType<Y.YEvent<any>>> = doc.share;
+                    return Array.from(share.entries()).filter(([name]) => !components.has(name));
                 }
 
                 function onDocUpdate() {
