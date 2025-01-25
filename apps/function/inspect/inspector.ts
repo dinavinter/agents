@@ -133,11 +133,15 @@ export function withTimeline<T extends AnyActorLogic>(actorLogic: T,  hub:servic
   }
     const transition = actorLogic.transition.bind(actorLogic);
     actorLogic.transition = (state, event, actorCtx) => {
+        console.group(event.type, Date.now());
+        
         const timestamp = Date.now();
-        const before = actorCtx.self.getSnapshot(); 
-        const last = before.events?.[before.events.length - 1]?.timestamp ?? before.event?.timestamp ?? 0;
+        const before = actorCtx.self.getSnapshot();
+        console.log("before", before.value);
+
+        const last = hub.emitted.pop()?.timestamp;
         const offset = last ? timestamp - last : 0;
-        console.log('offset', before.value, offset, last, timestamp,before.events, before.event);
+
         const newState = transition(state, {
             timestamp,
             offset,
@@ -145,6 +149,7 @@ export function withTimeline<T extends AnyActorLogic>(actorLogic: T,  hub:servic
             ...event
         } , actorCtx);
         const snapshot = actorCtx.self.getSnapshot();
+        console.log("after", snapshot.value);
 
         //persist timeline
         const timeline = hub.doc.getMap("timeline");
@@ -153,6 +158,7 @@ export function withTimeline<T extends AnyActorLogic>(actorLogic: T,  hub:servic
                 timeline.set(`${timestamp}`, actorCtx.self.getPersistedSnapshot());
             }
         }) 
+        console.groupEnd();
         return newState;
     }
         
