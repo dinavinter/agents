@@ -6,41 +6,48 @@ import {yArrayIterator, yMapIterate} from "@/stream/yjs.ts";
 import {createYjsHub} from "@/stream/hub.ts";
 import * as Y from "yjs";
 
- export async function routes(fastify: FastifyInstance) {
+async function* revisions(agent: Y.Doc) {
+    const map = agent.getMap<string>();
+    let rev = undefined as string | undefined;
+
+    const next = () => new Promise<string>((resolve) => {
+        if (rev !== map.get("rev")) {
+            resolve(map.get("rev") || "")
+        }
+
+        function onUpdate(event: Y.YMapEvent<string>) {
+            console.log("update", map.get("rev"))
+            if (rev !== map.get("rev")) {
+                resolve(map.get("rev") || "")
+                map.unobserve(onUpdate);
+            }
+        }
+
+        map.observe(onUpdate);
+    })
+
+
+    while (true) {
+        rev = await next();
+        yield rev
+    }
+}
+
+
+export async function routes(fastify: FastifyInstance) {
     // fastify.register(FastifySSEPlugin);
     // fastify.register(import('@fastify/formbody'))
 
      fastify.get('/agents/:agent/rev', async function handler(request, reply: FastifyReply) {
             const {agent:id} = request.params as {  agent: string };
             const agent = fastify.docs.getOrCreate(id);
-            const map = agent.getMap<string>();
          
             if (request.headers.accept === 'text/event-stream') {
              return reply.sse(async function* () {
-                 let rev = undefined as string | undefined;
-
-                 const next = () => new Promise<string>((resolve) => {
-                     if (rev !== map.get("rev")) {
-                         resolve(map.get("rev") || "")
-                     }
-
-                     function onUpdate(event: Y.YMapEvent<string>) {
-                         console.log("update", event)
-                         if (rev !== map.get("rev")) {
-                             resolve(map.get("rev") || "")
-                             map.unobserve(onUpdate);
-                         }
-                     }
-
-                     map.observe(onUpdate);
-                 })
-
-
-                 while (true) {
-                     rev = await next(); 
+                    for await (const rev of revisions(agent)) {
 
                      yield {
-                         data: `<pre contenteditable class="z-60 w-full sticky bottom-0 right-0 p-2 bg-slate-50 text-slate-500 antialiased text-balance whitespace-normal text-end" 
+                         data: `<pre sse-swap="rev+html" hx-swap="outerHTML transition:true swap:1s settle:1s"  contenteditable class="z-60 w-full sticky bottom-0 right-0 p-2 bg-slate-50 text-slate-500 antialiased text-balance whitespace-normal text-end" 
                                           hx-ext="sse" sse-connect="view"  sse-swap="rev+html"
                                                         hx-swap="outerHTML transition:true swap:1s settle:1s">
                                      <span class="uppercase font-sans font-semibold">${id} agent</span> | <span class="uppercase font-sans font-semibold">Rev: <span class="font-mono font-light font-sans">${rev}</span>  </span>               
@@ -69,57 +76,16 @@ import * as Y from "yjs";
 
          const agent = fastify.docs.getOrCreate(id);
          const map = agent.getMap<string>();
-          if (request.headers.accept === 'text/event-stream') {
-             return reply.sse(async function* () {
-                 let rev= undefined as string | undefined;
-
-                 const next = () => new Promise<string>((resolve) => {
-                     if (rev !== map.get("rev")) {
-                         resolve(map.get("rev") || "")
-                     }
-
-                     function onUpdate(event: Y.YMapEvent<string>) {
-                         console.log("update", event)
-                         if (rev !== map.get("rev")) {
-                             resolve(map.get("rev") || "")
-                             map.unobserve(onUpdate);
-                         }
-                     }
-
-                     map.observe(onUpdate);
-                 })
-
-
-                 while (true) {
-                     rev = await next();
-                     yield {
-                         data:` <embed  class="h-full w-full" src="${rev}/view" sse-swap="message"  hx-swap="outerHTML transition:true swap:1s settle:1s" ></embed>`,
-                         id: `embed-${rev}`,
-                     }
-                     
-                     yield {
-                            data:`<pre contenteditable class="z-60 w-full sticky bottom-0 right-0 p-2 bg-slate-50 text-slate-500 antialiased text-balance whitespace-normal text-end" 
-                                       sse-swap="rev+html"
-                                       hx-swap="outerHTML transition:true swap:1s settle:1s">
-                                     <span class="uppercase font-sans font-semibold">${id} agent</span> | <span class="uppercase font-sans font-semibold">Rev: <span class="font-mono font-light font-sans">${rev}</span>  </span>               
-                                 </pre>               
-                                `,
-                            event: "rev+html",
-                            id:rev
-                    }
-
-                     yield {
-                         data:`Agent: <span class="uppercase font-sans font-semibold">${id}</span> Rev: <span class="font-mono">${rev}</span>                 
-                               `,
-                         event: "rev",
-                         id:rev
-                     }
-
-                 }
-
-             }())
-
-         }
+         if (request.headers.accept === 'text/event-stream') {
+              return reply.sse(async function* () {
+                  for await (const rev of revisions(agent)) {
+                      yield {
+                          data:` <embed  class="h-full w-full" src="${rev}/view" sse-swap="message"  hx-swap="outerHTML transition:true swap:1s settle:1s" ></embed>`,
+                          id: `embed-${rev}`,
+                      }
+                  }
+              }()) 
+          }
          reply.header('Cache-Control', 'no-store');
          reply.type('text/html')
 
@@ -138,7 +104,8 @@ import * as Y from "yjs";
                                <div class="h-full w-full transition-all" sse-swap="message"  hx-swap="outerHTML transition:true swap:1s settle:1s" > 
                                     
                                 </div> 
-                                  <div sse-swap="rev+html" hx-swap="outerHTML "  >
+                                  <div sse-swap="rev+html" hx-swap="outerHTML transition:true swap:1s settle:1s"  hx-ext="sse" sse-connect="rev" >
+                                     
                                   </div>
                              </body>
                      </html>`)
@@ -164,10 +131,15 @@ import * as Y from "yjs";
          let lastEventTime = Date.now();
          //defer events if didn't pass the defer time from the previous event
          for await (const value of stream) {
+             const {defer, type} = value;
+             
              const elapsed = Date.now() - lastEventTime;
-             const {defer} = value;
-             await new Promise((resolve) => setTimeout(resolve, defer? defer - elapsed: 0));
+             const wait = defer ? defer - elapsed : 10- elapsed;
+             console.debug("type:", type, "\tdefer:", defer, "\telapsed:", elapsed, "\twaitFor:", wait)
+
+             await new Promise((resolve) => setTimeout(resolve, wait));
              lastEventTime = Date.now();
+             yield value;
          }
      }
      async function * deferOffsetAsync<T>(stream: AsyncIterable<Emitted>): AsyncGenerator<Emitted> {
@@ -205,15 +177,26 @@ import * as Y from "yjs";
          }
 
          function transform({data, type,format, ...event}:Emitted) {
-             return {
-                 data: format === 'json' ? JSON.stringify(data) :
-                     format === 'node' ? fromNode({data}).toJSON() :
-                         format === 'raw' ?  data.replace(/\s+/g, ' ') :
-                             data,
-                 event: type,
-                 type,
-                 ...event
+             try {
+                 return {
+                     data: format === 'json' ? JSON.stringify(data) :
+                         format === 'node' ? fromNode({data}).toJSON() :
+                             format === 'raw' ?  data.replace(/\s+/g, ' ') :
+                                 data,
+                     event: type,
+                     type,
+                     ...event
              }
+             }
+                catch (e) {
+                    console.error(e)
+                    return {
+                        data: data.toString(),
+                        event: type,
+                        type,
+                        ...event
+                    }
+                }
 
          }
          return mapAsync(yArrayIterator(doc.getArray<Emitted>("emitted")),transform )
@@ -225,12 +208,22 @@ import * as Y from "yjs";
         const workflow = fastify.docs.getOrCreate(id);
        
         if (request.headers.accept === 'text/event-stream') {
-            return reply.sse(deferAsync(emitted(workflow)));
+            return reply.sse(async function* () {
+                for await (const event of emitted(workflow)) {
+                    console.debug("yield", event.type, event.offset)
+                    if(event.data instanceof String) { 
+                        yield event;
+                    }
+                    else {
+                      console.warn( "skipping", event.type, event.data)
+                    }
+                }
+            }())
         }
         reply.header('Cache-Control', 'no-store');
         reply.type('text/html')
 
-        reply.send(`<html>
+         return reply.send(`<html>
       <head>
         <title>Agent AI ${id}</title>
         <base href="${request.originalUrl}" />
@@ -242,7 +235,7 @@ import * as Y from "yjs";
             "@atomico/hooks":"https://esm.sh/@atomico/hooks",
             "@atomico/hooks/use-slot":"https://esm.sh/@atomico/hooks@4.4.1/use-slot",
             "@atomico/store":"https://esm.sh/@atomico/store"
-            
+            "@cx/ai":"https://esm.sh/@cxai/stream@1.0.6"
           }
         }
         </script> 
@@ -250,14 +243,14 @@ import * as Y from "yjs";
        <script src="https://unpkg.com/htmx.org@2.0.2"></script>
        <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
- 
+        <script src="https://esm.sh/@cxai/stream/ui"></script>
+
 
        </head>
        <body>  
             <div hx-ext="sse" sse-connect="events"   hx-swap="beforeend">
                <div  sse-swap="message"   hx-swap="beforeend"></div> 
-            </div>
- 
+            </div> 
        </body>
  </html>`)
     })
@@ -267,7 +260,13 @@ import * as Y from "yjs";
         const id= `${agent}:${rev}` 
 
         const workflow = fastify.docs.getOrCreate(id);
-        return reply.sse(delayAsync(emitted(workflow)))
+        return reply.sse(async function* () {
+            for await (const event of deferAsync(emitted(workflow))) {
+                console.log("yield", event.type, event.offset)
+
+                yield event;
+            }
+        }())
     })
 
     fastify.get('/agents/:agent/:rev/events/:event', async function handler(request, reply: FastifyReply) {
@@ -284,7 +283,7 @@ import * as Y from "yjs";
         const data = request.body as object;
         const workflow = fastify.docs.getOrCreate(id);
         workflow.getArray<EventObject>("events").push([{...data, type: event}]);
-        return  reply.send('sent at '+ new Date().toISOString());
+        return  reply.send(202);
     })
 
     fastify.get('/agents/:agent/:rev/:service/events/:event', async function handler(request, reply: FastifyReply) {

@@ -10,6 +10,18 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     await fastify.register(import('@fastify/formbody'))
     await fastify.register(import('./plugins/static'))
 
+    //add error handler
+    fastify.setErrorHandler((error, request, reply) => {
+        console.error(error)
+        reply.status(500).send({error: error.message})
+    })
+    
+    //catch all errors
+    // fastify.addHook('onError', async (request, reply, error) => {
+    //     console.error(error)
+    //     reply.send({error: error.message})
+    // })
+    
     await fastify.register(import('./routes/home')) 
     // await fastify.register(import('./plugins/zod'))
     await fastify.register( import('./plugins/doc'))
@@ -21,6 +33,7 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
         doc: doc
     })
 
+    
     // await fastify.register( import('./plugins/agent/collection') , { doc: doc})
     await fastify.register( import('./plugins/agent/agent'))
     // await fastify.register( import('./plugins/agent/vm'))
