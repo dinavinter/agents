@@ -27,7 +27,7 @@ export async function routes(fastify: FastifyInstance) {
                   <ts-editor value="import { createMachine } from 'xstate';"  url="${fastify.docs.url}" room="${id}"> 
     
                  </ts-editor> 
-                    <div hx-ext="sse" sse-connect="view"  sse-swap="rev+html"
+                    <div hx-ext="sse" sse-connect="rev"  sse-swap="rev+html"
                                                         hx-swap="outerHTML transition:true"  >
                     </div>
                 </body>
