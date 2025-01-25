@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "sync": "deno run --allow-net --allow-read --allow-env  --allow-write --allow-import --cached-only --env-file=../../.env examples/sync.ts --url wss://yjs.cfapps.us10-001.hana.ondemand.com  --experimental-vm-modules  ",
+    "sync": "deno run --allow-net --allow-read --allow-env  --allow-write --allow-import   --env-file=../../.env examples/sync.ts --url wss://yjs.cfapps.us10-001.hana.ondemand.com  --experimental-vm-modules  ",
     "actor": "deno run --watch  --env-file=../../.env --allow-net --allow-read --allow-env  --allow-write --reload  main.ts --room test --experimental-vm-modules",
     "router": "deno run --watch --allow-net --allow-read --allow-env  --allow-write --allow-import --cached-only --env-file=../../.env router.ts --room agv:6863628f90 --url wss://hp.cfapps.us10-001.hana.ondemand.com --experimental-vm-modules",
     "run": "deno run --watch --allow-net --allow-read --allow-env  --allow-write --reload  run.ts --room test --experimental-vm-modules"

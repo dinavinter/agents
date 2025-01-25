@@ -44,7 +44,9 @@ async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Do
     try {
         const actor = await start(revDoc);
         actor.start();
+        console.log("started", revDoc.guid) 
         docManager.getOrCreate(revDoc.guid, revDoc);
+        
         const rev = revDoc.getMap<string>().get("rev")!;
         agentDoc.transact(() => {
             agentDoc.getMap("revisions").set(rev,  "running");
@@ -57,7 +59,7 @@ async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Do
             agentDoc.getMap("revisions").set(rev, "done")
         })
     } catch (error) {
-        console.log(error)
+        console.error(error)
         revDoc.getMap().set("status", "error")
         revDoc.destroy()
     }
@@ -70,9 +72,10 @@ if (import.meta.main) {
     // const revDoc = getRevDoc(doc.getMap().get("rev") || revisionHash(doc.getMap().get("codemirror") || ""), doc.getMap().get("codemirror"));
     // await tryStart(docManager, doc, revDoc);
     doc.getText("codemirror").observe(async (event) => {
-        console.log("change", event)
         const src = event.target.toJSON();
         const rev = revisionHash(src);
+        console.log("change", rev)
+
         const revDoc = getRevDoc(rev, src);
         await tryStart(docManager, doc, revDoc); 
 
@@ -84,7 +87,7 @@ async function start(doc:Y.Doc ) {
     doc.shouldLoad && doc.load();
     const state = doc.getMap("current").get("state");
     const context = doc.getMap("current").get("context");
-    console.log("state", state, context)
+    // console.log("state", state, context)
     
     const logic = await getMachine(doc.getMap<string>().get("src")!);
     return createYjsActor(logic);

@@ -1,7 +1,7 @@
 import { Subscribable, toObserver } from "xstate";
 import * as Y from "yjs";
 
-export type YIterator<T> = AsyncIterable<T> & Subscribable<T> & { push(e: T): any, raw: Y.Array<T> , readableStream: (abortSignal: AbortSignal) => ReadableStream<T>};
+export type YIterator<T> = AsyncIterable<T> & Subscribable<T> & { push(e: T): any, raw: Y.Array<T>,pop():T , readableStream: (abortSignal: AbortSignal) => ReadableStream<T>};
 
 export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
 

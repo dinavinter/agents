@@ -5,7 +5,7 @@ import { AnyEventObject, assign, emit, setup, UnknownActorLogic } from "xstate";
 import { fromAIEventStream , fromAIElementStream} from "https://esm.sh/@cxai/stream";
 import type { LanguageModelV1 } from "https://esm.sh/@ai-sdk/provider";
 import { z } from "https://esm.sh/zod";
-import  "https://esm.sh/@cxai/stream/ui";
+import  {ChatBubble} from "https://esm.sh/@cxai/stream@1.0.6/ui";
 
 type Actors = {
     aiStream:  ReturnType< typeof fromAIEventStream<{ model: LanguageModelV1 }> >;
@@ -33,25 +33,29 @@ export const machine = setup({
                  <header class="sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-center p-4 text-lg font-medium shadow">
                      Form Builder  
                  </header>
-                <div class="flex flex-col items-center justify-center gap-6"  sse-swap="content" hx-swap="beforeend" ></div>
-            </main>`,
-        type: "message",
+                <div class="flex flex-col items-center justify-center gap-6"  sse-swap="content" hx-swap="beforeend" >
+                  
+                </div>
+            </main>`  ,
+        type: "message"
     }),
 
     states: {
         idle: {
-            entry: emit({
-                data: `<form sse-swap="request" hx-swap="outerHTML" class="flex flex-col gap-4 w-full">
-                    <div class="flex gap-2">
-                        <input type="text"
+
+            entry:
+                emit({
+                    data: `<form  class="isolate flex flex-col gap-4 w-full p-4">
+                    <div class="flex gap-2" sse-swap="request" hx-swap="innerHTML transition:true swap:1s ">
+                        <input type="text" 
                                autocomplete="on"
                                list="screen"
                                class="flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                name="request"
                                placeholder="What can we build for you?" />
-                        <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                        <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
                                 type="submit"
-                                hx-post="events/request"
+                                hx-post="events/request" 
                                 hx-target="this">Send</button>
                     </div>
                     <datalist id="screen">
@@ -61,9 +65,10 @@ export const machine = setup({
                         <option value="Login with password and captcha"></option>
                     </datalist>
                 </form>`,
-                type: "content",
-            }),
+                    type: "content",
+                    defer: 400
 
+                })  ,
             on: {
                 "request": {
                     target: "draft",
@@ -72,12 +77,21 @@ export const machine = setup({
                             request: ({ event: { request } }) => request,
                         }),
                         emit(({ event: { request } }) => ({
-                            data: request,
+                            data: `<div class="flex gap-2 w-full p-4">
+                               <input type="text"
+                               class="flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               name="request"
+                               disabled
+                               value="${request}" />
+                             </div> `,
                             type: "request",
+                            defer: 250
+
                         })),
                         emit(() => ({
                             data: new Date(Date.now()).toLocaleTimeString(),
                             type: "@request.status",
+                            defer: 500
                         })),
                     ],
                 },
@@ -88,13 +102,12 @@ export const machine = setup({
                 emit({
                     type: "content",
                     data:  `<div class="fixed sticky top-0 flex items-center space-x-2 rtl:space-x-reverse">
-                <span class="text-lg font-semibold text-gray-900 dark:text-white" sse-swap="@assistant.title" hx-swap="innerHTML"></span>
-                <span class="text-sm font-normal text-gray-500 dark:text-gray-400" sse-swap="@assistant.status" hx-swap="innerHTML"></span>
+                <span class="text-lg font-semibold text-gray-900 dark:text-white" sse-swap="@assistant.title" hx-swap="innerHTML transition:true"></span>
+                <span class="text-sm font-normal text-gray-500 dark:text-gray-400" sse-swap="@assistant.status" hx-swap="innerHTML transition:true"></span>
             </div>`,
                 }),
                 emit({
-                    data:
-                        `<div shadowDom sse-swap="screens" class="w-full h-full grid grid-cols-3  gap-4 scroll-smooth" hx-swap="beforeend transition:true" >
+                    data: `<div shadowDom sse-swap="screens" class="isolate transition-all w-full h-full grid grid-cols-3  gap-4 scroll-smooth" hx-swap="beforeend transition:true swap:1s " >
                                     <style 
                                         sse-swap="@css.text-delta" 
                                         hx-swap="beforeend">
@@ -132,48 +145,54 @@ export const machine = setup({
 
                         emit(({ event: { name ,title} }) => ({
                             type: `screens`,
-                            data: `<div class="grid grid-rows-subgrid row-span-4 divide-y bg-white rounded-lg shadow-lg border-slate-100 border-2 p-2" sse-swap="@screen.${name}" hx-swap="beforeend">
+                            data: `<div class="grid grid-rows-subgrid row-span-4 divide-y bg-white rounded-lg shadow-lg border-slate-100 border-2 p-2" sse-swap="@screen.${name}" hx-swap="beforeend transition:true swap:1s">
                                        <span class="bg-slate-50 font-semibold text-center antialiased text-slate-500 text-balance  align-bottom align-text-bottom">${title} (${name})</span> 
                                    </div> 
                                 `,
-                            defer: 100
+                            defer: 10
                         })),
+                        emit(({ event: { name ,description} }) => ({
+                            type:`@screen.${name}`,
+                            data: `<div class="pt-4 px-2 isolate transition-all">
+                                    <form id="${name}"  >
+                                        <fieldset sse-swap="@screen.${name}.input"
+                                                hx-swap="beforeend transition:true swap:1s">
+                                        </fieldset>
+                                        <style
+                                                sse-swap="@css.${name}"
+                                                hx-swap="beforeend transition:false">
+                                        </style>
+                                    </form>
+                                </div>`,
+                            defer: 500
+                        })),
+
                         emit(({ event: { name ,description} }) => ({
                             type:`@screen.${name}`,
                             data: `<article class="pt-2 w-full text-pretty font-thin line-clamp-2 ">
                                     <p class=" line-clamp-2 text-slate-500"><span class="font-semibold inline">Requirements:</span>
                                         <span class="inline antialiased whitespace-normal">${description}.</span></p>
                                 </article>`,
-                            defer: 100
+                            defer: 10
                         })),
-                        emit(({ event: { name ,description} }) => ({
-                            type:`@screen.${name}`,
-                            data: `<div class="pt-4 px-2 isolate ">
-                                    <form id="${name}"  >
-                                        <fieldset sse-swap="@screen.${name}.input"
-                                                hx-swap="beforeend">
-                                        </fieldset>
-                                        <style
-                                                sse-swap="@css.${name}"
-                                                hx-swap="beforeend">
-                                        </style>
-                                    </form>
-                                </div>`,
-                            defer: 100
-                        })),
+
+
                         emit(({ event: { name ,description} }) => ({
                             type:`@screen.${name}`,
                             data: `<pre class="bg-slate-50 text-slate-500  antialiased  text-balance whitespace-normal text-end"> 
                                     <p  class="inline text-end" 
                                         sse-swap="@assistant.title,@assistant.${name}.status"
                                         hx-swap="innerHTML transition:true" >>${name}</p></pre>`,
-                            defer: 100
+                            defer: 10
                         })),
+
                         emit(({ event: { name } }) => ({
                             type: `@assistant.status`,
                             data: `<code>${name}</code>`,
-                            defer: 100
+                            defer: 10
                         })),
+
+
                     ],
                 },
                 "output": {
@@ -196,7 +215,7 @@ export const machine = setup({
                     template: `{{#draft}}
                                <form id="{{name}}" >
                                     <!-- {{description}} --> 
-                                    <fieldset  sse-swap="@screen.{{name}}.input" hx-swap="beforeend transition:true"  />
+                                    <fieldset  sse-swap="@screen.{{name}}.input" hx-swap="beforeend transition:true "  />
                              </form> 
                            {{/draft}}`,
                     system:
@@ -227,18 +246,21 @@ export const machine = setup({
                             event: `@screen.${screen}.input`,
                             type: "field",
                             data: outerHTML,
-                            defer: 200
+                            defer: 300
 
                         })),
                         emit(({ event: { name, screen } }) => ({
                             event: `@assistant.status`,
                             type: "field",
                             data: `<code class="text-1Xl">${screen}<code> &#10133;: <code>${name}</code>`,
+                            defer: 300
+
                         })),
                         emit(({ event: { name, screen } }) => ({
                             event: `@assistant.${screen}.status`,
                             type: "field",
                             data: `&#10133;: <code>${name}</code>`,
+                            defer: 300
                         })),
                         assign({
                             draft: (
@@ -293,7 +315,7 @@ export const machine = setup({
                         `<div sse-swap="screens" class="w-full h-full grid grid-rows-2 grid-flow-col gap-4 items-start justify-start gap-6 *:h-1/3" hx-swap="beforeend">
                                     <style  
                                         sse-swap="@css.text-delta" 
-                                        hx-swap="beforeend">
+                                        hx-swap="beforeend ">
                                            <!--here go your css code! -->
                                     </style>
                                     {{#draft}} 
