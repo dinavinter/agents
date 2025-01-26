@@ -34,41 +34,36 @@ export const machine = setup({
                      Form Builder  
                  </header>
                 <div class="flex flex-col items-center justify-center gap-6"  sse-swap="content" hx-swap="beforeend" >
-                  
+                      <form  class="isolate flex flex-col gap-4 w-full p-4">
+                        <div class="flex gap-2" sse-swap="request" hx-swap="innerHTML transition:true swap:1s ">
+                            <input type="text" 
+                                   autocomplete="on"
+                                   list="screen"
+                                   class="flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   name="request"
+                                   value="{{request}}"
+                                   placeholder="What can we build for you?" />
+                               {{ if state('idle') }}
+                                     <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+                                        type="submit"
+                                        hx-post="events/request" 
+                                        hx-target="this">Send</button>
+                               {{ /if }} 
+                        </div>
+                        <datalist id="screen">
+                            <option value="Register with password"></option>
+                            <option value="Implement a registration system for events that collects attendee information on sessions of interest, dietary preferences."></option>
+                            <option value="Create a quick registration for checkout process for an e-commerce platform that collects user preferences, and shipping details."></option>
+                            <option value="Login with password and captcha"></option>
+                        </datalist>
+                    </form>
                 </div>
             </main>`  ,
         type: "message"
     }),
 
     states: {
-        idle: {
-
-            entry:
-                emit({
-                    data: `<form  class="isolate flex flex-col gap-4 w-full p-4">
-                    <div class="flex gap-2" sse-swap="request" hx-swap="innerHTML transition:true swap:1s ">
-                        <input type="text" 
-                               autocomplete="on"
-                               list="screen"
-                               class="flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                               name="request"
-                               placeholder="What can we build for you?" />
-                        <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
-                                type="submit"
-                                hx-post="events/request" 
-                                hx-target="this">Send</button>
-                    </div>
-                    <datalist id="screen">
-                        <option value="Register with password"></option>
-                        <option value="Implement a registration system for events that collects attendee information on sessions of interest, dietary preferences."></option>
-                        <option value="Create a quick registration for checkout process for an e-commerce platform that collects user preferences, and shipping details."></option>
-                        <option value="Login with password and captcha"></option>
-                    </datalist>
-                </form>`,
-                    type: "content",
-                    defer: 400
-
-                })  ,
+        idle: { 
             on: {
                 "request": {
                     target: "draft",
