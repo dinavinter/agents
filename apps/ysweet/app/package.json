@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite src --port 3000",
+    "dev": "node server.js --port 3000",
     "server": "node server.js",
     "lint": "eslint src",
     "format": "prettier --write \"**/*.js\""
