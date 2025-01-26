@@ -1,0 +1,23 @@
+
+<h2>Agents</h2>
+
+<ul>
+{{ for doc of agents }}
+      <li>
+         <a href="{{ doc.url }}">
+           {{ doc.title }}
+         </a>
+       </li>
+{{ /for }}
+</ul>
+
+## Pages
+<ul>
+  {{ for agent of search.pages() }} 
+     <li>
+        <a href="{{ agent.url }}">
+          {{ agent.title }}
+        </a>
+      </li>
+  {{ /for }}
+</ul>
