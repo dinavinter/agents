@@ -44,7 +44,7 @@ export default class DocServer implements Party.Server {
                 mode: "snapshot"
             },
             load: async () => {
-                // console.log("load",this.service.doc.guid, this.room.id, this.room.storage)
+                console.log("load", this.room.id)
               // return this.service.doc
                 const roomStorage = new YPartyKitStorage(this.room.storage);
                 const ydoc = await roomStorage.getYDoc(this.room.id);
@@ -106,6 +106,22 @@ export default class DocServer implements Party.Server {
         */
         const doc=await roomStorage.getYDoc(this.room.id);
         console.log("onRequest", req.method, req.url, this.room.id, doc.guid)
+        return new Response(JSON.stringify({
+            guid: doc.guid,
+            collectionid: doc.collectionid,
+            synced: doc.isSynced,
+            metadata: doc.meta,
+            
+            ...Array.from(doc.share.entries()).reduce((acc, [key, value]) => {
+                acc[key] = value.toJSON();
+                return acc
+            }, {} as Record<string, any>),
+            
+            list:await this.room.storage.list(),
+            db:await this.room.storage.list(),
+            room: this.room.id
+        }))
+        
         if(req.headers.get("accept")?.includes("text/event-stream")) {
             const path = req.url.split('/');
             
