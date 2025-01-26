@@ -15,7 +15,7 @@ const flags = parseArgs(Deno.args, {
 });
 flags.room="i_24"
 console.log(flags, Deno.args)
-const src = flags.src ||  "./examples/withinput.ts"
+const src = flags.src ||  "./examples/agents/withinput.ts"
 const room = flags.room || src.split("/").pop()?.split(".")[0] || src;
 // Learn more at https://docs.deno.com/runtime/manual/examples/module_metadata#concepts
 if (import.meta.main) {
