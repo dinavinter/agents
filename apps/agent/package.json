@@ -23,6 +23,7 @@
     "@atomico/hooks": "^4.4.1",
     "@atomico/store": "^2.0.1",
     "@atomico/use-script": "^1.0.1",
+    "@cxai/stream": "^1.0.4",
     "@fastify/formbody": "^7.4.0",
     "@fastify/static": "^7.0.4",
     "@langchain/community": "^0.2.17",
@@ -52,6 +53,9 @@
     "yjs": "^13.6.18"
   },
   "devDependencies": {
+    "@fastify/one-line-logger": "^1.4.0",
+    "@fastify/swagger": "^8.15.0",
+    "@scalar/fastify-api-reference": "^1.25.7",
     "@tsconfig/node22": "^22.0.0",
     "@types/mustache": "^4.2.5",
     "@types/node": "^22.0.2",
@@ -63,10 +67,6 @@
     "tslib": "^2.6.3",
     "tsx": "^4.16.3",
     "typescript": "~5.5.2",
-    "zod": "^3.23.8",
-    "@fastify/one-line-logger": "^1.4.0",
-    "@fastify/swagger": "^8.15.0",
-    "@scalar/fastify-api-reference": "^1.25.7"
-
+    "zod": "^3.23.8"
   }
 }
