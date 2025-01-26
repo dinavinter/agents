@@ -1,5 +1,34 @@
-import { type AnyActorRef } from "https://esm.sh/xstate";
+import { type AnyActorRef, type AnyActorLogic , type InspectionEvent } from "https://esm.sh/xstate";
+import * as fs from "node:fs/promises";
+export function withLogging<T extends AnyActorLogic>(actorLogic: T) {
+    return {
+        ...actorLogic,
+        transition: (state, event, actorCtx) => {
+            console.log('Event:', state.value, event.type, {
+                id: actorCtx.id,
+                sessionId: actorCtx.sessionId,
+                selfID: actorCtx.self?.id
+            });
+            const transitioned = actorLogic.transition(state, event, actorCtx);
+            return transitioned;
+        },
+    } satisfies T;
+}
 
+export const loggerFsInspector= {
+    next: (s: InspectionEvent) => { 
+        fs.writeFileSync('log.json', JSON.stringify(s.actorRef?.getPersistedSnapshot(), null, 2))
+
+        if(s.type === "@xstate.snapshot"){
+             fs.writeFileSync("log/"+s.actorRef.id +"."+ s.actorRef?.getSnapshot()?.value, JSON.stringify(s.actorRef?.getPersistedSnapshot(), null, 2))
+
+        }
+        if(s.type === "@xstate.event"){
+            fs.appendFileSync("log/"+'event.jsonl', JSON.stringify(s.event) + "\n")
+        } 
+
+    }
+}
  
 
  export function logger(actor: AnyActorRef) {
