@@ -1,0 +1,26 @@
+---
+title: Welcome to my page
+layout: layout.vto
+links:
+- text: My Twitter
+  url: https://twitter.com/misteroom
+- text: My GitHub profile
+  url: https://github.com/oscarotero
+---
+
+
+<article>
+  <header>
+    <h1>{{ title }}</h1>
+  </header>
+
+  <ul>
+    {{ for link of links }}
+    <li>
+      <a href="{{ link.url }}">
+        {{ link.text }}
+      </a>
+    </li>
+    {{ /for }}
+  </ul>
+</article>
