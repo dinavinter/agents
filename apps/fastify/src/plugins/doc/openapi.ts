@@ -1,6 +1,5 @@
 import {FastifyPluginAsync} from "fastify";
 import fastifySwagger from "@fastify/swagger";
-import {jsonSchemaTransform} from "fastify-type-provider-zod";
 import fp from "fastify-plugin";
 
 const openapi: FastifyPluginAsync<any> = async function (fastify) {
@@ -16,8 +15,9 @@ const openapi: FastifyPluginAsync<any> = async function (fastify) {
             servers: [],
         },
         mode: 'dynamic',
+        
         // transform: jsonSchemaTransform,
-        exposeRoute: true,
+        
         
 
     });
@@ -26,8 +26,10 @@ const openapi: FastifyPluginAsync<any> = async function (fastify) {
     await fastify.register(import('@scalar/fastify-api-reference'), {
         routePrefix: '/reference',
         configuration: {
-
+            
             spec: {
+                description: 'API documentation Agents',
+                
                 content: () => {
                     try {
                         console.log('swagger', fastify.swagger());
@@ -41,7 +43,17 @@ const openapi: FastifyPluginAsync<any> = async function (fastify) {
             },
         },
     })
- 
+
+    // fastify.get("openapi.json",  (request, reply) => {
+    //     reply.header('Content-Type', 'application/json');
+    //    return   reply.send(fastify.swagger());
+    // })
+    //
+    // fastify.get("openapi",  (request, reply) => {
+    //     reply.header('Content-Type', 'application/x-yaml');
+    //     return   reply.send(fastify.swagger({yaml: true}));
+    // })
+
 }
 
 export default fp(openapi);
