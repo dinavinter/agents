@@ -1,9 +1,8 @@
 import * as Y from "https://esm.sh/yjs";
 import {parseArgs} from "jsr:@std/cli/parse-args";
-import {createActor, SnapshotFrom, waitFor} from "xstate";
-import {AnyActorLogic} from "xstate";
-import {YjsDocManager} from "../provider/hp.ts";
-import {serviceMachine} from "../inspect/inspector.ts";
+import {type AnyActorLogic, createActor, waitFor} from "xstate";
+import {YjsDocManager} from "./provider/hp.ts";
+import {serviceMachine} from "./inspect/inspector.ts";
 import {fromAIEventStream, fromAIElementStream} from "https://esm.sh/@cxai/stream";
 import {azure} from "https://esm.sh/@ai-sdk/azure";
 import {createHash} from "node:crypto";
