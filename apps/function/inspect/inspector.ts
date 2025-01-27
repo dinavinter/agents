@@ -38,20 +38,20 @@ export const serviceMachine = setup({
         }
     } 
 }).createMachine({ 
-    context: ({input: {logic,doc,hub, ...options}, spawn, self}) => {
+    context: ({input: {logic,doc,hub,input, ...options}, spawn, self}) => {
         hub = hub ?? createYjsHub(doc);
         const snapshotMap = hub.doc.getMap('state').toJSON() as SnapshotFrom<typeof logic>;
-
+        input = Object.assign(input || {}, {
+            ...hub.doc.getMap('input').toJSON(),
+            ...hub.doc.meta || {}
+         })
         const service =createActor(withTimeline(withInspector(logic,hub),hub), {
             id: self.id,
             logger: (s) => {},
             snapshot:  snapshotMap.status ? snapshotMap : undefined,
-            ...options,
-            // inspect: {
-            //     next:(e) => {
-            //        // e.type === '@xstate.event' && hub.inspected.push(e)
-            //     } 
-            // }
+            input: input ,
+            ...options
+         
         }); 
           
         return {
@@ -61,18 +61,25 @@ export const serviceMachine = setup({
          }
     },
     invoke:{
-        src: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator(input.getArray<EventObject>("events"))), 
-        input: ({context:{hub}}) => hub.doc,
-            
+        src: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator<EventObject>(input.getArray("events"))), 
+        input: ({context:{hub}}) => hub.doc 
     },
 
     entry: enqueueActions(({context: {service, hub}, enqueue}) => {
         service.on("*", (event: Emitted) => {
+            console.group('emitted', event.type);
+            if(event.type === "frontend") {
+                console.log('emitted', event.data);
+            }
+            
             hub.emitted.push({
                 timestamp:  Date.now(),
                 offset: Date.now()- (hub.emitted.raw.get(0)?.timestamp ?? Date.now()),
+                id: hub.emitted.length + 1,
                 ...event 
             }); 
+            
+            console.groupEnd();
         }) 
         service.start();
         

@@ -31,7 +31,7 @@ export const machine = setup({
     entry: emit({
         data: `<main class="mx-auto bg-slate-100 min-h-screen p-6">
                  <header class="sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-center p-4 text-lg font-medium shadow">
-                     Form Builder  
+                     Form Generator  
                  </header>
                 <div class="flex flex-col items-center justify-center gap-6"  sse-swap="content" hx-swap="beforeend" >
                       <form  class="isolate flex flex-col gap-4 w-full p-4">
@@ -41,14 +41,11 @@ export const machine = setup({
                                    list="screen"
                                    class="flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                    name="request"
-                                   value="{{request}}"
                                    placeholder="What can we build for you?" />
-                               {{ if state('idle') }}
                                      <button class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
                                         type="submit"
                                         hx-post="events/request" 
                                         hx-target="this">Send</button>
-                               {{ /if }} 
                         </div>
                         <datalist id="screen">
                             <option value="Register with password"></option>

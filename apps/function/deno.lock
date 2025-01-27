@@ -9,8 +9,11 @@
     "jsr:@std/path@1.0.8": "1.0.8",
     "jsr:@vento/vento@^1.12.15": "1.12.15",
     "npm:@types/estree@1.0.6": "1.0.6",
+    "npm:deno-http-worker@*": "0.0.16",
+    "npm:deno-http-worker@^0.0.16": "0.0.16",
     "npm:estree-walker@3.0.3": "3.0.3",
-    "npm:meriyah@6.0.5": "6.0.5"
+    "npm:meriyah@6.0.5": "6.0.5",
+    "npm:zod@^3.24.1": "3.24.1"
   },
   "jsr": {
     "@davidbonnet/astring@1.8.6": {
@@ -50,6 +53,9 @@
     "@types/estree@1.0.6": {
       "integrity": "sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw=="
     },
+    "deno-http-worker@0.0.16": {
+      "integrity": "sha512-WAzuLIdf5oN1GpER/D4yiYhesNRwaiB3F+NVGWiQfbDDDZi7Cs24BEDyafvRp654kMPIhou1vc91Ji6F1oHWkA=="
+    },
     "estree-walker@3.0.3": {
       "integrity": "sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==",
       "dependencies": [
@@ -58,10 +64,14 @@
     },
     "meriyah@6.0.5": {
       "integrity": "sha512-SrMqQCox7TTwtftWKHy/ZaVe+ZRpRl20pAgDo+PS9hzcAJrMjYsBJQPPiLXTnjztrqdfGS+Zz99r6Bwvydta1w=="
+    },
+    "zod@3.24.1": {
+      "integrity": "sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A=="
     }
   },
   "redirects": {
     "https://esm.sh/@ai-sdk/azure": "https://esm.sh/@ai-sdk/azure@1.0.10",
+    "https://esm.sh/@ai-sdk/provider": "https://esm.sh/@ai-sdk/provider@1.0.2",
     "https://esm.sh/@ai-sdk/provider@^1.0.4": "https://esm.sh/@ai-sdk/provider@1.0.5",
     "https://esm.sh/@cxai/stream": "https://esm.sh/@cxai/stream@1.0.6",
     "https://esm.sh/@cxai/stream/ui": "https://esm.sh/@cxai/stream@1.0.2/ui",
@@ -78,6 +88,7 @@
     "https://esm.sh/@types/lodash.debounce@~4.0.9/index.d.ts": "https://esm.sh/@types/lodash.debounce@4.0.9/index.d.ts",
     "https://esm.sh/atomico": "https://esm.sh/atomico@1.79.2",
     "https://esm.sh/atomico/ssr/load": "https://esm.sh/atomico@1.79.2/ssr/load",
+    "https://esm.sh/deno-http-worker": "https://esm.sh/deno-http-worker@0.0.16",
     "https://esm.sh/it-pushable@^3.2.3": "https://esm.sh/it-pushable@3.2.3",
     "https://esm.sh/lib0@^0.2.85/decoding?target=denonext": "https://esm.sh/lib0@0.2.99/decoding?target=denonext",
     "https://esm.sh/lib0@^0.2.85/encoding?target=denonext": "https://esm.sh/lib0@0.2.99/encoding?target=denonext",
@@ -142,6 +153,7 @@
   },
   "remote": {
     "https://esm.sh/@ai-sdk/azure@1.0.10": "28698381e4d49824d26c6cb1c7b092b6a651d77f9d7cbc2fc4e83c0bdf69140d",
+    "https://esm.sh/@ai-sdk/provider@1.0.2": "556a306b301f1b8cba2020c4b90376631eb3f1dbbd3ef472597487fdbfb33c13",
     "https://esm.sh/@ai-sdk/provider@1.0.5": "74d19f2cb51c5cbf45a24746e99c2dcb0e4b031cd72c14a85dd729fdcee7f371",
     "https://esm.sh/@ai-sdk/provider@1.0.5/denonext/provider.mjs": "6dc64736e9d971c38d4259ed426f97f647bdfd8bf2d7f6b7c08827e31d8117e5",
     "https://esm.sh/@cxai/stream@1.0.2/ui": "ee3bea4952b4adaa96b1b14b37d228a2f9372e386716b417460ce2a3b43f5968",
@@ -160,6 +172,16 @@
     "https://esm.sh/@cxai/stream@1.0.6/denonext/stream.mjs": "eed49a02a7763d3ab1fc6749d2fbf1eff8b5556acdb195059d161320e93fcdbe",
     "https://esm.sh/@cxai/stream@1.0.6/denonext/ui.mjs": "3a1443a1b3382839a74a0bb17c318c2ec36f38f66a1ab43a3fafb7d4dc5cfb95",
     "https://esm.sh/@cxai/stream@1.0.6/ui": "cf2a04f5275a1be6c8a92a7174144f4e0152504a7c95f1b296ea928693270900",
+    "https://esm.sh/@cxai/stream@1.0.8": "7a983386e8283c57a10d66da9892590dbfc1419cb2fd6acb8a74c01d02b2289f",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/dist/few_shot-Ruynm7uf.mjs": "547f5dc40160b58f9eabf73e938ef82af69f2c1349c6252cac4c43b09e9275ec",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/dist/generator-CkkXVbnK.mjs": "fe68935d6c680fb40580aba4db153417b0a386ed6afa38aea32e7661e8f5e177",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/dist/index-8YElVOzp.mjs": "8e504e0e277bb4055a672d57dd47b429f3852992897cd91a993f06a11b1e4a38",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/dist/log-2a773d37.esm-DRQYm0Sr.mjs": "8c58da7aaf1cafcd7c7c15cb6f34fa4a9779042b7d82c92de77c3fe0ceb7239b",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/dist/monads-BloitKQ6.mjs": "4f862281be693554f7b998cf85714ce442d27485172dca8f9a8deb11720663b5",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/dist/sse-CMD-MIHJ.mjs": "3de057abdd33e8ae19d70363211659089c28b3dd10f313a8047d87f311ae7713",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/dist/ydoc-B5HJqaEL.mjs": "908613e161581f9d001777a282c9a20054dd091f995558e687b54a5b28f20653",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/iterator.mjs": "c0b8605795903ac80327597150d6437673317c5051d338aa104c8df205091bd5",
+    "https://esm.sh/@cxai/stream@1.0.8/denonext/stream.mjs": "ed00a544dae089e70c8f215a115502e422ae971a80b878999e3eb6d0d826ed13",
     "https://esm.sh/@hocuspocus/common@2.15.0/denonext/common.mjs": "8236979dedfb33ee30000f4b38004bbb91163c66b493f4746b56b4dc801da041",
     "https://esm.sh/@hocuspocus/common@2.15.0?target=denonext": "ad2975e8c42df8dba23a02beed91ba47ef6b706557a44943c7b78bfe6eace514",
     "https://esm.sh/@hocuspocus/provider@2.15.0": "74516f005e91c9c3e1fb498e315f61203076da391c65b1758ac47452cde4e448",
@@ -168,6 +190,8 @@
     "https://esm.sh/@lifeomic/attempt@3.1.0?target=denonext": "f73953d6eb440803408b27c9f4632957d40a8b2534cf293bb40a11e397f2260a",
     "https://esm.sh/atomico@1.79.2": "ee8c24006621eaca4873390e75002af15dd13f94597918c3ef5533db6a78c808",
     "https://esm.sh/atomico@1.79.2/ssr/load": "4b31cae81532fecaf69e870b69757680d2741e581d92a3bcea3975990015acc7",
+    "https://esm.sh/deno-http-worker@0.0.16": "a69c17e3228fbf362ac21f8860a5b6e168ef5b3704b71cf41049f235ac216f57",
+    "https://esm.sh/deno-http-worker@0.0.16/denonext/deno-http-worker.mjs": "e65ad6538c9d099a8fa9223b1ae49e06c3d6eeab9e6cea8bcd2abcca59970be5",
     "https://esm.sh/it-pushable@3.2.3": "ce0b99417093d797ea458a09713b74ba34680da81f0a5f59871112590ce830ba",
     "https://esm.sh/it-pushable@3.2.3/denonext/it-pushable.mjs": "905590652a6247bfda99878511e589f91daf289d7906ac41c8c9f7e4a5add1d5",
     "https://esm.sh/json-schema@0.4.0": "21a68e4e83b0441c3a90fa051c6b7c42d29926e4ff429745eebec153ac53cd7a",
@@ -262,7 +286,9 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
-      "jsr:@vento/vento@^1.12.15"
+      "jsr:@vento/vento@^1.12.15",
+      "npm:deno-http-worker@^0.0.16",
+      "npm:zod@^3.24.1"
     ]
   }
 }

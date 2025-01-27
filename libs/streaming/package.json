@@ -1,6 +1,6 @@
 {
   "name": "@cxai/stream",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "",
   
   "scripts": {
@@ -34,9 +34,9 @@
   
   "devDependencies": {
     "@langchain/core": "^0.2.14",
-    "@ai-sdk/openai": "^0.0.54",
-    "@ai-sdk/provider": "^1.0.2",
-    "ai": "^3.3.19",
+    "@ai-sdk/openai": "^1.1.4",
+    "@ai-sdk/provider": "^1.0.6",
+    "ai": "^4.1.7",
     "sap-ai-token": "workspace:*",
     "xstate": "^5.16.0",
     "it-pushable": "^3.2.3",
