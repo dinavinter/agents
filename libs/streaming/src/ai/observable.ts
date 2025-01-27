@@ -36,8 +36,9 @@ export function fromAIEventStream<TDefaultOptions extends Partial<StreamTextOpti
 export type AIStream=ReturnType<typeof fromAIEventStream<{model: LanguageModelV1}>>;
 
 
+type ElementStreamPart = {type:'element' | 'text'} & EventObject;
 export function fromAIElementStream<OBJECT extends EventObject, TDefaultOptions extends Partial<StreamObjectOptions<OBJECT>>, TOptions extends FromDefault<StreamObjectOptions<OBJECT>, TDefaultOptions > =FromDefault<StreamObjectOptions<OBJECT>, TDefaultOptions >>( defaultOptions?: TDefaultOptions){
-    type TContext = OBJECT | {type:'output', output:OBJECT[]}
+    type TContext = OBJECT | {type:'output', output:OBJECT[]} | ElementStreamPart;
 
     return fromEventAsyncGenerator( async function * ({input, self, emit}):AsyncGenerator<TContext>{
         const resolvedOptions = await aiOptions<StreamObjectOptions<OBJECT>>(self._parent?.getSnapshot()?.context, defaultOptions, input);
@@ -47,8 +48,11 @@ export function fromAIElementStream<OBJECT extends EventObject, TDefaultOptions 
             output: 'array'  
         });
 
-        for await (const part of elementStream) {
-            yield part;
+        for await (const {type,...part} of elementStream) {
+            yield {
+                type: type ?? 'element',
+                ...part
+            } as TContext
         }
 
         yield  {

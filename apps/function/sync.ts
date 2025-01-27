@@ -3,13 +3,14 @@ import {parseArgs} from "jsr:@std/cli/parse-args";
 import {type AnyActorLogic, createActor, waitFor} from "xstate";
 import {YjsDocManager} from "./provider/hp.ts";
 import {serviceMachine} from "./inspect/inspector.ts";
-import {fromAIEventStream, fromAIElementStream} from "https://esm.sh/@cxai/stream";
+import {fromAIEventStream, fromAIElementStream,asyncBatchEvents,asyncEventGenerator} from "https://esm.sh/@cxai/stream";
 import {azure} from "https://esm.sh/@ai-sdk/azure";
 import {createHash} from "node:crypto";
 import { Buffer } from "node:buffer";
-  
+import { newDenoHTTPWorker } from "deno-http-worker";
+
 const flags = parseArgs(Deno.args, {
-  string: ["url" , "room", "collection", "doc", "src", ],
+  string: ["url" , "room", "collection", "doc", "src", "port"],
 });
 export function revisionHash(src: string): string  {
     return revisionHash(Buffer.from(src))
@@ -21,10 +22,10 @@ export function revisionHash(src: string): string  {
 }
 
 console.log(flags, Deno.args)
-const room = flags.room || Deno.env.get("ID") || "agv";
+const room = flags.room || Deno.env.get("ID") || "app";
 
 function getRevDoc(rev: string, src: string) {
-    const revDoc = new Y.Doc({guid: `${room}:${rev}`, meta: {rev}});
+    const revDoc = new Y.Doc({guid: `${room}:${rev}`, meta: {rev, agent: room, path: `/agents/${room}/${rev}`}});
     if(revDoc.getMap().get("rev") !== rev) {
         revDoc.transact(() => {
             revDoc.getMap().set("src", src);
@@ -68,6 +69,7 @@ async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Do
 if (import.meta.main) {
     const docManager = new YjsDocManager(flags.url); 
     const doc  =docManager.getOrCreate(room);
+    const agents = docManager.getOrCreate(":agents");
     // const revDoc = getRevDoc(doc.getMap().get("rev") || revisionHash(doc.getMap().get("codemirror") || ""), doc.getMap().get("codemirror"));
     // await tryStart(docManager, doc, revDoc);
     doc.getText("codemirror").observe(async (event) => {
@@ -77,6 +79,15 @@ if (import.meta.main) {
 
         const revDoc = getRevDoc(rev, src);
         await tryStart(docManager, doc, revDoc); 
+        agents.transact(() => {
+            // agents.getMap().set(id, {
+            //     rev: agent.getMap().get("rev"),
+            //     timestamp: agent.getMap().get("timestamp")
+            // })
+            agents.getMap(room).set("rev", revDoc.getMap().get("rev"))
+            agents.getMap(room).set("timestamp",  revDoc.getMap().get("timestamp"))
+            agents.getMap(room).set("status", "running")
+        });
 
     })
 }
@@ -111,6 +122,22 @@ async function start(doc:Y.Doc ) {
 
         return module.default.provide({
             actors: {
+                stream:asyncEventGenerator,
+                batch:  asyncBatchEvents,
+                apiWorker: async ({ input }) => {
+                    if (!input?.code) return undefined;
+                    try {
+                        const worker = await newDenoHTTPWorker(input.code, {
+                            printOutput: true,
+                            runFlags: ["--allow-net"],
+                            port: parseInt(env.DENO_HTTP_WORKER_PORT || "8000")
+                        });
+                        return worker;
+                    } catch (error) {
+                        console.error("Failed to create API worker:", error);
+                        return undefined;
+                    }
+                },
                 aiElementStream: fromAIElementStream({
                     model: azure('gpt-4o',{
                         // baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
@@ -133,4 +160,3 @@ async function start(doc:Y.Doc ) {
 
 
 }
-

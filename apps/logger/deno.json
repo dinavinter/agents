@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-net --allow-read --allow-env  --allow-write   router.ts --room agv --url wss://hp.cfapps.us10-001.hana.ondemand.com ",
+    "dev": "deno run --watch --allow-net --allow-read --allow-env  --allow-write   router.ts --room html --url wss://yjs.cfapps.us10-001.hana.ondemand.com ",
     "sync": "deno run --allow-net --allow-read --allow-env  --allow-write --allow-import --cached-only --env-file=../../.env router.ts --url wss://hp.cfapps.us10-001.hana.ondemand.com  --experimental-vm-modules  "
 
   },

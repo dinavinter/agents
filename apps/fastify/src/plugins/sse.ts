@@ -39,6 +39,10 @@ const sseProxy: FastifyPluginAsync<{prefix?:string, condition: (req: FastifyRequ
                         type: 'string',
                         format: 'uri',
                         description: 'The url of the server sent events'
+                    },
+                    type: {
+                        type: 'string',
+                        description: 'The type event to swap',
                     }
                     
                 }
@@ -54,7 +58,7 @@ const sseProxy: FastifyPluginAsync<{prefix?:string, condition: (req: FastifyRequ
             produces: ['text/html']
         },
         async handler(request, reply) {
-            const {url} = request.query;
+            const {url, type} = request.query;
             reply.type('text/html');
             return reply.send(`<html>
                     <head>
@@ -63,7 +67,7 @@ const sseProxy: FastifyPluginAsync<{prefix?:string, condition: (req: FastifyRequ
                         <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
                     </head>
                     <body>  
-                         <div hx-ext="sse" sse-connect="${url}" sse-close="done" hx-ext="sse" sse-swap="message" hx-swap="beforeend" class="h-screen w-screen"/>
+                         <div hx-ext="sse" sse-connect="${url}" sse-close="done" hx-ext="sse" sse-swap="${type || "*"}" hx-swap="beforeend" class="h-screen w-screen"/>
                     </body>
                     </html> `
             );
