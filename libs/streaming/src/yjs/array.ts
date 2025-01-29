@@ -1,33 +1,9 @@
 import * as Y from "yjs";
-export interface Subscribable<T> {
-    subscribe(observer: Observer<T>): Subscription;
-    subscribe(next: (value: T) => void, error?: (error: any) => void, complete?: () => void): Subscription;
-}
-export type Observer<T> = {
-    next?: (value: T) => void;
-    error?: (err: unknown) => void;
-    complete?: () => void;
-};
-export type Handler<T> = (value: T) => void;
-export interface Subscription {
-    unsubscribe(): void;
-}
-function toObserver<T =any>(nextHandler:Observer<T> | Handler<T>, errorHandler?: Observer<T>["error"], completionHandler?: Observer<T>["complete"]) {
-    const isObserver = typeof nextHandler === 'object';
-    const self = isObserver ? nextHandler : undefined;
-    return {
-        next: (isObserver ? nextHandler.next : nextHandler)?.bind(self),
-        error: (isObserver ? nextHandler.error : errorHandler)?.bind(self),
-        complete: (isObserver ? nextHandler.complete : completionHandler)?.bind(self)
-    };
-}
-export type YIterator<T> = AsyncIterable<T> & Subscribable<T> & { push(e: T): any, raw: Y.Array<T> , readableStream: (abortSignal: AbortSignal) => ReadableStream<T>};
+import { Subscribable, toObserver } from "xstate";
+  
+ 
+export type YIterator<T> = AsyncIterable<T> & Subscribable<T> & {length: number, push(e: T): any, raw: Y.Array<T>,pop():T , readableStream: (abortSignal: AbortSignal) => ReadableStream<T>};
 
-
-type ArrayEvent<T>= {
-    index: number;
-    value: T | undefined;
-}
 export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
 
     async function* iterateArrayItems() {
@@ -40,28 +16,17 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
         }
     }
 
-
-
-
-
     function getNextItems(startIndex: number): Promise<[T[], number]> {
-        // function transformNew<T>(value:T, index:number):ArrayEvent<T> {
-        //     return {
-        //         index:startIndex + index,
-        //         value
-        //     }
-        // }
-        function transformNew(value:T)  {
-            return  value;
-        }
         return new Promise((resolve) => {
             if (startIndex < array.length) {
-                resolve([array.slice(startIndex).map(transformNew), array.length]);
+                resolve([array.slice(startIndex), array.length]);
             } else {
                 const callback = (event: Y.YArrayEvent<T>) => {
                     const newItems = event.delta.flatMap(d => d.insert).filter(Boolean);
-                    resolve([newItems.map(transformNew), startIndex + newItems.length]);
-                    array.unobserve(callback);
+                    if (newItems.length > 0) {
+                        array.unobserve(callback);
+                        resolve([newItems, startIndex + newItems.length]);
+                    }
                 };
                 array.observe(callback);
             }
@@ -71,13 +36,15 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
     async function* iterator() {
         yield* iterateArrayItems();
     }
-
-
-
-
+    
+    
+    
+ 
     return {
         raw: array,
+        length: array.length,
         push: (e: T) => array.push([e]),
+        pop: () => array.get(array.length - 1),
         [Symbol.asyncIterator]: iterator,
         readableStream: (abortSignal) => {
             const abortController =  new AbortController()
@@ -86,24 +53,24 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
                 abortSignal.removeEventListener('abort', abort);
             }
             abortSignal.addEventListener('abort', abort);
-
-
+            
+            
             return new ReadableStream<T>({
-                async start(controller) {
+                async start(controller) { 
                     for await (const event of iterateArrayItems()) {
                         if (abortController.signal.aborted) {
                             return;
                         }
                         controller.enqueue(event);
-                    }
+                    } 
                 },
                 cancel() {
                     abortController.abort();
                 }
             })
         },
-
-        subscribe: (observerOrCallback:Observer<any > |Handler<any>) => {
+                    
+        subscribe: (observerOrCallback) => {
             const observer = toObserver(observerOrCallback);
             const callback = (event: Y.YArrayEvent<T>) => {
                 const newItems = event.delta.flatMap(d => d.insert).filter(Boolean);
@@ -118,6 +85,7 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
         }
     };
 }
+ 
 
 
 type DeltaItr<T>= {

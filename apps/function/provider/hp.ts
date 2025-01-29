@@ -44,7 +44,7 @@ export class YjsDocManager {
         return provider;
     }
 
-    getOrCreate(id: string, doc:Y.Doc |undefined =  undefined,  connect:boolean=true) {
+    connect(id: string, doc:Y.Doc |undefined =  undefined,  connect:boolean=true) {
         if (!this.providers.has(id)) {
             this.providers.set(id, this.create(id, doc,connect));
 

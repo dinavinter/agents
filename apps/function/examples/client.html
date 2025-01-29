@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deno HTTP Worker Client</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { padding: 10px; margin: 5px; }
+        #response { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Deno HTTP Worker Client</h1>
+    <form id="workerForm">
+        <input type="text" id="urlInput" placeholder="Enter URL" required>
+        <button type="submit">Send Request</button>
+    </form>
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('workerForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const url = document.getElementById('urlInput').value;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('response').innerText = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html> 

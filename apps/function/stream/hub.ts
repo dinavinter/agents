@@ -6,7 +6,6 @@ import {
 } from "https://esm.sh/xstate";
 import * as Y from "yjs";
 import {yArrayIterator} from "./yjs.ts";
-import {EventMessage} from "./sse.ts";
 
 export type Emitted= {
     format?: string,

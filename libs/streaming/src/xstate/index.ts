@@ -3,4 +3,5 @@ export * from './emitter';
 export * from './filter';
 export * from './generator';
 export * from './hub';
-export * from './inspector';
+import controller from './inspector';
+export const ServiceController = controller;

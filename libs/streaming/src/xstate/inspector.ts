@@ -2,21 +2,20 @@ import {
     Actor,
     AnyActorLogic,
     AnyActorRef,
-    AnyStateMachine,
     createActor,
     enqueueActions,
-    EventDescriptor,
-    EventFromLogic,
-    EventObject, forwardTo, fromEventObservable,
-    InspectionEvent,
-    setup,
-    SnapshotFrom, StateMachine
+    type EventDescriptor,
+    type EventFromLogic,
+    type EventObject, forwardTo, fromEventObservable,
+    type InspectionEvent,
+    setup, type AnyStateMachine,
+    SnapshotFrom, StateMachine, AnyEventObject, AnyActor
 } from "xstate";
-import {createYjsHub, type serviceHub} from "./hub";
+import {createYjsHub, type serviceHub, type Emitted} from "./hub";
 import * as Y from "yjs";
-import {EventMessage} from "@/iterator";
 import  {yArrayIterator} from "@/yjs";
-type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
+
+export type CreateServiceControllerOptions<TLogic extends AnyActorLogic> = {
     logic: TLogic,
     name?: string,
     doc?: Y.Doc,
@@ -24,23 +23,22 @@ type CreateServiceMachineOptions<TLogic extends AnyActorLogic> = {
 } & Parameters<typeof createActor<TLogic>>[1]
     & Record<string, any>
 
-type Context = {
+export type ServiceControllerContext = {
     service: AnyActorRef,
     hub: serviceHub
 }
 
 type Event = InspectionEvent
-type Input = CreateServiceMachineOptions<AnyActorLogic>
-export type ServiceMachine<T extends AnyActorLogic= AnyActorLogic> =  StateMachine<Context, Event, any, any, any, any, any, any, any, CreateServiceMachineOptions<T>, any, any, any, any>
+type Input = CreateServiceControllerOptions<AnyActorLogic>
+export type ServiceController<T extends AnyActorLogic= AnyActorLogic> =  StateMachine<ServiceControllerContext, Event, any, any, any, any, any, any, any, CreateServiceControllerOptions<T>, any, any, any, any>
 
-// export type ServiceMachine= StateMachine<Context, Event, Input, AnyStateMachine>
 
-const serviceMachineSetup = setup({
+const serviceControllerSetup = setup({
     actors:{
         events: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator(input.getArray<EventObject>("events")))
     },
     types: {
-        input: {} as CreateServiceMachineOptions<AnyActorLogic>,
+        input: {} as Input,
         events: {} as InspectionEvent ,
         context: {} as {
             service: AnyActorRef,
@@ -48,21 +46,23 @@ const serviceMachineSetup = setup({
         }
     } 
 })
-const serviceMachine=serviceMachineSetup.createMachine({ 
-    context: ({input: {logic,doc,hub, ...options}, spawn, self}) => {
+ 
+
+ const machine=serviceControllerSetup.createMachine({ 
+    context: ({input: {logic,doc,hub,input, ...options}, self} ) => {
         hub = hub ?? createYjsHub(doc);
         const snapshotMap = hub.doc.getMap('state').toJSON() as SnapshotFrom<typeof logic>;
-
-        const service =createActor(withInspector(logic,hub), {
+        input = Object.assign(input || {}, {
+            ...hub.doc.getMap('input').toJSON(),
+            ...hub.doc.meta || {}
+         })
+        const service =createActor(withTimeline(withInspector(logic,hub),hub), {
             id: self.id,
             logger: (s) => {},
             snapshot:  snapshotMap.status ? snapshotMap : undefined,
-            ...options,
-            // inspect: {
-            //     next:(e) => {
-            //        // e.type === '@xstate.event' && hub.inspected.push(e)
-            //     } 
-            // }
+            input: input ,
+            ...options
+         
         }); 
           
         return {
@@ -72,16 +72,26 @@ const serviceMachine=serviceMachineSetup.createMachine({
          }
     },
     invoke:{
-        src: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator(input.getArray<EventObject>("events"))), 
-        input: ({context:{hub}}) => hub.doc,
-            
+        src: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator<EventObject>(input.getArray("events"))), 
+        input: ({context:{hub}}) => hub.doc 
     },
 
     entry: enqueueActions(({context: {service, hub}, enqueue}) => {
-        service.on("*", (event: EventMessage & EventObject) => {
+        service.on("*", (event: Emitted) => {
+            console.group('emitted', event.type);
+            if(event.type === "frontend") {
+                console.log('emitted', event.data);
+            }
+            
             hub.emitted.push({
-                ...event 
+                offset: Date.now()- (hub.emitted.raw.get(0)?.timestamp ?? Date.now()),
+                id: (hub.emitted.length + 1).toString(),
+                ...event,
+                timestamp:  Date.now(),
+
             }); 
+            
+            console.groupEnd();
         }) 
         service.start();
         
@@ -106,6 +116,75 @@ const serviceMachine=serviceMachineSetup.createMachine({
 })
 
 
+export function withMarks<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub) {
+    if(actorLogic == undefined) {
+        throw new Error("actorLogic is undefined")
+    }
+    const transition = actorLogic.transition.bind(actorLogic);
+    actorLogic.transition = (state, event, actorCtx) => {
+        const marks = hub.doc.getMap<number>("marks");
+        const timestamp = Date.now();
+        if (event.type === "@xstate.init") {
+            marks.set("started", timestamp);
+        }
+        if (event.type === "@xstate.stop") {
+            marks.set("stopped", timestamp);
+        }
+
+        const before = actorCtx.self.getSnapshot();
+        const newState = transition(state, event, actorCtx);
+        const snapshot = actorCtx.self.getSnapshot();
+        if (snapshot.value !== before.value) {
+            marks.set(`start:${snapshot.value}`, timestamp);
+            marks.set(`end:${before.value}`, timestamp);
+        }
+
+        return newState;
+    }
+
+
+
+}
+
+export function withTimeline<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub) {
+  if(actorLogic == undefined) {
+       throw new Error("actorLogic is undefined")
+  }
+    const transition = actorLogic.transition.bind(actorLogic);
+    actorLogic.transition = (state, event, actorCtx) => {
+        console.group(event.type, Date.now());
+        
+        const timestamp = Date.now();
+        const before = actorCtx.self.getSnapshot();
+        console.log("before", before.value);
+
+        const last = hub.emitted.pop()?.timestamp;
+        const offset = last ? timestamp - last : 0;
+
+        const newState = transition(state, {
+            timestamp,
+            offset,
+            id: offset,
+            ...event
+        } , actorCtx);
+        const snapshot = actorCtx.self.getSnapshot();
+        console.log("after", snapshot.value);
+
+        //persist timeline
+        const timeline = hub.doc.getMap("timeline");
+        timeline.doc?.transact(() => {
+            if (snapshot.value !== before.value) {
+                timeline.set(`${timestamp}`, actorCtx.self.getPersistedSnapshot());
+            }
+        }) 
+        console.groupEnd();
+        return newState;
+    }
+        
+    return actorLogic;
+          
+    
+} 
 
 function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):T {
     if(actorLogic == undefined) {
@@ -115,10 +194,12 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
     
     // return actorLogic;
     const transition = actorLogic.transition.bind(actorLogic);
-    
+    const serviceMap =new Map<string, AnyActor>();
     actorLogic.transition = (state, event, actorCtx) => {
         // hub.inspected.push(event);
         // console.log('Inspected', event.type);
+       
+        
         const newState= transition(state, event, actorCtx);
         const snapshotMap = hub.doc.getMap('state');
         Object.entries(actorCtx.self.getPersistedSnapshot()).forEach(([key, value]) => {
@@ -133,30 +214,36 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
             context: snapshot.context
         };
         Object.entries(newState.children)?.forEach(([service, ref]) => {
-            const {isNew, hub: serviceHub} = hub.child(service)
-            if (isNew) {
-
-                if (ref instanceof Actor) {
-                    ref.on("*", (event) => {
-                        //todo: decide either to push to the service hub or the main hub
-                        serviceHub.emitted.push({
-                            ...event,
-                            type: event.type
-                        }); 
-                        hub.emitted.push({
-                            ...event,
-                            type: `@${service}.${event.type}`
-                        });
-                    }) 
-                    ref.subscribe((snapshot) => {
-                        serviceHub.snapshot.push(snapshot);
-                    })
-                }
+            if (ref instanceof Actor) { 
+               
+              hub.doc.getMap('services').get(service) || hub.doc.getMap('services').set(service, {
+                    id: ref.id,
+                    sessionId: ref.sessionId,
+                    created: Date.now(),
+                    status: ref.getSnapshot()?.status,
+                    started: Date.now()
+                })  
+                    
+                 
+                  if(!serviceMap.get(service)) {
+                      ref.on("*", (event: AnyEventObject) => {
+                          hub.emitted.push({
+                              offset: Date.now()- (hub.emitted.raw.get(0)?.timestamp ?? Date.now()),
+                              ...event,
+                              type: `@${service}.${event.type}`,
+                              timestamp: Date.now()
+                          });
+                      })
+                      serviceMap.set(service, ref);
+                  }
+               
             }
         })
+            
+        
 
         return newState;
-    }
+    }  
     
     return actorLogic;
     function getAllOwnEventDescriptors<TSnapshot extends SnapshotFrom<AnyStateMachine>>(snapshot:TSnapshot):EventDescriptor<EventFromLogic<T>>[] {
@@ -165,4 +252,18 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
 }
 
 
-export default serviceMachine as ServiceMachine;
+
+//todo: decide either to push to the service hub or the main hub
+// serviceHub.emitted.push({
+//     timestamp:  Date.now(),
+//     offset: Date.now() - (hub.doc.getMap<number>("timeline")?.get("started") ?? 0),
+//     ...event,
+//     type: event.type
+// }); 
+
+// ref.subscribe((snapshot) => {
+//     serviceHub.snapshot.push(snapshot);
+// })
+ 
+
+export default machine as ServiceController;

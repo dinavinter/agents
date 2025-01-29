@@ -1,14 +1,11 @@
 import * as Y from "https://esm.sh/yjs";
 import {parseArgs} from "jsr:@std/cli/parse-args";
-import {type AnyActorLogic, createActor, waitFor} from "xstate";
-import {YjsDocManager} from "./provider/hp.ts";
-import {serviceMachine} from "./inspect/inspector.ts";
-import {fromAIEventStream, fromAIElementStream,asyncBatchEvents,asyncEventGenerator} from "https://esm.sh/@cxai/stream";
-import {azure} from "https://esm.sh/@ai-sdk/azure";
+import {waitFor} from "xstate";
+import {HPYjsDocManager as YjsDocManager} from "https://crux.land/6Ex5Yb";
 import {createHash} from "node:crypto";
 import { Buffer } from "node:buffer";
-import { newDenoHTTPWorker } from "deno-http-worker";
-
+ import {mod} from "./imort.ts";
+ import {createYjsActor} from "https://crux.land/4TzRc8";
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", "port"],
 });
@@ -35,6 +32,13 @@ function getRevDoc(rev: string, src: string) {
     }
     return revDoc;
 }
+async function start(doc: Y.Doc) {
+    doc.shouldLoad && doc.load();
+    const module = await mod(doc.getMap<string>().get("src")!);
+
+    return createYjsActor(module.default,doc);
+ 
+}
 
 async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Doc) {
     if(revDoc.getMap().get("src") ) {
@@ -45,7 +49,7 @@ async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Do
         const actor = await start(revDoc);
         actor.start();
         console.log("started", revDoc.guid) 
-        docManager.getOrCreate(revDoc.guid, revDoc);
+        docManager.connect({doc: revDoc});
         
         const rev = revDoc.getMap<string>().get("rev")!;
         agentDoc.transact(() => {
@@ -61,15 +65,18 @@ async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Do
     } catch (error) {
         console.error(error)
         revDoc.getMap().set("status", "error")
-        revDoc.destroy()
+        
     }
-    }
+
+
+  
+}
 }
 
 if (import.meta.main) {
     const docManager = new YjsDocManager(flags.url); 
-    const doc  =docManager.getOrCreate(room);
-    const agents = docManager.getOrCreate(":agents");
+    const doc  =docManager.connect(room);
+    const agents = docManager.connect(":agents");
     // const revDoc = getRevDoc(doc.getMap().get("rev") || revisionHash(doc.getMap().get("codemirror") || ""), doc.getMap().get("codemirror"));
     // await tryStart(docManager, doc, revDoc);
     doc.getText("codemirror").observe(async (event) => {
@@ -93,70 +100,4 @@ if (import.meta.main) {
 }
 
 
-async function start(doc:Y.Doc ) {
-    doc.shouldLoad && doc.load();
-    const state = doc.getMap("current").get("state");
-    const context = doc.getMap("current").get("context");
-    // console.log("state", state, context)
-    
-    const logic = await getMachine(doc.getMap<string>().get("src")!);
-    return createYjsActor(logic);
 
-    function createYjsActor(logic: AnyActorLogic) { 
-        return createActor(serviceMachine, {
-            id: 'service',
-            input: {
-                logic: logic,
-                doc: doc 
-            }
-        }) 
-    }
-
-   
-    async function getMachine(code:string) {
-        // code= code || example;
-        const tempFilePath = await Deno.makeTempFile();
-        await Deno.writeTextFile(tempFilePath, code);
-        const env= Deno.env.toObject();
-        const module = await import(tempFilePath);
-
-        return module.default.provide({
-            actors: {
-                stream:asyncEventGenerator,
-                batch:  asyncBatchEvents,
-                apiWorker: async ({ input }) => {
-                    if (!input?.code) return undefined;
-                    try {
-                        const worker = await newDenoHTTPWorker(input.code, {
-                            printOutput: true,
-                            runFlags: ["--allow-net"],
-                            port: parseInt(env.DENO_HTTP_WORKER_PORT || "8000")
-                        });
-                        return worker;
-                    } catch (error) {
-                        console.error("Failed to create API worker:", error);
-                        return undefined;
-                    }
-                },
-                aiElementStream: fromAIElementStream({
-                    model: azure('gpt-4o',{
-                        // baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
-                        // fetch: sapAIFetch,
-                    }),  
-                    temperature: 0.9
-                }),
-                aiStream: fromAIEventStream({
-                    model: azure('gpt-4o',{
-                        // baseURL: baseUrl(env.SAP_AI_API_URL, env.SAP_AI_DEPLOYMENT_ID),
-                        // fetch: sapAIFetch, 
-                    }),
-                    temperature: 0.9,
-                     
-                    
-                })
-            }
-        });
-    }
-
-
-}
