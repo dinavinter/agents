@@ -20,6 +20,9 @@ importers:
       ai:
         specifier: ^3.2.40
         version: 3.4.33(openai@4.76.3(encoding@0.1.13)(zod@3.24.1))(react@18.2.0)(sswr@2.1.0(svelte@5.14.1))(svelte@5.14.1)(vue@3.5.13(typescript@5.5.4))(zod@3.24.1)
+      deno-vm:
+        specifier: ^0.12.0
+        version: 0.12.0
       object-hash:
         specifier: ^3.0.0
         version: 3.0.0
@@ -3640,6 +3643,10 @@ packages:
   delegates@1.0.0:
     resolution: {integrity: sha512-bd2L678uiWATM6m5Z1VzNCErI3jiGzt6HGY8OVICs40JQq/HALfbyNJmp0UDakEY4pMMaN0Ly5om/B1VI/+xfQ==}
 
+  deno-vm@0.12.0:
+    resolution: {integrity: sha512-JcQroHIjemG7kwADvdW9mjVqSuCsTHyQbL8INwZFAch+kKNUvhWiDcBG3KBCSeIRoErW3MoU5/7riPyimzTFUg==}
+    engines: {node: '>= 12'}
+
   denque@2.1.0:
     resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
     engines: {node: '>=0.10'}
@@ -5972,6 +5979,18 @@ packages:
 
   ws@6.2.3:
     resolution: {integrity: sha512-jmTjYU0j60B+vHey6TfR3Z7RD61z/hmxBS3VMSGIrroOWXQEneK1zNuotOUrGyBHQj0yrpsLHPWtigEFd13ndA==}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@7.5.10:
+    resolution: {integrity: sha512-+dbF1tHwZpXcbOJdVOkzLDxZP1ailvSxM6ZweXTegylPny803bFhA+vqBYw4s31NSAk4S2Qz+AKXK9a4wkdjcQ==}
+    engines: {node: '>=8.3.0'}
     peerDependencies:
       bufferutil: ^4.0.1
       utf-8-validate: ^5.0.2
@@ -9009,6 +9028,14 @@ snapshots:
 
   delegates@1.0.0: {}
 
+  deno-vm@0.12.0:
+    dependencies:
+      base64-js: 1.5.1
+      ws: 7.5.10
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   denque@2.1.0:
     optional: true
 
@@ -11403,6 +11430,8 @@ snapshots:
     dependencies:
       async-limiter: 1.0.1
     optional: true
+
+  ws@7.5.10: {}
 
   ws@8.18.0: {}
 

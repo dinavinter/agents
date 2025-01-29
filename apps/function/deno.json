@@ -7,20 +7,28 @@
   },
   "imports": {
     "@ai-sdk/provider": "https://esm.sh/@ai-sdk/provider",
-    "@cxai/stream": "https://esm.sh/@cxai/stream@1.0.8",
+    "@cxai/stream": "https://esm.sh/@cxai/stream@1.0.11",
     "@std/assert": "jsr:@std/assert@1",
+    "@types/node": "npm:@types/node@^22.10.10",
     "@vento/vento": "jsr:@vento/vento@^1.12.15",
     "deno-http-worker": "npm:deno-http-worker@^0.0.16",
+    "deno-vm": "npm:deno-vm@^0.12.0",
     "it-pushable": "https://esm.sh/it-pushable@^3.2.3",
+    "jest": "npm:jest@^29.7.0",
     "xstate": "https://esm.sh/xstate@^5.19.0",
     "y-partykit": "https://esm.sh/y-partykit@^0.0.32",
     "yjs": "https://esm.sh/yjs@^13.6.20",
     "https://esm.sh/lib0@0.2.99/denonex": "https://esm.sh/lib0@0.2.99/time?target=es2022",
     "zod": "npm:zod@^3.24.1"
   },
+  "lint": {
+
+  },
   "compilerOptions": {
     "checkJs": true,
     "strictNullChecks": true,
+    "noImplicitAny": false,
+
 
     "lib": [
       "dom",

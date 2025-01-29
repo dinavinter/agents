@@ -14,6 +14,7 @@
     "@ai-sdk/openai": "^0.0.40",
     "@xstate/graph": "^2.0.0",
     "ai": "^3.2.40",
+    "deno-vm": "^0.12.0",
     "object-hash": "^3.0.0",
     "xstate": "^5.16.0",
     "@statelyai/agent": "^1.1.3"
