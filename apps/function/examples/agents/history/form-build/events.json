@@ -1,0 +1,2459 @@
+{
+    "id": "agv:0abd5ded89",
+    "collection": null,
+    "loaded": false,
+    "synced": false,
+    "should_load": true,
+    "meta": null,
+    "rev": "0abd5ded89",
+    "emitted": [
+        {
+          "timestamp": 1737828474715,
+          "offset": 0,
+          "data": "\u003Cmain class=\"mx-auto bg-slate-100 min-h-screen p-6\"\u003E\n                 \u003Cheader class=\"sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-center p-4 text-lg font-medium shadow\"\u003E\n                     Form Builder  \n                 \u003C/header\u003E\n                \u003Cdiv class=\"flex flex-col items-center justify-center gap-6\"  sse-swap=\"content\" hx-swap=\"beforeend\" \u003E\n                      \u003Cform  class=\"isolate flex flex-col gap-4 w-full p-4\"\u003E\n                        \u003Cdiv class=\"flex gap-2\" sse-swap=\"request\" hx-swap=\"innerHTML transition:true swap:1s \"\u003E\n                            \u003Cinput type=\"text\" \n                                   autocomplete=\"on\"\n                                   list=\"screen\"\n                                   class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                                   name=\"request\"\n                                   placeholder=\"What can we build for you?\" /\u003E\n                            \u003Cbutton class=\"px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all\"\n                                    type=\"submit\"\n                                    hx-post=\"events/request\" \n                                    hx-target=\"this\"\u003ESend\u003C/button\u003E\n                        \u003C/div\u003E\n                        \u003Cdatalist id=\"screen\"\u003E\n                            \u003Coption value=\"Register with password\"\u003E\u003C/option\u003E\n                            \u003Coption value=\"Implement a registration system for events that collects attendee information on sessions of interest, dietary preferences.\"\u003E\u003C/option\u003E\n                            \u003Coption value=\"Create a quick registration for checkout process for an e-commerce platform that collects user preferences, and shipping details.\"\u003E\u003C/option\u003E\n                            \u003Coption value=\"Login with password and captcha\"\u003E\u003C/option\u003E\n                        \u003C/datalist\u003E\n                    \u003C/form\u003E\n                \u003C/div\u003E\n            \u003C/main\u003E",
+          "type": "message"
+        },
+        {
+          "timestamp": 1737828506837,
+          "offset": 32122,
+          "data": "\u003Cdiv class=\"flex gap-2 w-full p-4\"\u003E\n                               \u003Cinput type=\"text\"\n                               class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                               name=\"request\"\n                               disabled\n                               value=\"Register with password\" /\u003E\n                             \u003C/div\u003E ",
+          "type": "request",
+          "defer": 250
+        },
+        {
+          "timestamp": 1737828506837,
+          "offset": 32122,
+          "data": "8:08:26 PM",
+          "type": "@request.status",
+          "defer": 500
+        },
+        {
+          "timestamp": 1737828506837,
+          "offset": 32122,
+          "type": "content",
+          "data": "\u003Cdiv class=\"fixed sticky top-0 flex items-center space-x-2 rtl:space-x-reverse\"\u003E\n                \u003Cspan class=\"text-lg font-semibold text-gray-900 dark:text-white\" sse-swap=\"@assistant.title\" hx-swap=\"innerHTML transition:true\"\u003E\u003C/span\u003E\n                \u003Cspan class=\"text-sm font-normal text-gray-500 dark:text-gray-400\" sse-swap=\"@assistant.status\" hx-swap=\"innerHTML transition:true\"\u003E\u003C/span\u003E\n            \u003C/div\u003E"
+        },
+        {
+          "timestamp": 1737828506837,
+          "offset": 32122,
+          "data": "\u003Cdiv shadowDom sse-swap=\"screens\" class=\"isolate transition-all w-full h-full grid grid-cols-3  gap-4 scroll-smooth\" hx-swap=\"beforeend transition:true swap:1s \" \u003E\n                                    \u003Cstyle \n                                        sse-swap=\"@css.text-delta\" \n                                        hx-swap=\"beforeend\"\u003E\n                                    \u003C/style\u003E\n                          \u003C/div\u003E",
+          "type": "content",
+          "defer": 20
+        },
+        {
+          "timestamp": 1737828506837,
+          "offset": 32122,
+          "data": "Drafting Forms &#128396;",
+          "type": "@assistant.title"
+        },
+        {
+          "timestamp": 1737828509156,
+          "offset": 34441,
+          "type": "screens",
+          "data": "\u003Cdiv class=\"grid grid-rows-subgrid row-span-4 divide-y bg-white rounded-lg shadow-lg border-slate-100 border-2 p-2\" sse-swap=\"@screen.register_step1\" hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                       \u003Cspan class=\"bg-slate-50 font-semibold text-center antialiased text-slate-500 text-balance  align-bottom align-text-bottom\"\u003EUser Registration - Step 1 (register_step1)\u003C/span\u003E \n                                   \u003C/div\u003E \n                                ",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828509157,
+          "offset": 34442,
+          "type": "@screen.register_step1",
+          "data": "\u003Cdiv class=\"pt-4 px-2 isolate transition-all\"\u003E\n                                    \u003Cform id=\"register_step1\"  \u003E\n                                        \u003Cfieldset sse-swap=\"@screen.register_step1.input\"\n                                                hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                        \u003C/fieldset\u003E\n                                        \u003Cstyle\n                                                sse-swap=\"@css.register_step1\"\n                                                hx-swap=\"beforeend transition:false\"\u003E\n                                        \u003C/style\u003E\n                                    \u003C/form\u003E\n                                \u003C/div\u003E",
+          "defer": 500
+        },
+        {
+          "timestamp": 1737828509157,
+          "offset": 34442,
+          "type": "@screen.register_step1",
+          "data": "\u003Carticle class=\"pt-2 w-full text-pretty font-thin line-clamp-2 \"\u003E\n                                    \u003Cp class=\" line-clamp-2 text-slate-500\"\u003E\u003Cspan class=\"font-semibold inline\"\u003ERequirements:\u003C/span\u003E\n                                        \u003Cspan class=\"inline antialiased whitespace-normal\"\u003EThe first step in the user registration process. This screen collects basic user information such as First Name, Last Name, and Email Address. It introduces the user to the registration process and sets expectations for the next steps..\u003C/span\u003E\u003C/p\u003E\n                                \u003C/article\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828509157,
+          "offset": 34442,
+          "type": "@screen.register_step1",
+          "data": "\u003Cpre class=\"bg-slate-50 text-slate-500  antialiased  text-balance whitespace-normal text-end\"\u003E \n                                    \u003Cp  class=\"inline text-end\" \n                                        sse-swap=\"@assistant.title,@assistant.register_step1.status\"\n                                        hx-swap=\"innerHTML transition:true\" \u003E\u003Eregister_step1\u003C/p\u003E\u003C/pre\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828509157,
+          "offset": 34442,
+          "type": "@assistant.status",
+          "data": "\u003Ccode\u003Eregister_step1\u003C/code\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828510972,
+          "offset": 36257,
+          "type": "screens",
+          "data": "\u003Cdiv class=\"grid grid-rows-subgrid row-span-4 divide-y bg-white rounded-lg shadow-lg border-slate-100 border-2 p-2\" sse-swap=\"@screen.register_step2\" hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                       \u003Cspan class=\"bg-slate-50 font-semibold text-center antialiased text-slate-500 text-balance  align-bottom align-text-bottom\"\u003EUser Registration - Step 2 (register_step2)\u003C/span\u003E \n                                   \u003C/div\u003E \n                                ",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828510972,
+          "offset": 36257,
+          "type": "@screen.register_step2",
+          "data": "\u003Cdiv class=\"pt-4 px-2 isolate transition-all\"\u003E\n                                    \u003Cform id=\"register_step2\"  \u003E\n                                        \u003Cfieldset sse-swap=\"@screen.register_step2.input\"\n                                                hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                        \u003C/fieldset\u003E\n                                        \u003Cstyle\n                                                sse-swap=\"@css.register_step2\"\n                                                hx-swap=\"beforeend transition:false\"\u003E\n                                        \u003C/style\u003E\n                                    \u003C/form\u003E\n                                \u003C/div\u003E",
+          "defer": 500
+        },
+        {
+          "timestamp": 1737828510972,
+          "offset": 36257,
+          "type": "@screen.register_step2",
+          "data": "\u003Carticle class=\"pt-2 w-full text-pretty font-thin line-clamp-2 \"\u003E\n                                    \u003Cp class=\" line-clamp-2 text-slate-500\"\u003E\u003Cspan class=\"font-semibold inline\"\u003ERequirements:\u003C/span\u003E\n                                        \u003Cspan class=\"inline antialiased whitespace-normal\"\u003EThe second step in the user registration process. This screen is designed to securely collect the user's desired password. It includes fields for Password and Confirm Password, along with password strength indicators and tips for creating a strong password..\u003C/span\u003E\u003C/p\u003E\n                                \u003C/article\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828510972,
+          "offset": 36257,
+          "type": "@screen.register_step2",
+          "data": "\u003Cpre class=\"bg-slate-50 text-slate-500  antialiased  text-balance whitespace-normal text-end\"\u003E \n                                    \u003Cp  class=\"inline text-end\" \n                                        sse-swap=\"@assistant.title,@assistant.register_step2.status\"\n                                        hx-swap=\"innerHTML transition:true\" \u003E\u003Eregister_step2\u003C/p\u003E\u003C/pre\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828510972,
+          "offset": 36257,
+          "type": "@assistant.status",
+          "data": "\u003Ccode\u003Eregister_step2\u003C/code\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828512926,
+          "offset": 38211,
+          "type": "screens",
+          "data": "\u003Cdiv class=\"grid grid-rows-subgrid row-span-4 divide-y bg-white rounded-lg shadow-lg border-slate-100 border-2 p-2\" sse-swap=\"@screen.register_step3\" hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                       \u003Cspan class=\"bg-slate-50 font-semibold text-center antialiased text-slate-500 text-balance  align-bottom align-text-bottom\"\u003EUser Registration - Step 3 (register_step3)\u003C/span\u003E \n                                   \u003C/div\u003E \n                                ",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828512926,
+          "offset": 38211,
+          "type": "@screen.register_step3",
+          "data": "\u003Cdiv class=\"pt-4 px-2 isolate transition-all\"\u003E\n                                    \u003Cform id=\"register_step3\"  \u003E\n                                        \u003Cfieldset sse-swap=\"@screen.register_step3.input\"\n                                                hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                        \u003C/fieldset\u003E\n                                        \u003Cstyle\n                                                sse-swap=\"@css.register_step3\"\n                                                hx-swap=\"beforeend transition:false\"\u003E\n                                        \u003C/style\u003E\n                                    \u003C/form\u003E\n                                \u003C/div\u003E",
+          "defer": 500
+        },
+        {
+          "timestamp": 1737828512926,
+          "offset": 38211,
+          "type": "@screen.register_step3",
+          "data": "\u003Carticle class=\"pt-2 w-full text-pretty font-thin line-clamp-2 \"\u003E\n                                    \u003Cp class=\" line-clamp-2 text-slate-500\"\u003E\u003Cspan class=\"font-semibold inline\"\u003ERequirements:\u003C/span\u003E\n                                        \u003Cspan class=\"inline antialiased whitespace-normal\"\u003EThe final step in the user registration process. This screen might include additional optional information, such as Phone Number, Profile Picture, or Marketing Preferences, allowing the user to tailor their experience right from the start..\u003C/span\u003E\u003C/p\u003E\n                                \u003C/article\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828512926,
+          "offset": 38211,
+          "type": "@screen.register_step3",
+          "data": "\u003Cpre class=\"bg-slate-50 text-slate-500  antialiased  text-balance whitespace-normal text-end\"\u003E \n                                    \u003Cp  class=\"inline text-end\" \n                                        sse-swap=\"@assistant.title,@assistant.register_step3.status\"\n                                        hx-swap=\"innerHTML transition:true\" \u003E\u003Eregister_step3\u003C/p\u003E\u003C/pre\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828512926,
+          "offset": 38211,
+          "type": "@assistant.status",
+          "data": "\u003Ccode\u003Eregister_step3\u003C/code\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828514445,
+          "offset": 39730,
+          "type": "screens",
+          "data": "\u003Cdiv class=\"grid grid-rows-subgrid row-span-4 divide-y bg-white rounded-lg shadow-lg border-slate-100 border-2 p-2\" sse-swap=\"@screen.registration_confirmation\" hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                       \u003Cspan class=\"bg-slate-50 font-semibold text-center antialiased text-slate-500 text-balance  align-bottom align-text-bottom\"\u003ERegistration Confirmation (registration_confirmation)\u003C/span\u003E \n                                   \u003C/div\u003E \n                                ",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828514445,
+          "offset": 39730,
+          "type": "@screen.registration_confirmation",
+          "data": "\u003Cdiv class=\"pt-4 px-2 isolate transition-all\"\u003E\n                                    \u003Cform id=\"registration_confirmation\"  \u003E\n                                        \u003Cfieldset sse-swap=\"@screen.registration_confirmation.input\"\n                                                hx-swap=\"beforeend transition:true swap:1s\"\u003E\n                                        \u003C/fieldset\u003E\n                                        \u003Cstyle\n                                                sse-swap=\"@css.registration_confirmation\"\n                                                hx-swap=\"beforeend transition:false\"\u003E\n                                        \u003C/style\u003E\n                                    \u003C/form\u003E\n                                \u003C/div\u003E",
+          "defer": 500
+        },
+        {
+          "timestamp": 1737828514445,
+          "offset": 39730,
+          "type": "@screen.registration_confirmation",
+          "data": "\u003Carticle class=\"pt-2 w-full text-pretty font-thin line-clamp-2 \"\u003E\n                                    \u003Cp class=\" line-clamp-2 text-slate-500\"\u003E\u003Cspan class=\"font-semibold inline\"\u003ERequirements:\u003C/span\u003E\n                                        \u003Cspan class=\"inline antialiased whitespace-normal\"\u003EThis screen confirms that the user has successfully registered. It includes a welcome message and instructions for verifying their email address or next steps they can take within the application..\u003C/span\u003E\u003C/p\u003E\n                                \u003C/article\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828514445,
+          "offset": 39730,
+          "type": "@screen.registration_confirmation",
+          "data": "\u003Cpre class=\"bg-slate-50 text-slate-500  antialiased  text-balance whitespace-normal text-end\"\u003E \n                                    \u003Cp  class=\"inline text-end\" \n                                        sse-swap=\"@assistant.title,@assistant.registration_confirmation.status\"\n                                        hx-swap=\"innerHTML transition:true\" \u003E\u003Eregistration_confirmation\u003C/p\u003E\u003C/pre\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828514445,
+          "offset": 39730,
+          "type": "@assistant.status",
+          "data": "\u003Ccode\u003Eregistration_confirmation\u003C/code\u003E",
+          "defer": 10
+        },
+        {
+          "timestamp": 1737828514480,
+          "offset": 39765,
+          "data": "Build &#128221;",
+          "type": "@assistant.title"
+        },
+        {
+          "timestamp": 1737828515035,
+          "offset": 40320,
+          "event": "@screen.register_step1.input",
+          "type": "field",
+          "data": "\u003Cinput type=\"text\" name=\"first_name\" placeholder=\"First Name\" required /\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515035,
+          "offset": 40320,
+          "event": "@assistant.status",
+          "type": "field",
+          "data": "\u003Ccode class=\"text-1Xl\"\u003Eregister_step1\u003Ccode\u003E &#10133;: \u003Ccode\u003Efirst_name\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515035,
+          "offset": 40320,
+          "event": "@assistant.register_step1.status",
+          "type": "field",
+          "data": "&#10133;: \u003Ccode\u003Efirst_name\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515399,
+          "offset": 40684,
+          "event": "@screen.register_step1.input",
+          "type": "field",
+          "data": "\u003Cinput type=\"text\" name=\"last_name\" placeholder=\"Last Name\" required /\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515399,
+          "offset": 40684,
+          "event": "@assistant.status",
+          "type": "field",
+          "data": "\u003Ccode class=\"text-1Xl\"\u003Eregister_step1\u003Ccode\u003E &#10133;: \u003Ccode\u003Elast_name\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515399,
+          "offset": 40684,
+          "event": "@assistant.register_step1.status",
+          "type": "field",
+          "data": "&#10133;: \u003Ccode\u003Elast_name\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515744,
+          "offset": 41029,
+          "event": "@screen.register_step1.input",
+          "type": "field",
+          "data": "\u003Cinput type=\"email\" name=\"email\" placeholder=\"Email Address\" required /\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515744,
+          "offset": 41029,
+          "event": "@assistant.status",
+          "type": "field",
+          "data": "\u003Ccode class=\"text-1Xl\"\u003Eregister_step1\u003Ccode\u003E &#10133;: \u003Ccode\u003Eemail\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515744,
+          "offset": 41029,
+          "event": "@assistant.register_step1.status",
+          "type": "field",
+          "data": "&#10133;: \u003Ccode\u003Eemail\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515990,
+          "offset": 41275,
+          "event": "@screen.register_step1.input",
+          "type": "field",
+          "data": "\u003Cbutton type=\"submit\"\u003ENext\u003C/button\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515990,
+          "offset": 41275,
+          "event": "@assistant.status",
+          "type": "field",
+          "data": "\u003Ccode class=\"text-1Xl\"\u003Eregister_step1\u003Ccode\u003E &#10133;: \u003Ccode\u003Esubmit\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828515990,
+          "offset": 41275,
+          "event": "@assistant.register_step1.status",
+          "type": "field",
+          "data": "&#10133;: \u003Ccode\u003Esubmit\u003C/code\u003E",
+          "defer": 300
+        },
+        {
+          "timestamp": 1737828516004,
+          "offset": 41289,
+          "data": "\u003Ccode\u003EProccessing css in \u003Ci\u003Eglobal\u003C/i\u003E scope...\u003C/code\u003E",
+          "type": "@assistant.status"
+        },
+        {
+          "timestamp": 1737828516004,
+          "offset": 41289,
+          "data": "Applying styles &#128396;",
+          "type": "@assistant.title"
+        },
+        {
+          "timestamp": 1737828516561,
+          "offset": 41846,
+          "type": "@css.text-delta",
+          "data": "```"
+        },
+        {
+          "timestamp": 1737828516562,
+          "offset": 41847,
+          "type": "@css.text-delta",
+          "data": "css"
+        },
+        {
+          "timestamp": 1737828516564,
+          "offset": 41849,
+          "type": "@css.text-delta",
+          "data": "\n"
+        },
+        {
+          "timestamp": 1737828516564,
+          "offset": 41849,
+          "type": "@css.text-delta",
+          "data": "form"
+        },
+        {
+          "timestamp": 1737828516566,
+          "offset": 41851,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828516567,
+          "offset": 41852,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516567,
+          "offset": 41852,
+          "type": "@css.text-delta",
+          "data": " display"
+        },
+        {
+          "timestamp": 1737828516568,
+          "offset": 41853,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516568,
+          "offset": 41853,
+          "type": "@css.text-delta",
+          "data": " flex"
+        },
+        {
+          "timestamp": 1737828516569,
+          "offset": 41854,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516570,
+          "offset": 41855,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516570,
+          "offset": 41855,
+          "type": "@css.text-delta",
+          "data": " flex"
+        },
+        {
+          "timestamp": 1737828516571,
+          "offset": 41856,
+          "type": "@css.text-delta",
+          "data": "-direction"
+        },
+        {
+          "timestamp": 1737828516571,
+          "offset": 41856,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516572,
+          "offset": 41857,
+          "type": "@css.text-delta",
+          "data": " column"
+        },
+        {
+          "timestamp": 1737828516572,
+          "offset": 41857,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516572,
+          "offset": 41857,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516573,
+          "offset": 41858,
+          "type": "@css.text-delta",
+          "data": " gap"
+        },
+        {
+          "timestamp": 1737828516574,
+          "offset": 41859,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516574,
+          "offset": 41859,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516574,
+          "offset": 41859,
+          "type": "@css.text-delta",
+          "data": "16"
+        },
+        {
+          "timestamp": 1737828516574,
+          "offset": 41859,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828516575,
+          "offset": 41860,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516575,
+          "offset": 41860,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516575,
+          "offset": 41860,
+          "type": "@css.text-delta",
+          "data": " background"
+        },
+        {
+          "timestamp": 1737828516576,
+          "offset": 41861,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516576,
+          "offset": 41861,
+          "type": "@css.text-delta",
+          "data": " #"
+        },
+        {
+          "timestamp": 1737828516577,
+          "offset": 41862,
+          "type": "@css.text-delta",
+          "data": "f"
+        },
+        {
+          "timestamp": 1737828516577,
+          "offset": 41862,
+          "type": "@css.text-delta",
+          "data": "7"
+        },
+        {
+          "timestamp": 1737828516577,
+          "offset": 41862,
+          "type": "@css.text-delta",
+          "data": "f"
+        },
+        {
+          "timestamp": 1737828516577,
+          "offset": 41862,
+          "type": "@css.text-delta",
+          "data": "7"
+        },
+        {
+          "timestamp": 1737828516578,
+          "offset": 41863,
+          "type": "@css.text-delta",
+          "data": "f"
+        },
+        {
+          "timestamp": 1737828516578,
+          "offset": 41863,
+          "type": "@css.text-delta",
+          "data": "7"
+        },
+        {
+          "timestamp": 1737828516578,
+          "offset": 41863,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516579,
+          "offset": 41864,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516579,
+          "offset": 41864,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828516581,
+          "offset": 41866,
+          "type": "@css.text-delta",
+          "data": "-radius"
+        },
+        {
+          "timestamp": 1737828516581,
+          "offset": 41866,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516582,
+          "offset": 41867,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516582,
+          "offset": 41867,
+          "type": "@css.text-delta",
+          "data": "8"
+        },
+        {
+          "timestamp": 1737828516582,
+          "offset": 41867,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828516583,
+          "offset": 41868,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516583,
+          "offset": 41868,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516584,
+          "offset": 41869,
+          "type": "@css.text-delta",
+          "data": " padding"
+        },
+        {
+          "timestamp": 1737828516584,
+          "offset": 41869,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516584,
+          "offset": 41869,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516584,
+          "offset": 41869,
+          "type": "@css.text-delta",
+          "data": "20"
+        },
+        {
+          "timestamp": 1737828516585,
+          "offset": 41870,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828516585,
+          "offset": 41870,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516585,
+          "offset": 41870,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516585,
+          "offset": 41870,
+          "type": "@css.text-delta",
+          "data": " box"
+        },
+        {
+          "timestamp": 1737828516933,
+          "offset": 42218,
+          "type": "@css.text-delta",
+          "data": "-shadow"
+        },
+        {
+          "timestamp": 1737828516933,
+          "offset": 42218,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516934,
+          "offset": 42219,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516935,
+          "offset": 42220,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828516935,
+          "offset": 42220,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516935,
+          "offset": 42220,
+          "type": "@css.text-delta",
+          "data": "4"
+        },
+        {
+          "timestamp": 1737828516936,
+          "offset": 42221,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828516936,
+          "offset": 42221,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516937,
+          "offset": 42222,
+          "type": "@css.text-delta",
+          "data": "8"
+        },
+        {
+          "timestamp": 1737828516938,
+          "offset": 42223,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828516938,
+          "offset": 42223,
+          "type": "@css.text-delta",
+          "data": " rgba"
+        },
+        {
+          "timestamp": 1737828516939,
+          "offset": 42224,
+          "type": "@css.text-delta",
+          "data": "("
+        },
+        {
+          "timestamp": 1737828516939,
+          "offset": 42224,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828516939,
+          "offset": 42224,
+          "type": "@css.text-delta",
+          "data": ","
+        },
+        {
+          "timestamp": 1737828516940,
+          "offset": 42225,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516940,
+          "offset": 42225,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828516941,
+          "offset": 42226,
+          "type": "@css.text-delta",
+          "data": ","
+        },
+        {
+          "timestamp": 1737828516941,
+          "offset": 42226,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516941,
+          "offset": 42226,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828516942,
+          "offset": 42227,
+          "type": "@css.text-delta",
+          "data": ","
+        },
+        {
+          "timestamp": 1737828516942,
+          "offset": 42227,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516943,
+          "offset": 42228,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828516943,
+          "offset": 42228,
+          "type": "@css.text-delta",
+          "data": "."
+        },
+        {
+          "timestamp": 1737828516943,
+          "offset": 42228,
+          "type": "@css.text-delta",
+          "data": "1"
+        },
+        {
+          "timestamp": 1737828516944,
+          "offset": 42229,
+          "type": "@css.text-delta",
+          "data": ");\n"
+        },
+        {
+          "timestamp": 1737828516944,
+          "offset": 42229,
+          "type": "@css.text-delta",
+          "data": "}\n\n"
+        },
+        {
+          "timestamp": 1737828516945,
+          "offset": 42230,
+          "type": "@css.text-delta",
+          "data": "fieldset"
+        },
+        {
+          "timestamp": 1737828516945,
+          "offset": 42230,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828516945,
+          "offset": 42230,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516946,
+          "offset": 42231,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828516946,
+          "offset": 42231,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516946,
+          "offset": 42231,
+          "type": "@css.text-delta",
+          "data": " none"
+        },
+        {
+          "timestamp": 1737828516947,
+          "offset": 42232,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516947,
+          "offset": 42232,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516947,
+          "offset": 42232,
+          "type": "@css.text-delta",
+          "data": " padding"
+        },
+        {
+          "timestamp": 1737828516948,
+          "offset": 42233,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516948,
+          "offset": 42233,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516948,
+          "offset": 42233,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828516949,
+          "offset": 42234,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516949,
+          "offset": 42234,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828516949,
+          "offset": 42234,
+          "type": "@css.text-delta",
+          "data": " margin"
+        },
+        {
+          "timestamp": 1737828516949,
+          "offset": 42234,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828516950,
+          "offset": 42235,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828516950,
+          "offset": 42235,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828516950,
+          "offset": 42235,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828516950,
+          "offset": 42235,
+          "type": "@css.text-delta",
+          "data": "}\n\n"
+        },
+        {
+          "timestamp": 1737828516951,
+          "offset": 42236,
+          "type": "@css.text-delta",
+          "data": "input"
+        },
+        {
+          "timestamp": 1737828516951,
+          "offset": 42236,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828516951,
+          "offset": 42236,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828516952,
+          "offset": 42237,
+          "type": "@css.text-delta",
+          "data": "text"
+        },
+        {
+          "timestamp": 1737828516952,
+          "offset": 42237,
+          "type": "@css.text-delta",
+          "data": "\"],\n"
+        },
+        {
+          "timestamp": 1737828516952,
+          "offset": 42237,
+          "type": "@css.text-delta",
+          "data": "input"
+        },
+        {
+          "timestamp": 1737828516953,
+          "offset": 42238,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828516953,
+          "offset": 42238,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828516953,
+          "offset": 42238,
+          "type": "@css.text-delta",
+          "data": "email"
+        },
+        {
+          "timestamp": 1737828516954,
+          "offset": 42239,
+          "type": "@css.text-delta",
+          "data": "\"],\n"
+        },
+        {
+          "timestamp": 1737828516954,
+          "offset": 42239,
+          "type": "@css.text-delta",
+          "data": "input"
+        },
+        {
+          "timestamp": 1737828517316,
+          "offset": 42601,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828517317,
+          "offset": 42602,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828517317,
+          "offset": 42602,
+          "type": "@css.text-delta",
+          "data": "password"
+        },
+        {
+          "timestamp": 1737828517318,
+          "offset": 42603,
+          "type": "@css.text-delta",
+          "data": "\"]"
+        },
+        {
+          "timestamp": 1737828517319,
+          "offset": 42604,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828517319,
+          "offset": 42604,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517320,
+          "offset": 42605,
+          "type": "@css.text-delta",
+          "data": " width"
+        },
+        {
+          "timestamp": 1737828517320,
+          "offset": 42605,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517321,
+          "offset": 42606,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828517321,
+          "offset": 42606,
+          "type": "@css.text-delta",
+          "data": "100"
+        },
+        {
+          "timestamp": 1737828517321,
+          "offset": 42606,
+          "type": "@css.text-delta",
+          "data": "%;\n"
+        },
+        {
+          "timestamp": 1737828517322,
+          "offset": 42607,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517322,
+          "offset": 42607,
+          "type": "@css.text-delta",
+          "data": " padding"
+        },
+        {
+          "timestamp": 1737828517322,
+          "offset": 42607,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517323,
+          "offset": 42608,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828517323,
+          "offset": 42608,
+          "type": "@css.text-delta",
+          "data": "12"
+        },
+        {
+          "timestamp": 1737828517323,
+          "offset": 42608,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828517324,
+          "offset": 42609,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828517324,
+          "offset": 42609,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517325,
+          "offset": 42610,
+          "type": "@css.text-delta",
+          "data": " margin"
+        },
+        {
+          "timestamp": 1737828517325,
+          "offset": 42610,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517325,
+          "offset": 42610,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828517325,
+          "offset": 42610,
+          "type": "@css.text-delta",
+          "data": "8"
+        },
+        {
+          "timestamp": 1737828517326,
+          "offset": 42611,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828517326,
+          "offset": 42611,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828517326,
+          "offset": 42611,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828517327,
+          "offset": 42612,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828517327,
+          "offset": 42612,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517327,
+          "offset": 42612,
+          "type": "@css.text-delta",
+          "data": " box"
+        },
+        {
+          "timestamp": 1737828517327,
+          "offset": 42612,
+          "type": "@css.text-delta",
+          "data": "-sizing"
+        },
+        {
+          "timestamp": 1737828517328,
+          "offset": 42613,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517328,
+          "offset": 42613,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828517328,
+          "offset": 42613,
+          "type": "@css.text-delta",
+          "data": "-box"
+        },
+        {
+          "timestamp": 1737828517329,
+          "offset": 42614,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828517329,
+          "offset": 42614,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517329,
+          "offset": 42614,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828517330,
+          "offset": 42615,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517330,
+          "offset": 42615,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828517330,
+          "offset": 42615,
+          "type": "@css.text-delta",
+          "data": "2"
+        },
+        {
+          "timestamp": 1737828517330,
+          "offset": 42615,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828517330,
+          "offset": 42615,
+          "type": "@css.text-delta",
+          "data": " solid"
+        },
+        {
+          "timestamp": 1737828517331,
+          "offset": 42616,
+          "type": "@css.text-delta",
+          "data": " #"
+        },
+        {
+          "timestamp": 1737828517331,
+          "offset": 42616,
+          "type": "@css.text-delta",
+          "data": "ccc"
+        },
+        {
+          "timestamp": 1737828517331,
+          "offset": 42616,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828517331,
+          "offset": 42616,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517331,
+          "offset": 42616,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828517332,
+          "offset": 42617,
+          "type": "@css.text-delta",
+          "data": "-radius"
+        },
+        {
+          "timestamp": 1737828517332,
+          "offset": 42617,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517332,
+          "offset": 42617,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828517782,
+          "offset": 43067,
+          "type": "@css.text-delta",
+          "data": "4"
+        },
+        {
+          "timestamp": 1737828517782,
+          "offset": 43067,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828517782,
+          "offset": 43067,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828517783,
+          "offset": 43068,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517783,
+          "offset": 43068,
+          "type": "@css.text-delta",
+          "data": " transition"
+        },
+        {
+          "timestamp": 1737828517784,
+          "offset": 43069,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517784,
+          "offset": 43069,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828517785,
+          "offset": 43070,
+          "type": "@css.text-delta",
+          "data": "-color"
+        },
+        {
+          "timestamp": 1737828517785,
+          "offset": 43070,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828517786,
+          "offset": 43071,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828517786,
+          "offset": 43071,
+          "type": "@css.text-delta",
+          "data": "."
+        },
+        {
+          "timestamp": 1737828517786,
+          "offset": 43071,
+          "type": "@css.text-delta",
+          "data": "4"
+        },
+        {
+          "timestamp": 1737828517786,
+          "offset": 43071,
+          "type": "@css.text-delta",
+          "data": "s"
+        },
+        {
+          "timestamp": 1737828517787,
+          "offset": 43072,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828517787,
+          "offset": 43072,
+          "type": "@css.text-delta",
+          "data": "}\n\n"
+        },
+        {
+          "timestamp": 1737828517787,
+          "offset": 43072,
+          "type": "@css.text-delta",
+          "data": "input"
+        },
+        {
+          "timestamp": 1737828517789,
+          "offset": 43074,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828517790,
+          "offset": 43075,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828517790,
+          "offset": 43075,
+          "type": "@css.text-delta",
+          "data": "text"
+        },
+        {
+          "timestamp": 1737828517790,
+          "offset": 43075,
+          "type": "@css.text-delta",
+          "data": "\"]:"
+        },
+        {
+          "timestamp": 1737828517790,
+          "offset": 43075,
+          "type": "@css.text-delta",
+          "data": "focus"
+        },
+        {
+          "timestamp": 1737828517791,
+          "offset": 43076,
+          "type": "@css.text-delta",
+          "data": ",\n"
+        },
+        {
+          "timestamp": 1737828517791,
+          "offset": 43076,
+          "type": "@css.text-delta",
+          "data": "input"
+        },
+        {
+          "timestamp": 1737828517792,
+          "offset": 43077,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828517792,
+          "offset": 43077,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828517793,
+          "offset": 43078,
+          "type": "@css.text-delta",
+          "data": "email"
+        },
+        {
+          "timestamp": 1737828517793,
+          "offset": 43078,
+          "type": "@css.text-delta",
+          "data": "\"]:"
+        },
+        {
+          "timestamp": 1737828517793,
+          "offset": 43078,
+          "type": "@css.text-delta",
+          "data": "focus"
+        },
+        {
+          "timestamp": 1737828517793,
+          "offset": 43078,
+          "type": "@css.text-delta",
+          "data": ",\n"
+        },
+        {
+          "timestamp": 1737828517794,
+          "offset": 43079,
+          "type": "@css.text-delta",
+          "data": "input"
+        },
+        {
+          "timestamp": 1737828517794,
+          "offset": 43079,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828517794,
+          "offset": 43079,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828517794,
+          "offset": 43079,
+          "type": "@css.text-delta",
+          "data": "password"
+        },
+        {
+          "timestamp": 1737828517795,
+          "offset": 43080,
+          "type": "@css.text-delta",
+          "data": "\"]:"
+        },
+        {
+          "timestamp": 1737828517795,
+          "offset": 43080,
+          "type": "@css.text-delta",
+          "data": "focus"
+        },
+        {
+          "timestamp": 1737828517795,
+          "offset": 43080,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828517795,
+          "offset": 43080,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828517795,
+          "offset": 43080,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828517796,
+          "offset": 43081,
+          "type": "@css.text-delta",
+          "data": "-color"
+        },
+        {
+          "timestamp": 1737828517796,
+          "offset": 43081,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828517797,
+          "offset": 43082,
+          "type": "@css.text-delta",
+          "data": " #"
+        },
+        {
+          "timestamp": 1737828517797,
+          "offset": 43082,
+          "type": "@css.text-delta",
+          "data": "5"
+        },
+        {
+          "timestamp": 1737828517797,
+          "offset": 43082,
+          "type": "@css.text-delta",
+          "data": "cb"
+        },
+        {
+          "timestamp": 1737828517797,
+          "offset": 43082,
+          "type": "@css.text-delta",
+          "data": "85"
+        },
+        {
+          "timestamp": 1737828518141,
+          "offset": 43426,
+          "type": "@css.text-delta",
+          "data": "c"
+        },
+        {
+          "timestamp": 1737828518142,
+          "offset": 43427,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518142,
+          "offset": 43427,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518143,
+          "offset": 43428,
+          "type": "@css.text-delta",
+          "data": " outline"
+        },
+        {
+          "timestamp": 1737828518143,
+          "offset": 43428,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518143,
+          "offset": 43428,
+          "type": "@css.text-delta",
+          "data": " none"
+        },
+        {
+          "timestamp": 1737828518144,
+          "offset": 43429,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518144,
+          "offset": 43429,
+          "type": "@css.text-delta",
+          "data": "}\n\n"
+        },
+        {
+          "timestamp": 1737828518145,
+          "offset": 43430,
+          "type": "@css.text-delta",
+          "data": "button"
+        },
+        {
+          "timestamp": 1737828518145,
+          "offset": 43430,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828518146,
+          "offset": 43431,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518146,
+          "offset": 43431,
+          "type": "@css.text-delta",
+          "data": " padding"
+        },
+        {
+          "timestamp": 1737828518148,
+          "offset": 43433,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518149,
+          "offset": 43434,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828518149,
+          "offset": 43434,
+          "type": "@css.text-delta",
+          "data": "12"
+        },
+        {
+          "timestamp": 1737828518149,
+          "offset": 43434,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828518150,
+          "offset": 43435,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518150,
+          "offset": 43435,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518150,
+          "offset": 43435,
+          "type": "@css.text-delta",
+          "data": " background"
+        },
+        {
+          "timestamp": 1737828518151,
+          "offset": 43436,
+          "type": "@css.text-delta",
+          "data": "-color"
+        },
+        {
+          "timestamp": 1737828518151,
+          "offset": 43436,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518151,
+          "offset": 43436,
+          "type": "@css.text-delta",
+          "data": " #"
+        },
+        {
+          "timestamp": 1737828518152,
+          "offset": 43437,
+          "type": "@css.text-delta",
+          "data": "5"
+        },
+        {
+          "timestamp": 1737828518152,
+          "offset": 43437,
+          "type": "@css.text-delta",
+          "data": "cb"
+        },
+        {
+          "timestamp": 1737828518153,
+          "offset": 43438,
+          "type": "@css.text-delta",
+          "data": "85"
+        },
+        {
+          "timestamp": 1737828518153,
+          "offset": 43438,
+          "type": "@css.text-delta",
+          "data": "c"
+        },
+        {
+          "timestamp": 1737828518153,
+          "offset": 43438,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518154,
+          "offset": 43439,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518154,
+          "offset": 43439,
+          "type": "@css.text-delta",
+          "data": " color"
+        },
+        {
+          "timestamp": 1737828518154,
+          "offset": 43439,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518154,
+          "offset": 43439,
+          "type": "@css.text-delta",
+          "data": " white"
+        },
+        {
+          "timestamp": 1737828518155,
+          "offset": 43440,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518155,
+          "offset": 43440,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518155,
+          "offset": 43440,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828518155,
+          "offset": 43440,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518156,
+          "offset": 43441,
+          "type": "@css.text-delta",
+          "data": " none"
+        },
+        {
+          "timestamp": 1737828518156,
+          "offset": 43441,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518156,
+          "offset": 43441,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518156,
+          "offset": 43441,
+          "type": "@css.text-delta",
+          "data": " border"
+        },
+        {
+          "timestamp": 1737828518157,
+          "offset": 43442,
+          "type": "@css.text-delta",
+          "data": "-radius"
+        },
+        {
+          "timestamp": 1737828518157,
+          "offset": 43442,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518157,
+          "offset": 43442,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828518158,
+          "offset": 43443,
+          "type": "@css.text-delta",
+          "data": "4"
+        },
+        {
+          "timestamp": 1737828518158,
+          "offset": 43443,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828518158,
+          "offset": 43443,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518158,
+          "offset": 43443,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518158,
+          "offset": 43443,
+          "type": "@css.text-delta",
+          "data": " cursor"
+        },
+        {
+          "timestamp": 1737828518469,
+          "offset": 43754,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518470,
+          "offset": 43755,
+          "type": "@css.text-delta",
+          "data": " pointer"
+        },
+        {
+          "timestamp": 1737828518470,
+          "offset": 43755,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518470,
+          "offset": 43755,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518471,
+          "offset": 43756,
+          "type": "@css.text-delta",
+          "data": " transition"
+        },
+        {
+          "timestamp": 1737828518471,
+          "offset": 43756,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518472,
+          "offset": 43757,
+          "type": "@css.text-delta",
+          "data": " background"
+        },
+        {
+          "timestamp": 1737828518472,
+          "offset": 43757,
+          "type": "@css.text-delta",
+          "data": "-color"
+        },
+        {
+          "timestamp": 1737828518472,
+          "offset": 43757,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828518472,
+          "offset": 43757,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828518473,
+          "offset": 43758,
+          "type": "@css.text-delta",
+          "data": "."
+        },
+        {
+          "timestamp": 1737828518473,
+          "offset": 43758,
+          "type": "@css.text-delta",
+          "data": "3"
+        },
+        {
+          "timestamp": 1737828518473,
+          "offset": 43758,
+          "type": "@css.text-delta",
+          "data": "s"
+        },
+        {
+          "timestamp": 1737828518473,
+          "offset": 43758,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518474,
+          "offset": 43759,
+          "type": "@css.text-delta",
+          "data": "}\n\n"
+        },
+        {
+          "timestamp": 1737828518474,
+          "offset": 43759,
+          "type": "@css.text-delta",
+          "data": "button"
+        },
+        {
+          "timestamp": 1737828518474,
+          "offset": 43759,
+          "type": "@css.text-delta",
+          "data": ":hover"
+        },
+        {
+          "timestamp": 1737828518474,
+          "offset": 43759,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828518475,
+          "offset": 43760,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518475,
+          "offset": 43760,
+          "type": "@css.text-delta",
+          "data": " background"
+        },
+        {
+          "timestamp": 1737828518475,
+          "offset": 43760,
+          "type": "@css.text-delta",
+          "data": "-color"
+        },
+        {
+          "timestamp": 1737828518475,
+          "offset": 43760,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518476,
+          "offset": 43761,
+          "type": "@css.text-delta",
+          "data": " #"
+        },
+        {
+          "timestamp": 1737828518476,
+          "offset": 43761,
+          "type": "@css.text-delta",
+          "data": "4"
+        },
+        {
+          "timestamp": 1737828518479,
+          "offset": 43764,
+          "type": "@css.text-delta",
+          "data": "ca"
+        },
+        {
+          "timestamp": 1737828518479,
+          "offset": 43764,
+          "type": "@css.text-delta",
+          "data": "e"
+        },
+        {
+          "timestamp": 1737828518479,
+          "offset": 43764,
+          "type": "@css.text-delta",
+          "data": "4"
+        },
+        {
+          "timestamp": 1737828518479,
+          "offset": 43764,
+          "type": "@css.text-delta",
+          "data": "c"
+        },
+        {
+          "timestamp": 1737828518480,
+          "offset": 43765,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518480,
+          "offset": 43765,
+          "type": "@css.text-delta",
+          "data": "}\n\n"
+        },
+        {
+          "timestamp": 1737828518480,
+          "offset": 43765,
+          "type": "@css.text-delta",
+          "data": "button"
+        },
+        {
+          "timestamp": 1737828518481,
+          "offset": 43766,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518481,
+          "offset": 43766,
+          "type": "@css.text-delta",
+          "data": "active"
+        },
+        {
+          "timestamp": 1737828518481,
+          "offset": 43766,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828518481,
+          "offset": 43766,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518482,
+          "offset": 43767,
+          "type": "@css.text-delta",
+          "data": " transform"
+        },
+        {
+          "timestamp": 1737828518482,
+          "offset": 43767,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518482,
+          "offset": 43767,
+          "type": "@css.text-delta",
+          "data": " scale"
+        },
+        {
+          "timestamp": 1737828518482,
+          "offset": 43767,
+          "type": "@css.text-delta",
+          "data": "("
+        },
+        {
+          "timestamp": 1737828518483,
+          "offset": 43768,
+          "type": "@css.text-delta",
+          "data": "0"
+        },
+        {
+          "timestamp": 1737828518483,
+          "offset": 43768,
+          "type": "@css.text-delta",
+          "data": "."
+        },
+        {
+          "timestamp": 1737828518483,
+          "offset": 43768,
+          "type": "@css.text-delta",
+          "data": "98"
+        },
+        {
+          "timestamp": 1737828518484,
+          "offset": 43769,
+          "type": "@css.text-delta",
+          "data": ");\n"
+        },
+        {
+          "timestamp": 1737828518484,
+          "offset": 43769,
+          "type": "@css.text-delta",
+          "data": "}\n\n"
+        },
+        {
+          "timestamp": 1737828518484,
+          "offset": 43769,
+          "type": "@css.text-delta",
+          "data": "@"
+        },
+        {
+          "timestamp": 1737828518781,
+          "offset": 44066,
+          "type": "@css.text-delta",
+          "data": "media"
+        },
+        {
+          "timestamp": 1737828518781,
+          "offset": 44066,
+          "type": "@css.text-delta",
+          "data": " ("
+        },
+        {
+          "timestamp": 1737828518781,
+          "offset": 44066,
+          "type": "@css.text-delta",
+          "data": "max"
+        },
+        {
+          "timestamp": 1737828518781,
+          "offset": 44066,
+          "type": "@css.text-delta",
+          "data": "-width"
+        },
+        {
+          "timestamp": 1737828518782,
+          "offset": 44067,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518782,
+          "offset": 44067,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828518783,
+          "offset": 44068,
+          "type": "@css.text-delta",
+          "data": "600"
+        },
+        {
+          "timestamp": 1737828518783,
+          "offset": 44068,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828518783,
+          "offset": 44068,
+          "type": "@css.text-delta",
+          "data": ")"
+        },
+        {
+          "timestamp": 1737828518784,
+          "offset": 44069,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828518784,
+          "offset": 44069,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518784,
+          "offset": 44069,
+          "type": "@css.text-delta",
+          "data": " form"
+        },
+        {
+          "timestamp": 1737828518784,
+          "offset": 44069,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828518784,
+          "offset": 44069,
+          "type": "@css.text-delta",
+          "data": "       "
+        },
+        {
+          "timestamp": 1737828518785,
+          "offset": 44070,
+          "type": "@css.text-delta",
+          "data": " padding"
+        },
+        {
+          "timestamp": 1737828518785,
+          "offset": 44070,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518785,
+          "offset": 44070,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828518785,
+          "offset": 44070,
+          "type": "@css.text-delta",
+          "data": "15"
+        },
+        {
+          "timestamp": 1737828518785,
+          "offset": 44070,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828518785,
+          "offset": 44070,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518786,
+          "offset": 44071,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518788,
+          "offset": 44073,
+          "type": "@css.text-delta",
+          "data": " }\n\n"
+        },
+        {
+          "timestamp": 1737828518788,
+          "offset": 44073,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518789,
+          "offset": 44074,
+          "type": "@css.text-delta",
+          "data": " input"
+        },
+        {
+          "timestamp": 1737828518789,
+          "offset": 44074,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828518789,
+          "offset": 44074,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828518789,
+          "offset": 44074,
+          "type": "@css.text-delta",
+          "data": "text"
+        },
+        {
+          "timestamp": 1737828518789,
+          "offset": 44074,
+          "type": "@css.text-delta",
+          "data": "\"],\n"
+        },
+        {
+          "timestamp": 1737828518790,
+          "offset": 44075,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518790,
+          "offset": 44075,
+          "type": "@css.text-delta",
+          "data": " input"
+        },
+        {
+          "timestamp": 1737828518790,
+          "offset": 44075,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828518790,
+          "offset": 44075,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828518790,
+          "offset": 44075,
+          "type": "@css.text-delta",
+          "data": "email"
+        },
+        {
+          "timestamp": 1737828518791,
+          "offset": 44076,
+          "type": "@css.text-delta",
+          "data": "\"],\n"
+        },
+        {
+          "timestamp": 1737828518791,
+          "offset": 44076,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518791,
+          "offset": 44076,
+          "type": "@css.text-delta",
+          "data": " input"
+        },
+        {
+          "timestamp": 1737828518791,
+          "offset": 44076,
+          "type": "@css.text-delta",
+          "data": "[type"
+        },
+        {
+          "timestamp": 1737828518792,
+          "offset": 44077,
+          "type": "@css.text-delta",
+          "data": "=\""
+        },
+        {
+          "timestamp": 1737828518792,
+          "offset": 44077,
+          "type": "@css.text-delta",
+          "data": "password"
+        },
+        {
+          "timestamp": 1737828518793,
+          "offset": 44078,
+          "type": "@css.text-delta",
+          "data": "\"]"
+        },
+        {
+          "timestamp": 1737828518793,
+          "offset": 44078,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828518793,
+          "offset": 44078,
+          "type": "@css.text-delta",
+          "data": "       "
+        },
+        {
+          "timestamp": 1737828518961,
+          "offset": 44246,
+          "type": "@css.text-delta",
+          "data": " padding"
+        },
+        {
+          "timestamp": 1737828518962,
+          "offset": 44247,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518962,
+          "offset": 44247,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828518962,
+          "offset": 44247,
+          "type": "@css.text-delta",
+          "data": "10"
+        },
+        {
+          "timestamp": 1737828518962,
+          "offset": 44247,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828518963,
+          "offset": 44248,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518963,
+          "offset": 44248,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518963,
+          "offset": 44248,
+          "type": "@css.text-delta",
+          "data": " }\n\n"
+        },
+        {
+          "timestamp": 1737828518964,
+          "offset": 44249,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518964,
+          "offset": 44249,
+          "type": "@css.text-delta",
+          "data": " button"
+        },
+        {
+          "timestamp": 1737828518964,
+          "offset": 44249,
+          "type": "@css.text-delta",
+          "data": " {\n"
+        },
+        {
+          "timestamp": 1737828518965,
+          "offset": 44250,
+          "type": "@css.text-delta",
+          "data": "       "
+        },
+        {
+          "timestamp": 1737828518965,
+          "offset": 44250,
+          "type": "@css.text-delta",
+          "data": " padding"
+        },
+        {
+          "timestamp": 1737828518965,
+          "offset": 44250,
+          "type": "@css.text-delta",
+          "data": ":"
+        },
+        {
+          "timestamp": 1737828518965,
+          "offset": 44250,
+          "type": "@css.text-delta",
+          "data": " "
+        },
+        {
+          "timestamp": 1737828518965,
+          "offset": 44250,
+          "type": "@css.text-delta",
+          "data": "10"
+        },
+        {
+          "timestamp": 1737828518966,
+          "offset": 44251,
+          "type": "@css.text-delta",
+          "data": "px"
+        },
+        {
+          "timestamp": 1737828518966,
+          "offset": 44251,
+          "type": "@css.text-delta",
+          "data": ";\n"
+        },
+        {
+          "timestamp": 1737828518966,
+          "offset": 44251,
+          "type": "@css.text-delta",
+          "data": "   "
+        },
+        {
+          "timestamp": 1737828518966,
+          "offset": 44251,
+          "type": "@css.text-delta",
+          "data": " }\n"
+        },
+        {
+          "timestamp": 1737828518966,
+          "offset": 44251,
+          "type": "@css.text-delta",
+          "data": "}\n"
+        },
+        {
+          "timestamp": 1737828518966,
+          "offset": 44251,
+          "type": "@css.text-delta",
+          "data": "```"
+        },
+        {
+          "timestamp": 1737828519067,
+          "offset": 44352,
+          "data": "\u003Cspan class=\"text-2xl\"\u003E&#128640; &#128582;\u003C/span\u003E",
+          "type": "@assistant.status"
+        },
+        {
+          "timestamp": 1737828519067,
+          "offset": 44352,
+          "data": "&#8730; ",
+          "type": "@assistant.title"
+        }
+      ]
+    
+  }
