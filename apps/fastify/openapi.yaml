@@ -1,0 +1,681 @@
+openapi: 3.0.3
+info:
+  title: AI SDK + SAP AI + Fastify
+  description: API documentation for AI SDK + SAP AI + Fastify
+  version: 1.0.0
+components:
+  schemas: {}
+paths:
+  /agents:
+    get:
+      summary: Get all agents
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                description: Successful response
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                      properties:
+                        id:
+                          type: string
+                        version:
+                          type: string
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: string
+                            workers:
+                              type: string
+    post:
+      summary: New Agent
+      description: |+
+        This route is to create an agent definition
+        ```javascript title="source"
+        async handler (request, reply) {
+          const {
+            code,
+            id
+          } = request.body;
+          const agent = updateAgentSrc(fastify.docs, id, code);
+          reply.type("application/json");
+          return reply.send(agentJson(agent));
+        }
+        ```
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The agent javascript code
+              properties:
+                id:
+                  type: string
+                  example: emit
+                code:
+                  type: string
+                  description: The agent javascript code
+                  example: >2-
+                     createMachine({
+                                        id: 'emit-example',
+                                        initial: 'emit',
+                                        context:{
+                                            index: 0
+                                        },
+                                        states: {
+                                            emit: {
+                                                entry: assign({
+                                                    index: ({context: {index}}) => index + 1
+                                                }),
+                                                after: {
+                                                    1000: {
+                                                        target: 'emit',
+                                                        reenter: true,
+                                                        actions: emit(({context: {index}}) => ({
+                                                            type: 'EMIT',
+                                                            data: index,
+                                                            event: 'emit'
+                                                        }))
+                                                    }
+                                                },
+                                            }
+                                        }
+                                    })
+        description: The agent javascript code
+      x-source: |+
+        
+        ```javascript title="source"
+        async handler (request, reply) {
+          const {
+            code,
+            id
+          } = request.body;
+          const agent = updateAgentSrc(fastify.docs, id, code);
+          reply.type("application/json");
+          return reply.send(agentJson(agent));
+        }
+        ```
+
+      responses:
+        "201":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                description: Successful response
+                type: object
+                properties:
+                  id:
+                    type: string
+                  version:
+                    type: string
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                      workers:
+                        type: string
+  /agents/{agent}:
+    post:
+      summary: Post Specific Agent Code
+      description: |+
+        This route is to create an agent definition
+        ```javascript title="source"
+        async handler (request, reply) {
+          const {
+            code
+          } = request.body;
+          const {
+            agent: id
+          } = request.params;
+          const agent = updateAgentSrc(fastify.docs, id, code);
+          reply.type("application/json");
+          return reply.send(agentJson(agent));
+        }
+        ```
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The agent javascript code
+              properties:
+                code:
+                  type: string
+                  description: The agent javascript code
+                  example: >+
+                    import {createMachine, assign, emit} from "xstate";
+
+
+
+                    export default createMachine({
+                        id: 'machine',
+                        initial: 'stage1', 
+                        context:{
+                            index: 0
+                        },
+                        states: {
+                            stage1: {
+                                entry: assign({
+                                    index: ({context: {index}}: { context: { index: number } }) => index + 1
+                                }),
+                                always: {
+                                    target: 'stage2',
+                                    guard: ({context: {index}}: { context: { index: number } }) => index > 10
+                                }, 
+                                after: {
+                                    1000: {
+                                        target: 'stage1',
+                                        reenter: true,
+                                        actions: emit(({context: {index}}: { context: { index: number } }) => ({
+                                            type: 'EMIT',
+                                            data: index,
+                                            event: 'stage-1'
+                                        }))
+                                    },
+                                    
+
+                                },
+                            },
+                            stage2:{
+                                entry: assign({
+                                    index: ({context: {index}}: { context: { index: number } }) => index + 1
+                                }),
+                                after: {
+                                    10000: {
+                                        target: 'stage2',
+                                        reenter: true,
+                                        actions: emit(({context: {index}}: {context:{index:number}}) => ({
+                                            type: 'EMIT',
+                                            data: index,
+                                            event: 'stage-2'
+                                        }))
+                                    }
+                                },
+                            }
+                        }
+                    })
+
+                     
+
+
+                     
+        description: The agent javascript code
+      x-source: |+
+        
+        ```javascript title="source"
+        async handler (request, reply) {
+          const {
+            code
+          } = request.body;
+          const {
+            agent: id
+          } = request.params;
+          const agent = updateAgentSrc(fastify.docs, id, code);
+          reply.type("application/json");
+          return reply.send(agentJson(agent));
+        }
+        ```
+
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                description: Successful response
+                type: object
+                properties:
+                  id:
+                    type: string
+                  version:
+                    type: string
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                      workers:
+                        type: string
+    get:
+      summary: Get an agent definition
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                description: Successful response
+                type: object
+                additionalProperties: true
+                properties:
+                  id:
+                    type: string
+                  version:
+                    type: string
+                  config:
+                    type: object
+                  definition:
+                    type: object
+                  src:
+                    type: string
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                      workers:
+                        type: string
+  /agents/{agent}/src:
+    get:
+      summary: Get an agent definition
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                description: Successful response
+                type: string
+  /agents/{agent}/start:
+    post:
+      summary: Start Agent
+      description: >+
+        This route is to create an agent definition
+
+        ```javascript title="source"
+
+        async handler (request, reply) {
+          const {
+            agent: id
+          } = request.params;
+          const agent = fastify["agent.fromDoc"](fastify.docs.getOrCreate(id));
+          console.log(`Starting agent ${id} ${agent.getMap().get("rev")}  ${agent.getMap().get("src")}`);
+          const {
+            href
+          } = await fastify.vm(agent.createSnapshot()).start();
+          console.log(`Listening at ${href}.`);
+          reply.type("application/json");
+          return reply.send(JSON.stringify({
+            id,
+            links: {
+              self: request.originalUrl,
+              worker: href
+            }
+          }));
+        }
+
+        ```
+
+      parameters:
+        - schema:
+            type: string
+          example: emit
+          in: path
+          name: agent
+          required: true
+      x-source: >+
+        
+        ```javascript title="source"
+
+        async handler (request, reply) {
+          const {
+            agent: id
+          } = request.params;
+          const agent = fastify["agent.fromDoc"](fastify.docs.getOrCreate(id));
+          console.log(`Starting agent ${id} ${agent.getMap().get("rev")}  ${agent.getMap().get("src")}`);
+          const {
+            href
+          } = await fastify.vm(agent.createSnapshot()).start();
+          console.log(`Listening at ${href}.`);
+          reply.type("application/json");
+          return reply.send(JSON.stringify({
+            id,
+            links: {
+              self: request.originalUrl,
+              worker: href
+            }
+          }));
+        }
+
+        ```
+
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                description: Successful response
+                type: object
+                properties:
+                  id:
+                    type: string
+                  version:
+                    type: string
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: string
+                      workers:
+                        type: string
+  /agents/{agent}/latest:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/{rev}:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: rev
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/{rev}/src:
+    get:
+      summary: Get an agent definition
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: rev
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                description: Successful response
+                type: string
+  /docs/{doc}:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: doc
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/rev:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/view:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/{rev}/view:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: rev
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/{rev}/events:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: rev
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/{rev}/events/{event}:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: rev
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: event
+          required: true
+      responses:
+        "200":
+          description: Default Response
+    post:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: rev
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: event
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/{rev}/{service}/events/{event}:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: rev
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: service
+          required: true
+        - schema:
+            type: string
+          in: path
+          name: event
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/ide:
+    get:
+      summary: Get an agent ide
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /agents/{agent}/playground:
+    get:
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: agent
+          required: true
+      responses:
+        "200":
+          description: Default Response
+  /sse:
+    get:
+      summary: Proxy Server Sent Events
+      description: >+
+        This route will proxy server sent events from another server to the
+        client
+
+        ```javascript title="source"
+
+        async handler (request, reply) {
+          const {
+            url,
+            type
+          } = request.query;
+          reply.type("text/html");
+          return reply.send(
+            `<html>
+                            <head>
+                                 <script src="https://unpkg.com/htmx.org@2.0.2"><\/script>
+                                 <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"><\/script>
+                                <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"><\/script>
+                            </head>
+                            <body>  
+                                 <div hx-ext="sse" sse-connect="${url}" sse-close="done" hx-ext="sse" sse-swap="${type || "*"}" hx-swap="beforeend" class="h-screen w-screen"/>
+                            </body>
+                            </html> `
+          );
+        }
+
+        ```
+
+      parameters:
+        - schema:
+            - url
+          in: query
+          name: required
+        - schema:
+            url:
+              type: string
+              format: uri
+              description: The url of the server sent events
+            type:
+              type: string
+              description: The type event to swap
+          in: query
+          name: properties
+      x-source: >+
+        
+        ```javascript title="source"
+
+        async handler (request, reply) {
+          const {
+            url,
+            type
+          } = request.query;
+          reply.type("text/html");
+          return reply.send(
+            `<html>
+                            <head>
+                                 <script src="https://unpkg.com/htmx.org@2.0.2"><\/script>
+                                 <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"><\/script>
+                                <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"><\/script>
+                            </head>
+                            <body>  
+                                 <div hx-ext="sse" sse-connect="${url}" sse-close="done" hx-ext="sse" sse-swap="${type || "*"}" hx-swap="beforeend" class="h-screen w-screen"/>
+                            </body>
+                            </html> `
+          );
+        }
+
+        ```
+
+      responses:
+        "200":
+          description: HTML page that consumes the server sent events
+          content:
+            text/html:
+              schema:
+                description: HTML page that consumes the server sent events
+                type: string
+  /:
+    get:
+      responses:
+        "200":
+          description: Default Response
+servers: []
