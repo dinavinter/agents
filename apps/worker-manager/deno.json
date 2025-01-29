@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-net --allow-read --allow-env src/main.ts",
+    "test:e2e": "deno test --allow-net --allow-read --allow-env e2e/",
+    "build": "deno compile --allow-net --allow-read --allow-env src/main.ts"
+  },
+  "imports": {
+    "yjs": "npm:yjs@^13.6.10",
+    "@hocuspocus/provider": "npm:@hocuspocus/provider@^2.5.0"
+  }
+}
