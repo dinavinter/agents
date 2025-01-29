@@ -1,8 +1,8 @@
 import { azure } from "https://esm.sh/@ai-sdk/azure";
-import { fromAIEventStream, fromAIElementStream, asyncBatchEvents, asyncEventGenerator } from "https://esm.sh/@cxai/stream";
+import { fromAIEventStream, fromAIElementStream, asyncBatchEvents, asyncEventGenerator } from "https://esm.sh/@cxai/stream?target=esnext";
 import { ServiceController } from "https://esm.sh/@cxai/stream/xstate?target=esnext";
 import * as Y from "https://esm.sh/yjs@^13.6.20?target=esnext";
-import { type AnyActorLogic, AnyStateMachine, createActor } from "xstate";
+import { type AnyActorLogic, AnyStateMachine, createActor } from "https://esm.sh/xstate?target=esnext";
 
 export async function start(doc: Y.Doc) {
     doc.shouldLoad && doc.load();
