@@ -8,7 +8,7 @@ export async function start(doc: Y.Doc) {
     doc.shouldLoad && doc.load();
 
     const logic = await getMachine(doc.getMap<string>().get("src")!);
-    return createYjsActor(logic,doc);
+    return createYjsActor(logic);
 
     function createYjsActor(logic: AnyActorLogic) {
         return createActor(ServiceController, {

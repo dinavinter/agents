@@ -5,7 +5,9 @@ import {HPYjsDocManager as YjsDocManager} from "https://crux.land/6Ex5Yb";
 import {createHash} from "node:crypto";
 import { Buffer } from "node:buffer";
  import {mod} from "./imort.ts";
- import {createYjsActor} from "https://crux.land/4TzRc8";
+import { start } from "./xstate-yjs.ts";
+
+ 
 const flags = parseArgs(Deno.args, {
   string: ["url" , "room", "collection", "doc", "src", "port"],
 });
@@ -19,7 +21,7 @@ export function revisionHash(src: string): string  {
 }
 
 console.log(flags, Deno.args)
-const room = flags.room || Deno.env.get("ID") || "app";
+const room = flags.room || Deno.env.get("ID") || "idx-flow";
 
 function getRevDoc(rev: string, src: string) {
     const revDoc = new Y.Doc({guid: `${room}:${rev}`, meta: {rev, agent: room, path: `/agents/${room}/${rev}`}});
@@ -32,13 +34,7 @@ function getRevDoc(rev: string, src: string) {
     }
     return revDoc;
 }
-async function start(doc: Y.Doc) {
-    doc.shouldLoad && doc.load();
-    const module = await mod(doc.getMap<string>().get("src")!);
-
-    return createYjsActor(module.default,doc);
  
-}
 
 async function tryStart(docManager: YjsDocManager, agentDoc: Y.Doc, revDoc: Y.Doc) {
     if(revDoc.getMap().get("src") ) {
