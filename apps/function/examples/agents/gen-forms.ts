@@ -1,11 +1,8 @@
-import "https://esm.sh/atomico/ssr/load";
-import "yjs";
-import { html } from "https://esm.sh/atomico";
-import { AnyEventObject, assign, emit, setup, UnknownActorLogic } from "xstate";
+import "https://esm.sh/yjs";
+import { AnyEventObject, assign, emit, setup, UnknownActorLogic } from "https://esm.sh/xstate";
 import { fromAIEventStream , fromAIElementStream} from "https://esm.sh/@cxai/stream";
 import type { LanguageModelV1 } from "https://esm.sh/@ai-sdk/provider";
 import { z } from "https://esm.sh/zod";
-import  {ChatBubble} from "https://esm.sh/@cxai/stream@1.0.6/ui";
 
 type Actors = {
     aiStream:  ReturnType< typeof fromAIEventStream<{ model: LanguageModelV1 }> >;

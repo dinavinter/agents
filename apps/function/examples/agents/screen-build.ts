@@ -5,12 +5,15 @@ import { AnyEventObject, assign, emit, setup, UnknownActorLogic } from "xstate";
 import { fromAIEventStream } from "https://esm.sh/@cxai/stream";
 import type { LanguageModelV1 } from "https://esm.sh/@ai-sdk/provider";
 import { z } from "https://esm.sh/zod";
+import { gigyaAvatarAgent } from "./gigya-avatar-agent";
+
 type AIStream = ReturnType<
     typeof fromAIEventStream<{ model: LanguageModelV1 }>
 >;
 
 type Actors = {
     aiStream: AIStream;
+    gigyaAvatarAgent: typeof gigyaAvatarAgent;
 } & Record<string, UnknownActorLogic>;
 
 export const ChatBubble = c(({ content, name, img, swap }) => {
@@ -60,7 +63,9 @@ export const ChatBubble = c(({ content, name, img, swap }) => {
 customElements.define("chat-bubble", ChatBubble);
 
 export const machine = setup({
-    actors: {} as Actors,
+    actors: {
+        gigyaAvatarAgent
+    } as Actors,
     types: {
         emitted: {} as AnyEventObject,
         input: {} as any,
@@ -69,22 +74,31 @@ export const machine = setup({
             draft?: any[];
             fields?: [];
             css?: [];
+            avatars?: GigyaAccount[];
         },
     },
 }).createMachine({
     id: "form",
     initial: "idle",
     context: ({ input }) => input,
-    entry: emit({
-        data: `<main class="mx-auto bg-slate-100 min-h-screen p-6">
-                 <header class="sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-center p-4 text-lg font-medium shadow">
-                     Form Builder
-                 </header>
-                <div class="flex flex-col items-center justify-center gap-6" hx-ext="sse" sse-swap="content" hx-swap="beforeend" ></div>
-            </main>`,
-        type: "message",
-    }),
-
+    entry: [
+        emit({
+            data: `<main class="mx-auto bg-slate-100 min-h-screen p-6">
+                     <header class="sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-between p-4 text-lg font-medium shadow">
+                         <span>Form Builder</span>
+                         <span class="text-sm text-gray-500" sse-swap="@avatars.status"></span>
+                     </header>
+                    <div class="flex flex-col items-center justify-center gap-6" hx-ext="sse" sse-swap="content" hx-swap="beforeend">
+                        <div class="w-full" hx-ext="sse" sse-swap="avatars" hx-swap="innerHTML"></div>
+                    </div>
+                </main>`,
+            type: "message",
+        }),
+        // Spawn Gigya avatar agent
+        ({ spawn }) => {
+            spawn('gigyaAvatarAgent', { id: 'avatars' });
+        }
+    ],
     states: {
         idle: {
             entry: emit({

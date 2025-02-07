@@ -13,7 +13,6 @@ import {
 } from "xstate";
 import * as http from "node:http";
 import { Buffer } from "node:buffer";
-import { logger } from "../inspect/logger.ts";
 import { newDenoHTTPWorker, DenoHTTPWorker } from "./http-deno-vm.ts";
 // type DenoHTTPWorker = ReturnType<typeof newDenoHTTPWorker>
 type UpdateEvent = { type: "@worker.update"; code: string[] };
