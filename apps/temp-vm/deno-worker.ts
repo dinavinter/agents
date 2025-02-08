@@ -27,7 +27,7 @@ import {
 } from "xstate";
 import * as http from "node:http";
 import { Buffer } from "node:buffer";
-import { logger } from "../inspect/logger.ts";
+import { logger } from "../function/inspect/logger.ts";
 import { DenoWorker } from 'https://esm.sh/deno-vm?target=denonext';
 
 type UpdateEvent = { type: "@worker.update"; code: string };
@@ -91,6 +91,7 @@ const denoVMMachine = setup({
   guards: {},
   delays: {},
   actors: {  
+    
     spawnVM: fromPromise(async function ({ input: { code, id } }: { input: { code: string; id?: string } }) {
       const worker=new DenoWorker(code,{
 

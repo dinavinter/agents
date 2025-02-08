@@ -1,4 +1,4 @@
-import { createMachine, assign, createActor ,AnyEventObject, waitFor} from 'xstate';
+import { createMachine, assign, createActor ,AnyEventObject, waitFor} from 'npm:xstate';
 import { DenoWorker } from 'npm:deno-vm';
 
 type WorkerContext = {
@@ -116,11 +116,9 @@ export const workerMachine =
               env: true,
               write: true,
               import: true,
-              run: true
-
+              run: true,
             },
           });
-
           const workerScript = `${context.code}`;
 
           await worker.run(workerScript);
@@ -162,6 +160,7 @@ actor.send({ type: 'some_event', data: 'some data 2' });
 actor.send({ type: 'STOP_WORKER' });
 
 actor.send({ type: 'some_event', data: 'some data 3' });
+
 
 
 
