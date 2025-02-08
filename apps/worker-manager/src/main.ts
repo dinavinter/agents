@@ -1,5 +1,8 @@
 import * as Y from 'yjs';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { Application } from "https://deno.land/x/oak/mod.ts";
+import { newDenoHTTPWorker, DenoHTTPWorker } from "./http-deno-vm.ts";
+import { createRouter } from "./router.ts";
 
 interface WorkerConfig {
   id: string;
@@ -18,15 +21,15 @@ interface WorkerStatus {
   };
 }
 
-class WorkerManager {
+export class WorkerManager {
   private doc: Y.Doc;
   private provider: HocuspocusProvider;
   private workers: Y.Map<WorkerConfig>;
   private workerStatus: Y.Map<WorkerStatus>;
-  private activeWorkers = new Map<string, Worker>();
+  private activeWorkers = new Map<string, DenoHTTPWorker>();
 
   constructor(url = 'ws://localhost:1234', room = 'worker-manager') {
-    this.doc = new Y.Doc();
+    this.doc = new Y.Doc({guid: `${room}:workers`, collectionid: 'workers', gc: false, autoLoad: true});
     this.provider = new HocuspocusProvider({
       url,
       name: room,
@@ -53,97 +56,95 @@ class WorkerManager {
     });
   }
 
-  private async handleWorkerUpdate(workerId: string) {
-    const config = this.workers.get(workerId);
+  private async handleWorkerUpdate(id: string) {
+    const config = this.workers.get(id);
     if (!config) return;
 
-    this.updateStatus(workerId, { status: 'starting', timestamp: Date.now() });
-
     // Stop existing worker if any
-    await this.stopWorker(workerId);
+    await this.stopWorker(id);
 
-    // Start new worker
-    try {
-      await this.startWorker(config);
-      this.updateStatus(workerId, { status: 'running', timestamp: Date.now() });
-    } catch (error) {
-      this.updateStatus(workerId, { 
-        status: 'error', 
-        error: error.message, 
-        timestamp: Date.now() 
-      });
-    }
-  }
+    if (config.runtime === 'deno') {
+      try {
+        const worker = await newDenoHTTPWorker(config.sourceCode);
+        this.activeWorkers.set(id, worker);
+        this.updateWorkerStatus(id, { status: 'running', timestamp: Date.now() });
 
-  private async startWorker(config: WorkerConfig) {
-    const worker = new Worker(
-      new URL('./worker-runtime.ts', import.meta.url),
-      { type: 'module' }
-    );
-
-    worker.postMessage({ 
-      type: 'init', 
-      config 
-    });
-
-    this.activeWorkers.set(config.id, worker);
-
-    // Handle worker messages
-    worker.onmessage = (e) => {
-      const { type, data } = e.data;
-      switch (type) {
-        case 'health':
-          this.updateStatus(config.id, {
-            status: 'running',
-            timestamp: Date.now(),
-            metrics: data.metrics
-          });
-          break;
-        case 'error':
-          this.updateStatus(config.id, {
-            status: 'error',
-            error: data.error,
-            timestamp: Date.now()
-          });
-          break;
+        worker.addEventListener('exit', () => {
+          this.updateWorkerStatus(id, { status: 'stopped', timestamp: Date.now() });
+          this.activeWorkers.delete(id);
+        });
+      } catch (error) {
+        this.updateWorkerStatus(id, {
+          status: 'error',
+          error: error.message,
+          timestamp: Date.now()
+        });
       }
-    };
-  }
-
-  private async stopWorker(workerId: string) {
-    const worker = this.activeWorkers.get(workerId);
-    if (worker) {
-      worker.terminate();
-      this.activeWorkers.delete(workerId);
-      this.updateStatus(workerId, { 
-        status: 'stopped', 
-        timestamp: Date.now() 
-      });
     }
   }
 
-  private updateStatus(workerId: string, status: Partial<WorkerStatus>) {
-    const currentStatus = this.workerStatus.get(workerId) || {};
-    this.workerStatus.set(workerId, { ...currentStatus, ...status });
+  public async startWorker(id: string) {
+    const config = this.workers.get(id);
+    if (!config) {
+      throw new Error(`Worker ${id} not found`);
+    }
+    await this.handleWorkerUpdate(id);
+  }
+
+  public async stopWorker(id: string) {
+    const worker = this.activeWorkers.get(id);
+    if (worker) {
+      await worker.shutdown();
+      this.activeWorkers.delete(id);
+      this.updateWorkerStatus(id, { status: 'stopped', timestamp: Date.now() });
+    }
+  }
+
+  public getWorkerStatus(id: string): WorkerStatus | undefined {
+    return this.workerStatus.get(id);
+  }
+
+  public listWorkers() {
+   return Array.from(this.workers.entries() as Iterable<[string, WorkerConfig]>).map(([id, config]) => ({ 
+        id,
+        config,
+        status: this.workerStatus.get(id) 
+    }));
+   }
+
+  private updateWorkerStatus(id: string, status: Partial<WorkerStatus>) {
+    const currentStatus = this.workerStatus.get(id) || {
+      status: 'stopped',
+      timestamp: Date.now()
+    };
+    this.workerStatus.set(id, { ...currentStatus, ...status });
   }
 
   private setupHealthCheck() {
     setInterval(() => {
       this.activeWorkers.forEach((worker, id) => {
-        worker.postMessage({ type: 'health-check' });
+        // No health check for DenoHTTPWorker
+        //add health check with some extra code to worker to listen on health events
       });
     }, 30000);
   }
 }
 
-// Start the worker manager
+// Start the worker manager and HTTP server
 if (import.meta.main) {
-  const HOCUSPOCUS_URL = Deno.env.get('HOCUSPOCUS_URL') || 'ws://localhost:1234';
+  const YJS_URL = Deno.env.get('YJS_URL') || 'ws://localhost:1234';
   const ROOM_NAME = Deno.env.get('ROOM_NAME') || 'worker-manager';
+  const HTTP_PORT = parseInt(Deno.env.get('HTTP_PORT') || '3000');
+
+  const workerManager = new WorkerManager(YJS_URL, ROOM_NAME);
+  const app = new Application();
   
-  console.log(`Starting Worker Manager...`);
-  console.log(`Connecting to ${HOCUSPOCUS_URL}`);
-  console.log(`Room: ${ROOM_NAME}`);
-  
-  const manager = new WorkerManager(HOCUSPOCUS_URL, ROOM_NAME);
+  // Add router
+  const router = createRouter(workerManager);
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+
+  // Start HTTP server
+  console.log(`Starting HTTP server on port ${HTTP_PORT}...`);
+  await app.listen({ port: HTTP_PORT });
 }
