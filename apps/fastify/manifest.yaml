@@ -21,4 +21,16 @@ applications:
       services:
         - fastify-uaa-service
         - log
+#  - name: ngnix
+#    command: nginx -g 'daemon off;'
+#    routes:
+#      - route: 'https://ngnix.cfapps.us10-001.hana.ondemand.com'
+#    stack: cflinuxfs4
+#    memory: 512M
+#    instances: 1
+#    
+#    buildpacks:
+#      - https://github.com/cloudfoundry/nginx-buildpack.git
+  
+      
  
