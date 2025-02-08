@@ -26,6 +26,7 @@ export type CreateServiceControllerOptions<TLogic extends AnyActorLogic> = {
 export type ServiceControllerContext = {
     service: AnyActorRef,
     hub: serviceHub
+    logic: AnyActorLogic
 }
 
 type Event = InspectionEvent
@@ -43,6 +44,7 @@ const serviceControllerSetup = setup({
         context: {} as {
             service: AnyActorRef,
             hub: serviceHub
+            logic: AnyActorLogic
         }
     } 
 })
@@ -68,6 +70,7 @@ const serviceControllerSetup = setup({
         return {
              ...options,
             hub,
+            logic,
             service: service,
          }
     },
@@ -76,7 +79,7 @@ const serviceControllerSetup = setup({
         input: ({context:{hub}}) => hub.doc 
     },
 
-    entry: enqueueActions(({context: {service, hub}, enqueue}) => {
+    entry: enqueueActions(({context: {service, hub,logic}, enqueue}) => {
         service.on("*", (event: Emitted) => {
             console.group('emitted', event.type);
             if(event.type === "frontend") {
@@ -90,11 +93,15 @@ const serviceControllerSetup = setup({
                 timestamp:  Date.now(),
 
             }); 
+
+            setNextEvents(hub.doc.getMap('next'), logic, service.getSnapshot());
+
             
             console.groupEnd();
         }) 
         service.start();
-        
+        setNextEvents(hub.doc.getMap('next'), logic, service.getSnapshot());
+
         // enqueue(({context:{service, hub}}) => {
         //         hub.doc.getArray<EventObject>("events").observe((event) => {
         //             service.send(event);
@@ -202,16 +209,25 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
         
         const newState= transition(state, event, actorCtx);
         const snapshotMap = hub.doc.getMap('state');
-        Object.entries(actorCtx.self.getPersistedSnapshot()).forEach(([key, value]) => {
+        const persistedSnapshot = actorCtx.self.getPersistedSnapshot();
+        Object.entries(persistedSnapshot).forEach(([key, value]) => {
             snapshotMap.set(key, value);
         })
 
+        const contextMap = hub.doc.getMap('context'); 
+        Object.entries("context" in persistedSnapshot ? persistedSnapshot.context as Record<string, any> : {}  ).forEach(([key, value]) => {
+            contextMap.set(key, value);
+        })
+
+
         const snapshot = actorCtx.self.getSnapshot();
+        setNextEvents(hub.doc.getMap('next'),snapshot, actorLogic);
+
+
         hub.state = {
             next: getAllOwnEventDescriptors(snapshot).join(","),
             state: snapshot.value,
-            event: event?.type,
-            context: snapshot.context
+            event: event?.type 
         };
         Object.entries(newState.children)?.forEach(([service, ref]) => {
             if (ref instanceof Actor) { 
@@ -265,5 +281,32 @@ function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):
 //     serviceHub.snapshot.push(snapshot);
 // })
  
+
+
+function setNextEvents<T extends AnyActorLogic,TSnapshot extends SnapshotFrom<T>>(nextMap:Y.Map< any>, actorLogic: T, snapshot: TSnapshot) {
+    const nextEvents = getAllOwnEventDescriptors(snapshot);
+    console.debug("setnext", nextEvents);
+    nextMap.doc?.transact(() => { 
+        nextEvents.forEach(event => {
+            nextMap.set(event, {
+                type: event,
+                //@ts-ignore
+                meta: actorLogic.config?.states?.[snapshot.value]?.on?.[event]?.meta
+            });
+        });
+        //cleanup
+        nextMap.forEach((_, key) => {
+            if (!nextEvents.includes(key)) {
+                nextMap.delete(key);
+            }
+        });
+
+    });
+    console.log("next-map", nextMap.toJSON());
+
+    function getAllOwnEventDescriptors<TSnapshot extends SnapshotFrom<AnyStateMachine>>(snapshot:TSnapshot):EventDescriptor<EventFromLogic<T>>[] {
+        return [...new Set([...snapshot._nodes?.flatMap(sn => sn.ownEvents)])];
+    }
+}
 
 export default machine as ServiceController;
