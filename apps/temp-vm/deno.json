@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "dev": "deno serve --allow-all --env-file=../../.env  deployments.ts ",
+    "test": "deno test  --allow-all  --env-file=../../.env  deployments.test.ts --no-check", 
+    "sync": "deno run --allow-net --allow-read --allow-env  --allow-write --allow-import   --env-file=../../.env sync.ts --url wss://yjs.cfapps.us10-001.hana.ondemand.com --room screen  --experimental-vm-modules  ",
+
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}
