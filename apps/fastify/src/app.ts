@@ -6,6 +6,17 @@ import * as Y from "yjs";
 const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     const fastify = instance.withTypeProvider<JsonSchemaToTsProvider>()
 
+    fastify.register(async (instance, opts) => {
+        instance.addHook('onResponse', async (request, reply) => {
+            reply.header('Access-Control-Allow-Origin', '*')
+            reply.header('Access-Control-Allow-Methods', '*')
+            reply.header('Access-Control-Allow-Headers', '*')
+            reply.header('Access-Control-Allow-Credentials', 'true')
+            reply.header('Access-Control-Max-Age', '86400')
+            reply.header('Access-Control-Expose-Headers', '*')
+        })
+    });
+    
     await fastify.register(import('./plugins/log'))
     await fastify.register(import('@fastify/formbody'))
     await fastify.register(import('./plugins/static'))
@@ -22,10 +33,8 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     //     reply.send({error: error.message})
     // })
     
-    await fastify.register(import('./routes/home')) 
-    // await fastify.register(import('./plugins/zod'))
-    await fastify.register( import('./plugins/doc'))
-
+     // await fastify.register(import('./plugins/zod'))
+ 
 
     const doc = new Y.Doc({guid: "catalog", collectionid: "agents", autoLoad: true})
 
