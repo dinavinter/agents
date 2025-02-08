@@ -17,7 +17,7 @@ const server = Server.configure({
     timeout: 30000,
     debounce: 500,
     maxDebounce: 3000,
-
+   
     extensions: [
         new Logger({
             log: (...args)=>rootLogger.logMessage(Level.Info, ...args),
