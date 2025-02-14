@@ -18,6 +18,8 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
     });
     
     await fastify.register(import('./plugins/log'))
+    await fastify.register(import('./plugins/doc/openapi'))
+
     await fastify.register(import('@fastify/formbody'))
     await fastify.register(import('./plugins/static'))
 
