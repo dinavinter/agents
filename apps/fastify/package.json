@@ -11,7 +11,7 @@
     "build": "npm run build:pkgroll",
     "build:tsup": "pnpx tsup ./src/app.ts --outDir ./dist --target=esnext --format esm --treeshake --shims --publicDir  ",
     "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.13.1  && cp -r ./public/ ./dist ",
-    "dev": "node --import=tsx  --experimental-vm-modules --env-file=../../.env ./src/dev.ts",
+    "dev": "node --import=tsx --experimental-network-imports  --experimental-vm-modules --env-file=../../.env ./src/dev.ts ",
     "vercel:dev": "npm run build && vercel dev --listen 5005",
     "vercel:deploy": "npm run build &&  vercel deploy",
     "cf:deploy": "yarn run build && cf push ",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@cxai/ide": "^1.0.13",
-    "@cxai/stream": "^1.0.4",
+    "@cxai/stream": "^1.0.18",
     "@edge-runtime/types": "^3.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
     "@hocuspocus/provider": "^2.14.0",

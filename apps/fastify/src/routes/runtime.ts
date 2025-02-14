@@ -1,9 +1,7 @@
 import {FastifyInstance, FastifyReply} from "fastify";
- import {delayAsync, filterEventAsync, mapAsync} from "@/stream";
+ import {yArrayIterator, filterEventAsync,yMapIterate, mapAsync} from "@cxai/stream";
  import fp from "fastify-plugin";
 import {EventObject} from "xstate";
-import {yArrayIterator, yMapIterate} from "@/stream/yjs.ts";
-import {createYjsHub} from "@/stream/hub.ts";
 import * as Y from "yjs";
 
 async function* revisions(agent: Y.Doc) {
@@ -255,6 +253,123 @@ export async function routes(fastify: FastifyInstance) {
  </html>`)
     })
 
+    fastify.get('/agents/:agent/:rev/context', async function handler(request, reply: FastifyReply) {
+        const { agent,rev} = request.params as {
+            agent:string,
+            rev: string 
+        };
+
+        const id= `${agent}:${rev}`
+        const workflow = fastify.docs.getOrCreate(id);
+        if(request.headers.accept === 'text/event-stream') {
+            return reply.sse(async function* () {
+                  for await (const [_] of yMapIterate(workflow.getMap("context"))) {
+                        yield {
+                            event: "message",
+                            data: JSON.stringify(workflow.getMap("context").toJSON()),
+                        } 
+                  }
+            }())
+        }
+        else {
+            return reply.send(workflow.getMap("context").toJSON())
+        }
+ 
+       
+    })
+    fastify.get('/agents/:agent/:rev/context/attributes', async function handler(request, reply: FastifyReply) {
+        const { agent,rev} = request.params as {
+            agent:string,
+            rev: string 
+        };
+
+        const id= `${agent}:${rev}`
+        const workflow = fastify.docs.getOrCreate(id);
+        if(request.headers.accept === 'text/event-stream') {
+            return reply.sse(async function* () {
+                  for await (const [key, value] of yMapIterate(workflow.getMap("context"))) {
+                    const {action,  newValue} = value
+                        yield {
+                            event: key,
+                            data: typeof newValue ==="string" ? newValue : JSON.stringify(newValue),
+                            action
+                        } 
+                  }
+            }())
+        }
+        else {
+            return reply.send(workflow.getMap("context").toJSON())
+        }
+  
+    })
+
+    fastify.get('/agents/:agent/:rev/state', async function handler(request, reply: FastifyReply) {
+        const { agent,rev} = request.params as {
+            agent:string,
+            rev: string 
+        };
+
+        const id= `${agent}:${rev}`
+        const workflow = fastify.docs.getOrCreate(id);
+        if(request.headers.accept === 'text/event-stream') {
+            return reply.sse(async function* () {
+                  for await (const  [key, value] of yMapIterate(workflow.getMap("state"))) {
+                       const {  newValue} = value  
+                        if(key==="value" && newValue) {
+                            yield {
+                                event: "message",
+                                data: newValue
+                             } 
+                        } 
+                  }
+            }())
+        }
+        else {
+            return reply.send(workflow.getMap("state").get("value"))
+        } 
+       
+    })
+    fastify.get('/agents/:agent/:rev/next', async function handler(request, reply: FastifyReply) {
+        const { agent,rev} = request.params as {
+            agent:string,
+            rev: string 
+        };
+
+        const id= `${agent}:${rev}`
+        const workflow = fastify.docs.getOrCreate(id);
+        if(request.headers.accept === 'text/event-stream') {
+            return reply.sse(async function* () {
+                  for await (const  [key, value] of yMapIterate(workflow.getMap("next"))) {
+                       const {action,  newValue} = value  
+                        if(action === "update" || action === "add") {
+                            yield {
+                                event: "message",
+                                data: key,
+                                meta: "meta"  in newValue ? newValue.meta : undefined
+                             } 
+                        }
+                        else if(action === "delete") {
+                            yield {
+                                event: key,
+                                data: undefined,
+                                meta: "meta"  in newValue ? newValue.meta : undefined
+                             } 
+                             yield {
+                                event: "delete",
+                                data: key,
+                                meta: "meta"  in newValue ? newValue.meta : undefined
+                             }
+                        }
+                  }
+            }())
+        }
+        else {
+            return reply.send(workflow.getMap("state").get("value"))
+        } 
+       
+    })
+
+
     fastify.get('/agents/:agent/:rev/events', async function handler(request, reply: FastifyReply) {
         const {agent, rev} = request.params as {  rev: string ; agent :string};
         const id= `${agent}:${rev}` 
@@ -298,6 +413,7 @@ export async function routes(fastify: FastifyInstance) {
         
         return reply.sse(filterEventAsync(emitted(workflow), `@${service}.${event}`))
     })
+
 
 
 }

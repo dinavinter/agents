@@ -1,6 +1,6 @@
 /// <reference types="@edge-runtime/types" />
 
-import {type serviceHub,createYjsHub} from "@/stream/hub.ts";
+import {type serviceHub,createYjsHub} from "@cxai/stream/hub.ts";
 // import {serviceMachine} from "@/inspect/inspector.ts";
 import {
     ActorRefFrom, AnyActorLogic,
