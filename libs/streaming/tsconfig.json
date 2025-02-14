@@ -9,8 +9,8 @@
   "isolatedModules": true,
   "module": "NodeNext",
   "moduleDetection": "force",
- 
   "allowJs": true,
+  
   "lib": [
     "ESNext.Symbol",
     "DOM",

@@ -14,14 +14,18 @@ import {
 import {createYjsHub, type serviceHub, type Emitted} from "./hub";
 import * as Y from "yjs";
 import  {yArrayIterator} from "@/yjs";
+import {fromEventAsyncGenerator} from "./generator";
+import {withTimeline} from "./timeline";
 
-export type CreateServiceControllerOptions<TLogic extends AnyActorLogic> = {
-    logic: TLogic,
-    name?: string,
-    doc?: Y.Doc,
-    hub?: serviceHub
-} & Parameters<typeof createActor<TLogic>>[1]
-    & Record<string, any>
+export type CreateServiceControllerOptions<TLogic extends AnyActorLogic> =
+    & {
+        logic: TLogic;
+        name?: string;
+        doc?: Y.Doc;
+        hub?: serviceHub;
+    }
+    & Parameters<typeof createActor<TLogic>>[1]
+    & Record<string, any>;
 
 export type ServiceControllerContext = {
     service: AnyActorRef,
@@ -53,259 +57,194 @@ const serviceControllerSetup = setup({
  const machine=serviceControllerSetup.createMachine({ 
     context: ({input: {logic,doc,hub,input, ...options}, self} ) => {
         hub = hub ?? createYjsHub(doc);
-        const snapshotMap = hub.doc.getMap('state').toJSON() as SnapshotFrom<typeof logic>;
+        const snapshotMap = hub.doc.getMap("state").toJSON() as SnapshotFrom<typeof logic>;
         input = Object.assign(input || {}, {
-            ...hub.doc.getMap('input').toJSON(),
-            ...hub.doc.meta || {}
-         })
-        const service =createActor(withTimeline(withInspector(logic,hub),hub), {
+            ...hub.doc.getMap("input").toJSON(),
+            ...hub.doc.meta || {},
+        });
+        const service = createActor(withTimeline(withInspector(logic, hub), hub), {
             id: self.id,
             logger: (s) => {},
-            snapshot:  snapshotMap.status ? snapshotMap : undefined,
-            input: input ,
-            ...options
-         
-        }); 
-          
+            snapshot: snapshotMap.status ? snapshotMap : undefined,
+            input: input,
+            ...options,
+        });
+
         return {
-             ...options,
+            ...options,
             hub,
             logic,
             service: service,
-         }
+        };
     },
-    invoke:{
-        src: fromEventObservable(({input}:{input:Y.Doc})=> yArrayIterator<EventObject>(input.getArray("events"))), 
-        input: ({context:{hub}}) => hub.doc 
-    },
-
-    entry: enqueueActions(({context: {service, hub,logic}, enqueue}) => {
-        service.on("*", (event: Emitted) => {
-            console.group('emitted', event.type);
-            if(event.type === "frontend") {
-                console.log('emitted', event.data);
+    invoke: {
+        src: fromEventAsyncGenerator(async function*({ input }: { input: Y.Doc }) {
+            let i = 0;
+            for await (const e of yArrayIterator<EventObject>(input.getArray("events"))) {
+                yield {
+                    id: i++,
+                    timestamp: Date.now(),
+                    ...e,
+                };
             }
-            
+        }),
+        input: ({ context: { hub } }) => hub.doc,
+    },
+
+    entry: enqueueActions(({ context: { service, hub, logic }, enqueue }) => {
+        service.on("*", (event: Emitted) => {
+            console.group("emitted", event.type);
+            if (event.type === "frontend") {
+                console.log("emitted", event.data);
+            }
+
             hub.emitted.push({
-                offset: Date.now()- (hub.emitted.raw.get(0)?.timestamp ?? Date.now()),
-                id: (hub.emitted.length + 1).toString(),
+                offset: Date.now() - (hub.emitted.raw.get(0)?.timestamp ?? Date.now()),
+                id: event.id || (hub.emitted.raw.length + 1).toString(),
                 ...event,
-                timestamp:  Date.now(),
+                timestamp: Date.now(),
+            });
 
-            }); 
-
-            setNextEvents(hub.doc.getMap('next'), logic, service.getSnapshot());
-
-            
+            setNextEvents(hub.doc.getMap("next"), logic, service.getSnapshot());
             console.groupEnd();
-        }) 
+        });
         service.start();
-        setNextEvents(hub.doc.getMap('next'), logic, service.getSnapshot());
+        setNextEvents(hub.doc.getMap("next"), logic, service.getSnapshot());
 
         // enqueue(({context:{service, hub}}) => {
         //         hub.doc.getArray<EventObject>("events").observe((event) => {
         //             service.send(event);
-        //         }) 
+        //         })
         //     })
     }),
-   
-    on:{
-       "*": {
-           actions:  forwardTo(({context: {service}}) => service)
-       }
+
+    on: {
+        "*": {
+            actions: [
+                forwardTo(({ context: { service } }) => service),
+            ],
+            guards: ({ event, context: { hub } }) => !hub.doc.getMap("history").get(event.id),
+        },
         // "*" : {
         //     actions: log (({event, context: {service}}) => {
         //         return  {type: event.type, id: service.id, sessionId: service.sessionId}
         //     })
         // }
-    }
-    
-})
+    },
+});
 
-
-export function withMarks<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub) {
-    if(actorLogic == undefined) {
-        throw new Error("actorLogic is undefined")
-    }
-    const transition = actorLogic.transition.bind(actorLogic);
-    actorLogic.transition = (state, event, actorCtx) => {
-        const marks = hub.doc.getMap<number>("marks");
-        const timestamp = Date.now();
-        if (event.type === "@xstate.init") {
-            marks.set("started", timestamp);
-        }
-        if (event.type === "@xstate.stop") {
-            marks.set("stopped", timestamp);
-        }
-
-        const before = actorCtx.self.getSnapshot();
-        const newState = transition(state, event, actorCtx);
-        const snapshot = actorCtx.self.getSnapshot();
-        if (snapshot.value !== before.value) {
-            marks.set(`start:${snapshot.value}`, timestamp);
-            marks.set(`end:${before.value}`, timestamp);
-        }
-
-        return newState;
-    }
-
-
-
-}
-
-export function withTimeline<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub) {
-  if(actorLogic == undefined) {
-       throw new Error("actorLogic is undefined")
-  }
-    const transition = actorLogic.transition.bind(actorLogic);
-    actorLogic.transition = (state, event, actorCtx) => {
-        console.group(event.type, Date.now());
-        
-        const timestamp = Date.now();
-        const before = actorCtx.self.getSnapshot();
-        console.log("before", before.value);
-
-        const last = hub.emitted.pop()?.timestamp;
-        const offset = last ? timestamp - last : 0;
-
-        const newState = transition(state, {
-            timestamp,
-            offset,
-            id: offset,
-            ...event
-        } , actorCtx);
-        const snapshot = actorCtx.self.getSnapshot();
-        console.log("after", snapshot.value);
-
-        //persist timeline
-        const timeline = hub.doc.getMap("timeline");
-        timeline.doc?.transact(() => {
-            if (snapshot.value !== before.value) {
-                timeline.set(`${timestamp}`, actorCtx.self.getPersistedSnapshot());
-            }
-        }) 
-        console.groupEnd();
-        return newState;
-    }
-        
-    return actorLogic;
-          
-    
-} 
-
-function withInspector<T extends AnyActorLogic>(actorLogic: T,  hub:serviceHub):T {
-    if(actorLogic == undefined) {
+export function withInspector<T extends AnyActorLogic>(actorLogic: T, hub: serviceHub): T {
+    if (actorLogic == undefined) {
         debugger;
-        throw new Error("actorLogic is undefined")
+        throw new Error("actorLogic is undefined");
     }
-    
+
     // return actorLogic;
     const transition = actorLogic.transition.bind(actorLogic);
-    const serviceMap =new Map<string, AnyActor>();
+    const serviceMap = new Map<string, AnyActor>();
     actorLogic.transition = (state, event, actorCtx) => {
         // hub.inspected.push(event);
         // console.log('Inspected', event.type);
-       
-        
-        const newState= transition(state, event, actorCtx);
-        const snapshotMap = hub.doc.getMap('state');
+
+        const newState = transition(state, event, actorCtx);
+        const snapshotMap = hub.doc.getMap("state");
         const persistedSnapshot = actorCtx.self.getPersistedSnapshot();
         Object.entries(persistedSnapshot).forEach(([key, value]) => {
             snapshotMap.set(key, value);
-        })
+        });
 
-        const contextMap = hub.doc.getMap('context'); 
-        Object.entries("context" in persistedSnapshot ? persistedSnapshot.context as Record<string, any> : {}  ).forEach(([key, value]) => {
-            contextMap.set(key, value);
-        })
-
+        
+        const contextMap = hub.doc.getMap("context");
+        Object.entries("context" in persistedSnapshot ? persistedSnapshot.context as Record<string, any> : {}).forEach(
+            ([key, value]) => {
+                contextMap.set(key, value);
+            },
+        );
 
         const snapshot = actorCtx.self.getSnapshot();
-        setNextEvents(hub.doc.getMap('next'),snapshot, actorLogic);
-
-
+        setNextEvents(hub.doc.getMap("next"), snapshot, actorLogic);
         hub.state = {
             next: getAllOwnEventDescriptors(snapshot).join(","),
             state: snapshot.value,
-            event: event?.type 
+            event: event?.type,
         };
+
+        if (event) {
+            hub.doc.getMap("last-event").set("timestamp", event.timestamp ?? Date.now());
+            hub.doc.getMap("last-event").set("id", event.id);
+            hub.doc.getMap("last-event").set("type", event.type);
+            hub.doc.getMap("history").set(event.id, {
+                id: event.id,
+                type: event.type,
+                timestamp: event.timestamp ?? Date.now(),
+            });
+        }
+
         Object.entries(newState.children)?.forEach(([service, ref]) => {
-            if (ref instanceof Actor) { 
-               
-              hub.doc.getMap('services').get(service) || hub.doc.getMap('services').set(service, {
+            if (ref instanceof Actor) {
+                hub.doc.getMap("services").get(service) || hub.doc.getMap("services").set(service, {
                     id: ref.id,
                     sessionId: ref.sessionId,
                     created: Date.now(),
                     status: ref.getSnapshot()?.status,
-                    started: Date.now()
-                })  
-                    
-                 
-                  if(!serviceMap.get(service)) {
-                      ref.on("*", (event: AnyEventObject) => {
-                          hub.emitted.push({
-                              offset: Date.now()- (hub.emitted.raw.get(0)?.timestamp ?? Date.now()),
-                              ...event,
-                              type: `@${service}.${event.type}`,
-                              timestamp: Date.now()
-                          });
-                      })
-                      serviceMap.set(service, ref);
-                  }
-               
+                    started: Date.now(),
+                });
+
+                if (!serviceMap.get(service)) {
+                    ref.on("*", (event: AnyEventObject) => {
+                        hub.emitted.push({
+                            offset: Date.now() - (hub.emitted.raw.get(0)?.timestamp ?? Date.now()),
+                            ...event,
+                            type: `@${service}.${event.type}`,
+                            timestamp: Date.now(),
+                        });
+                    });
+                    serviceMap.set(service, ref);
+                }
             }
-        })
-            
-        
+        });
 
         return newState;
-    }  
-    
+    };
+
     return actorLogic;
-    function getAllOwnEventDescriptors<TSnapshot extends SnapshotFrom<AnyStateMachine>>(snapshot:TSnapshot):EventDescriptor<EventFromLogic<T>>[] {
-        return [...new Set([...snapshot._nodes?.flatMap(sn => sn.ownEvents)])];
-    }
+}
+function getAllOwnEventDescriptors<TSnapshot extends SnapshotFrom<AnyStateMachine>>(
+    snapshot: TSnapshot,
+): EventDescriptor<EventFromLogic<T>>[] {
+    console.log("nodes", snapshot._nodes);
+    return [...new Set([...snapshot._nodes?.flatMap(sn => sn.ownEvents) || []])];
 }
 
-
-
-//todo: decide either to push to the service hub or the main hub
-// serviceHub.emitted.push({
-//     timestamp:  Date.now(),
-//     offset: Date.now() - (hub.doc.getMap<number>("timeline")?.get("started") ?? 0),
-//     ...event,
-//     type: event.type
-// }); 
-
-// ref.subscribe((snapshot) => {
-//     serviceHub.snapshot.push(snapshot);
-// })
- 
-
-
-function setNextEvents<T extends AnyActorLogic,TSnapshot extends SnapshotFrom<T>>(nextMap:Y.Map< any>, actorLogic: T, snapshot: TSnapshot) {
+function setNextEvents<T extends AnyActorLogic, TSnapshot extends SnapshotFrom<T>>(
+    nextMap: Y.Map<any>,
+    actorLogic: T,
+    snapshot: TSnapshot,
+) {
     const nextEvents = getAllOwnEventDescriptors(snapshot);
     console.debug("setnext", nextEvents);
-    nextMap.doc?.transact(() => { 
+    nextMap.doc?.transact(() => {
         nextEvents.forEach(event => {
             nextMap.set(event, {
                 type: event,
-                //@ts-ignore
-                meta: actorLogic.config?.states?.[snapshot.value]?.on?.[event]?.meta
+                // @ts-ignore
+                meta: actorLogic.config?.states?.[snapshot.value]?.on?.[event]?.meta,
             });
         });
-        //cleanup
+        // cleanup
         nextMap.forEach((_, key) => {
             if (!nextEvents.includes(key)) {
                 nextMap.delete(key);
             }
         });
-
     });
     console.log("next-map", nextMap.toJSON());
 
-    function getAllOwnEventDescriptors<TSnapshot extends SnapshotFrom<AnyStateMachine>>(snapshot:TSnapshot):EventDescriptor<EventFromLogic<T>>[] {
-        return [...new Set([...snapshot._nodes?.flatMap(sn => sn.ownEvents)])];
+    function getAllOwnEventDescriptors<TSnapshot extends SnapshotFrom<AnyStateMachine>>(
+        snapshot: TSnapshot,
+    ): EventDescriptor<EventFromLogic<T>>[] {
+        console.log("nodes", snapshot._nodes);
+        return [...new Set([...snapshot._nodes?.flatMap(sn => sn.ownEvents) || []])];
     }
 }
 

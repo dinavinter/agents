@@ -1,11 +1,11 @@
 {
   "name": "@cxai/stream",
-  "version": "1.0.11",
+  "version": "1.0.18",
   "description": "",
   
   "scripts": {
     "build": "npm run build:pkgroll",
-    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0   ",
+    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0  --experimental-network-imports ",
     "build:tsup": "tsup src/index.ts --format cjs,esm --dts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run build",
@@ -58,6 +58,12 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
+    ".": {
+      "default": "./dist/index.mjs",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
     "./ai": {
       "default": "./dist/ai/index.mjs",
       "import": "./dist/ai/index.mjs",

@@ -1,5 +1,5 @@
 import {CoreTool, streamText, TextStreamPart} from "ai";
-import {ObservableActorLogic} from "xstate";
+import {ActionFunction, ObservableActorLogic} from "xstate";
 import {aiOptions, FromDefault, OneOf, StreamTextOptions} from "./options";
 import {fromEventAsyncGenerator} from "@/xstate/generator";
 
@@ -55,6 +55,7 @@ export const history = (maximumSize:number = 10)=>{
     }
         
 }
+  type a=ActionFunction<any, any, any, any, any, any, any, any, any>
 
 export function pipeToAI<TDefaultOptions extends Partial<PipeToAIStreamInput>, TOptions extends FromDefault<PipeToAIStreamInput, TDefaultOptions > =FromDefault<PipeToAIStreamInput, TDefaultOptions >, TTools extends OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>> =OneOf<TOptions, TDefaultOptions, "tools" > & Record<string, CoreTool<any, any>>>( defaultOptions?: TDefaultOptions) {
     return fromEventAsyncGenerator(async function* ({input, self}) {

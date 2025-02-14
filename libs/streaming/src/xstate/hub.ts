@@ -34,16 +34,14 @@ export function createYjsHub(doc?:Y.Doc  | undefined) {
                 next: doc.getMap('current').get('next') as string,
                 state: doc.getMap('current').get('state')as string,
                 event: doc.getMap('current').get('event')as string,
-                context: doc.getMap('current').get('context')as string,
-            }
+             }
         } ,
-        set state(value: {next: string, state: string, event: string , context: string}) {
+        set state(value: {next: string, state: string, event: string }) {
             doc?.transact(() => {
                 doc.getMap('current').set('next', value.next);
                 doc.getMap('current').set('state', value.state);
                 doc.getMap('current').set('event', value.event);
-                doc.getMap('current').set('context', value.context);
-            })
+             })
         },
         children: doc.getMap<Y.Doc>('children'),
         child(id: string) {
