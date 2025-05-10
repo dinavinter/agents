@@ -1,0 +1,10 @@
+---
+nginx:
+  version: mainline
+nodejs:
+  version: 22.13.1
+  npm:
+    version: 10.7.0
+  yarn:
+    version: 1.22.19
+    

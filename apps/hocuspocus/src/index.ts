@@ -1,11 +1,11 @@
 import {Server} from '@hocuspocus/server'
 import {Logger} from '@hocuspocus/extension-logger'
 import {SQLite} from '@hocuspocus/extension-sqlite'
-import rootLogger, {CustomFieldsFormat, CustomFieldsTypeConversion, Level} from 'cf-nodejs-logging-support'
-rootLogger.setCustomFieldsFormat(CustomFieldsFormat.All);
-rootLogger.setCustomFieldsTypeConversion(CustomFieldsTypeConversion.Retain)
-rootLogger.setLoggingLevel('Debug');
-rootLogger.logMessage(Level.Info, `Log level is set to Debug`);
+// import rootLogger, {CustomFieldsFormat, CustomFieldsTypeConversion, Level} from 'cf-nodejs-logging-support'
+// rootLogger.setCustomFieldsFormat(CustomFieldsFormat.All);
+// rootLogger.setCustomFieldsTypeConversion(CustomFieldsTypeConversion.Retain)
+// rootLogger.setLoggingLevel('Debug');
+// rootLogger.logMessage(Level.Info, `Log level is set to Debug`);
 
 import {env} from 'node:process'
 import * as Y from 'yjs'
@@ -20,7 +20,7 @@ const server = Server.configure({
    
     extensions: [
         new Logger({
-            log: (...args)=>rootLogger.logMessage(Level.Info, ...args),
+            // log: (...args)=>rootLogger.logMessage(Level.Info, ...args),
             onRequest: true,
             onConnect: true,
             onDisconnect: true,
@@ -39,13 +39,13 @@ const server = Server.configure({
     onRequest(data) {
         return new Promise<void>(async (resolve, reject) => {
             const {request, response} = data;
-            rootLogger.info(`Request for ${request.url  }`)
+            // rootLogger.info(`Request for ${request.url  }`)
 
             const path=request.url?.split('/') || [];
             if(request.url?.match(/^\/docs\/(.*)/)) { 
                 const docId=path.pop()
                 const doc=   await server.openDirectConnection(docId || ":agents", {})
-                rootLogger.warn(`Document request `, docId ,doc.document?.guid)
+                // rootLogger.warn(`Document request `, docId ,doc.document?.guid)
 
                 if(doc.document) {
                     doc.document.shouldLoad && doc.document.load()
