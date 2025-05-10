@@ -54,7 +54,8 @@ const serviceControllerSetup = setup({
 })
  
 
- const machine=serviceControllerSetup.createMachine({ 
+ // @ts-ignore
+const machine=serviceControllerSetup.createMachine({ 
     context: ({input: {logic,doc,hub,input, ...options}, self} ) => {
         hub = hub ?? createYjsHub(doc);
         const snapshotMap = hub.doc.getMap("state").toJSON() as SnapshotFrom<typeof logic>;
@@ -123,6 +124,7 @@ const serviceControllerSetup = setup({
             actions: [
                 forwardTo(({ context: { service } }) => service),
             ],
+            //@ts-ignore
             guards: ({ event, context: { hub } }) => !hub.doc.getMap("history").get(event.id),
         },
         // "*" : {

@@ -127,7 +127,7 @@ export class YDocSseHtmx {
                 }
                 if (action === "update") {
                     yield {
-                        data: newValue,
+                        data: newValue instanceof Object ? JSON.stringify(newValue) : newValue as string,
                         event: `${path}-${key}-value`,
                     }
                 }

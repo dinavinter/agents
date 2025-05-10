@@ -2,8 +2,8 @@ import 'atomico/ssr/load';
 import {html} from "atomico";
 import type {VNode, VNodeAny} from "atomico/types/vnode";
 import {type ActionArgs, emit, type EventObject,type MachineContext, type ParameterizedObject} from "xstate";
-import {type EventMessage} from "@/iterator";
-
+import {EventMessage} from "@/iterator";
+  
 
 export type StreamOptions ={
     href:string
@@ -100,3 +100,4 @@ export function renderTo<TContext extends MachineContext & {stream?: RenderStrea
 
 
 }
+
