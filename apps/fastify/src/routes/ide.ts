@@ -66,6 +66,37 @@ export async function routes(fastify: FastifyInstance) {
                         </html>
         `);
     });
+
+    fastify.post('/agents/:agent/deploy', async function handler(request, reply: FastifyReply) {
+      const {agent: id} = request.params as { agent: string };
+      reply.header('Cache-Control', 'no-store');
+      
+       
+
+      reply.send(`<!DOCTYPE html>
+                    <html>
+                      <head>
+                          <title>Agent Playground: ${id}</title>
+                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          
+                         <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
+                         <script src="https://unpkg.com/@spectrum-web-components/split-view/sp-split-view.js"></script>
+                          <script  src="https://jspm.dev/@spectrum-web-components/bundle/elements.js" type="module" async></script> 
+                         </head>
+                        <body class="h-screen w-screen bg-gray-100"> 
+                            <sp-split-view  horizontal resizable      > 
+                              <div id="editor"  class="relative h-screen">
+                                <embed src="ide" class="w-full h-full">
+                              </div>
+                              <div id="runtime" class="h-screen" >
+                                <embed src="view" class="w-full h-full" />
+                              </div>
+                               <script src="https://cdn.tailwindcss.com"></script> 
+                              </sp-split-view>
+                        </body>
+                      </html>
+      `);
+  });
 }
 
 

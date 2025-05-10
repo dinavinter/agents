@@ -44,7 +44,16 @@ const plugins:FastifyPluginAsync= fp(async function fastify( instance, opts){
         doc: doc
     })
 
-    
+    // fastify.addContentTypeParser('*', function (req, done) {
+    //     var data = ''
+    //     req.on('data', chunk => { data += chunk })
+    //     req.on('end', () => {
+    //         done(null, data)
+    //     })
+    // })
+
+
+
     // await fastify.register( import('./plugins/agent/collection') , { doc: doc})
     await fastify.register( import('./plugins/agent/agent'))
     // await fastify.register( import('./plugins/agent/vm'))

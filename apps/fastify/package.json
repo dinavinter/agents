@@ -2,7 +2,7 @@
   "name": "agent-route",
   "version": "1.0.0",
   "description": "",
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "yarn@1.22.19",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -10,8 +10,8 @@
   "scripts": {
     "build": "npm run build:pkgroll",
     "build:tsup": "pnpx tsup ./src/app.ts --outDir ./dist --target=esnext --format esm --treeshake --shims --publicDir  ",
-    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.13.1  && cp -r ./public/ ./dist ",
-    "dev": "node --import=tsx --experimental-network-imports  --experimental-vm-modules --env-file=../../.env ./src/dev.ts ",
+    "build:pkgroll": " pkgroll -y --clear-dist --dist ./dist --shims  --treeshake   --target=node22.13.1  && cp -r ./public/ ./dist ",
+    "dev": "node --import=tsx  --experimental-vm-modules --env-file=../../.env ./src/dev.ts ",
     "vercel:dev": "npm run build && vercel dev --listen 5005",
     "vercel:deploy": "npm run build &&  vercel deploy",
     "cf:deploy": "yarn run build && cf push ",
@@ -24,18 +24,16 @@
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
     "@hocuspocus/provider": "^2.14.0",
     "@types/ws": "^8.5.13",
-    "@y-sweet/client": "^0.6.3",
     "edge-runtime": "^4.0.1",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
     "fastify-sse-v2": "^4.0.0",
     "it-pushable": "^3.2.3",
-    "subhosting": "^0.1.0-alpha.1",
+    "typescript": "^5.7.3",
     "ws": "^8.18.0",
     "xstate": "^5.19.0",
     "y-partykit": "^0.0.32",
-    "y-websocket": "^2.0.4",
-    "yjs": "^13.6.20"
+    "yjs": "^13.6.23"
   },
   "devDependencies": {
     "@ai-sdk/openai": "^0.0.54",
@@ -51,7 +49,7 @@
     "@vercel/functions": "^1.4.1",
     "@vercel/node": "^3.2.10",
     "@y-sweet/sdk": "^0.6.0",
-    "ai": "^3.3.19",
+    "ai": "^4.1.45",
     "ajv": "^8.17.1",
     "cf-nodejs-logging-support": "^7.3.0",
     "dotenv": "^16.4.5",
@@ -59,7 +57,6 @@
     "fastify-type-provider-zod": "^2.0.0",
     "js-beautify": "^1.15.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.5.4",
     "zod": "^3.23.8"
   },
   "main": "./dist/index.cjs",
@@ -95,7 +92,6 @@
   },
   "engines": {
     "yarn": "1.22.19",
-    "npm": "10.7.0",
     "node": "22.13.1"
   },
   "overrides": {
