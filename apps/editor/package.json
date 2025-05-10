@@ -1,23 +1,30 @@
 {
   "name": "@cxai/ide",
-  "version": "1.0.13",
+  "version": "1.0.19",
   "type": "module",
-  "main": "dist/ide.cjs",
-  "module": "dist/ide.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "types/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
   "scripts": {
     "dev": "vite",
     "build": "npm run build:vite",
-    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=node22.8.0   ",
-    "build:vite": "tsc && vite build ",
+    "build:pkgroll": "npx pkgroll -y --clear-dist --dist ./dist  --treeshake --shims   --target=es2022 --format=esm --out ./dist",
+    "build:vite": "   vite build  --target es2022  ",
+    "types":"tsc --declarationDir ./dist --emitDeclarationOnly --declaration --listEmittedFiles --esModuleInterop --target es2022 --module es2022 src/index.ts",
+    "types:dist":" tsc  --declaration --emitDeclarationOnly --declarationDir ./dist --allowJs  --listEmittedFiles --target es2022 ./dist/index.js",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@valtown/codemirror-codeium": "^1.1.1",
     "typescript": "^5.2.2",
-    "yjs": "^13.6.10"
+    "yjs": "^13.6.24",
+    
+    "y-protocols": "^1.0.6",
+    "@cxai/ata": "^0.0.0",
+    "y-codemirror.next": "^0.3.2"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6",
@@ -25,18 +32,48 @@
     "@codemirror/lint": "^6",
     "@codemirror/state": "^6.5.0",
     "@codemirror/view": "^6",
-    "@cxai/ata": "^0.0.0",
     "@hocuspocus/provider": "^2.9.0",
+    "@types/deno": "^2.2.0",
     "@typescript/vfs": "^1.5.0",
+    "@valtown/codemirror-codeium": "^1.1.1",
     "@valtown/codemirror-ts": "3.0.0-9",
     "codemirror": "^6",
     "comlink": "^4.4.1",
     "vite": "^5.0.0",
-    "vite-plugin-comlink": "^5.1.0",
-    "y-codemirror.next": "^0.3.2",
-    "y-protocols": "^1.0.6"
+    "vite-plugin-comlink": "^5.1.0"
+    
+  },
+  "peerDependencies": {
+    "yjs": "^13.6.24"
   },
   "publishConfig": {
     "access": "public"
+  },
+  
+  "exports":{
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./types/index.d.ts"
+    },
+    "./collab": {
+      "import": "./dist/collab.js",
+      "types": "./types/collab.d.ts"
+    },
+    "./worker": {
+      "import": "./dist/worker.js",
+        "types": "./types/worker.d.ts"
+    },
+    "./styles": {
+      "import": "./dist/styles.js",
+       "types": "./types/styles.d.ts"
+    },
+    "./connect": {
+      "import": "./dist/connect.js",
+      "types": "./types/connect.d.ts"
+    },
+    "./yjs-text-input": {
+      "import": "./dist/yjs-text-input.js",
+      "types": "./types/yjs-text-input.d.ts"
+    }
   }
 }
