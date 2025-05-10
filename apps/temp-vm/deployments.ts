@@ -11,6 +11,7 @@ import { prettyJSON } from 'npm:hono/pretty-json'
 import { fromEventAsyncGenerator } from "https://esm.sh/@cxai/stream?target=esnext";
 import { apiReference } from 'npm:@scalar/hono-api-reference'
 import { openApiDocument } from "./openapi.ts";
+import { logger } from 'npm:hono/logger'
 
 export interface File {
     kind: "file";
@@ -373,6 +374,7 @@ export const deploymentMachine = setup({
 const workers = new Map<string, ActorRefFromLogic<typeof deploymentMachine>>();
 
 const app = new Hono();
+app.use(logger())
 app.use("/*", cors());
 app.use(prettyJSON());
 
@@ -416,7 +418,7 @@ app.get("/projects", async (c) => {
 });
 
 app.post("/projects", async (c) => {
-    const project = await subhosting.organizations.projects.create(c.get("organization"), await c.req.text());
+    const project = await subhosting.organizations.projects.create(c.get("organization"), await c.req.json());
     return c.json(project, 201);
 });
 
@@ -458,9 +460,7 @@ app.post("/projects/:project/workers", async (c) => {
 
     workers.set(actor.sessionId, actor);
 
-    actor.send({
-        type: "deploy",
-    });
+   
     c.set("@response.worker", actor);
 });
 
@@ -578,7 +578,4 @@ app.get(
   app.get('/', (c) => {
       return c.redirect('/references')
   })
-export default {
-    port: 8000,
-    fetch: app.fetch,
-};
+export default app
