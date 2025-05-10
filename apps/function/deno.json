@@ -1,6 +1,11 @@
 {
+  "nodeModulesDir": "auto",
   "tasks": {
-    "sync": "deno run --allow-net --allow-read --allow-env  --allow-write --allow-import   --env-file=../../.env sync.ts --url wss://yjs.cfapps.us10-001.hana.ondemand.com --room screen  --experimental-vm-modules  ",
+    "avatar": "deno serve --unstable-temporal --allow-net --allow-read --allow-env  --allow-write --allow-import   --env-file=../../.env ./vm/avatar.tsx --url wss://yjs.cfapps.us10-001.hana.ondemand.com --room screen  --experimental-vm-modules  ",
+    "groups": "deno run --unstable-temporal --allow-net --allow-read --allow-env  --allow-write --allow-import    --env-file=../../.env  ./dcom/groups.ts --url wss://yjs.cfapps.us10-001.hana.ondemand.com --room screen  --experimental-vm-modules  ",
+    "runner": "deno run --allow-all  --env-file=../../.env  runner.ts  --experimental-vm-modules  ",
+
+    "sync": "deno run --allow-all  --env-file=../../.env  sync.ts  --experimental-vm-modules  ",
     "actor": "deno run --watch  --env-file=../../.env --allow-net --allow-read --allow-env  --allow-write --reload  main.ts --room test --experimental-vm-modules",
     "router": "deno run --watch --allow-net --allow-read --allow-env  --allow-write --allow-import --cached-only --env-file=../../.env router.ts --room agv:6863628f90 --url wss://hp.cfapps.us10-001.hana.ondemand.com --experimental-vm-modules",
     "run": "deno run --watch --allow-net --allow-read --allow-env  --allow-write --reload  run.ts --room test --experimental-vm-modules"
@@ -17,7 +22,7 @@
     "jest": "npm:jest@^29.7.0",
     "xstate": "https://esm.sh/xstate@^5.19.0",
     "y-partykit": "https://esm.sh/y-partykit@^0.0.32",
-    "yjs": "https://esm.sh/yjs@^13.6.20",
+    "yjs": "https://esm.sh/yjs@^13.6.23",
     "https://esm.sh/lib0@0.2.99/denonex": "https://esm.sh/lib0@0.2.99/time?target=es2022",
     "zod": "npm:zod@^3.24.1"
   },
