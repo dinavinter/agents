@@ -119,6 +119,28 @@ export function yArrayIterator<T>(array: Y.Array<T>): YIterator<T> {
     };
 }
 
+export function readableStream <T>(array:Y.Array<T>){
+    
+    const abortController =  new AbortController() 
+    return new ReadableStream<T>({
+        async start(controller) { 
+            abortController.signal.addEventListener('abort', () => {
+                array.unobserve(callback);
+            }); 
+            function callback(event: Y.YArrayEvent<T>) {
+                const newItems = event.delta.flatMap(d => d.insert).filter(Boolean);
+                newItems.forEach(controller.enqueue);
+            } 
+            for (const item of array.toArray()) {
+                controller.enqueue(item);
+            }
+            array.observe(callback); 
+        },
+        cancel() {
+            abortController.abort();
+        }
+    })
+}
 
 type DeltaItr<T>= {
     index: number;
