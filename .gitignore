@@ -45,3 +45,4 @@ Thumbs.db
 .env
 temp
 npm-packages-offline-cache
+env
