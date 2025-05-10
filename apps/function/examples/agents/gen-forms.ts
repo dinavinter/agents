@@ -321,7 +321,7 @@ export const machine = setup({
                     - your response will be swapped into the style element with the '@css.text-delta' attribute, response only in css text 
                     - response only in css text , make sure to not effect anything outside the form elements themself .
                     - make sure to not effect anything outside the form elements themself .
-                    - make beautiful and immpressive styles! use animations, use icons, use pseudo css and responsive desigh 
+                    - make beautiful and impressive styles! use animations, use icons, use pseudo css and responsive design 
                     `,
                 },
             },

@@ -94,6 +94,17 @@ if (import.meta.main) {
 
     })
 }
-
-
+//
+// const src = `export const val = Math.random()`;
+// const codetext = doc.getText("codemirror");
+//
+// new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
+//     console.log("init", codetext.toJSON())
+//     // doc.transact(() => {
+//     //     codetext.insert(0, `export const val = Math.random()`)
+//     //     if (codetext.length - src.length) {
+//     //         codetext.delete(src.length, codetext.length - src.length)
+//     //     }
+//     // })
+// })
 
