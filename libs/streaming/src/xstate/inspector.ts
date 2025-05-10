@@ -209,7 +209,7 @@ export function withInspector<T extends AnyActorLogic>(actorLogic: T, hub: servi
 
     return actorLogic;
 }
-function getAllOwnEventDescriptors<TSnapshot extends SnapshotFrom<AnyStateMachine>>(
+function getAllOwnEventDescriptors<T extends AnyStateMachine,TSnapshot extends SnapshotFrom<AnyStateMachine>>(
     snapshot: TSnapshot,
 ): EventDescriptor<EventFromLogic<T>>[] {
     console.log("nodes", snapshot._nodes);

@@ -1,5 +1,5 @@
 import {teeAsync, teePushableAsync} from "./monads";
-import {Pushable} from "it-pushable";
+import {type Pushable} from "it-pushable";
 
 export type Clonable<T> =  T &{
     source: T
