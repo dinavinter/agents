@@ -15,9 +15,7 @@
     "ESNext.Symbol",
     "DOM",
     "DOM.Iterable",
-    "ESNext",
-    "deno.ns",
-    "deno.worker"
+    "ESNext"
   ],
   "paths": {
     "@/*": [
