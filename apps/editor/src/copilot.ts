@@ -2,21 +2,30 @@ import {codeiumOtherDocumentsConfig, copilotPlugin, Language, startCompletion} f
 import { keymap } from "@codemirror/view";
 
 
+const urls=[
+    "https://esm.town/v/dinavinter/htmx_layout",
+    // "https://esm.town/v/dinavinter/cxai/yjs/store",
+    // "https://esm.town/v/dinavinter/cxai/yjs/faker",
+    // "https://esm.town/v/dinavinter/cxai/yjs/job",
+    // "https://esm.town/v/dinavinter/cxai/yjs/last",  
+    // "https://esm.town/v/dinavinter/cxai/yjs/react-hooks",
+    // "https://esm.town/v/dinavinter/dcom/spotlight",
+
+]
+
+const otherDocuments =await Promise.all( urls.map(async (url) => ({
+    
+        absolutePath: url,
+        text: await fetch(url).then((res) => res.text()),
+        language: Language.JAVASCRIPT,
+        editorLanguage: "typescript",
+    })));
+        
+
 export function codeiumCopilot() {
     return [
         codeiumOtherDocumentsConfig.of({
-            override: () => [
-                {
-                    absolutePath: "https://esm.town/v/foo.ts",
-                    text: `export const foo = 10;
-                            const hiddenValue = "https://macwright.com/"`,
-                    language: Language.TYPESCRIPT,
-                    editorLanguage: "typescript",
-                } 
-              
-               
-                    
-            ],
+            override: () =>otherDocuments,
         }),
         copilotPlugin({
             apiKey: "d49954eb-cfba-4992-980f-d8fb37f0e942",

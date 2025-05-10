@@ -1,23 +1,22 @@
-import { autocompletion } from '@codemirror/autocomplete';
-import { javascript } from '@codemirror/lang-javascript';
-import {
-    tsAutocompleteWorker,
-    tsFacetWorker,
-    tsGotoWorker,
-    tsHoverWorker,
-    tsLinterWorker,
-    tsSyncWorker,
-} from '@valtown/codemirror-ts';
-import { EditorView, basicSetup } from 'codemirror';
-import * as Comlink from 'comlink';
-import { containerStyles, editorTheme, tooltipStyles } from './styles';
-import {cmCollab} from "./collab"
-import * as ts from "typescript";
-import TSWorker from "./worker.ts?worker&inline"
-import {codeiumCopilot, copilotStyle} from "./copilot.ts";
+import type * as ts from 'typescript';
+import { connect } from './connect';
+import { useStore } from './store.ts';
+import { Doc } from 'yjs';
+const { autocompletion } = await import('@codemirror/autocomplete');
+const { javascript } = await import('@codemirror/lang-javascript');
+const { tsAutocompleteWorker, tsFacetWorker, tsGotoWorker, tsHoverWorker, tsLinterWorker, tsSyncWorker } = await import('@valtown/codemirror-ts');
+const Comlink = await import('comlink');
+const { containerStyles, editorTheme, tooltipStyles } = await import('./styles');
+const { cmCollab } = await import('./collab');
+const { default: TSWorker } = await import('./worker.ts?worker&inline');
+const { codeiumCopilot, copilotStyle } = await import('./copilot.ts');
+import * as Y from "yjs";
 // import {classHighlighter} from '@lezer/highlight';
 // import {syntaxHighlighting} from '@codemirror/language';
 // import {tsxLanguage} from '@codemirror/lang-javascript';
+
+
+const { EditorView, basicSetup } = await import('codemirror');
 
 export function renderDisplayParts(dp: ts.SymbolDisplayPart[]) {
     const div = document.createElement('div');
@@ -30,13 +29,19 @@ export function renderDisplayParts(dp: ts.SymbolDisplayPart[]) {
 }
 
 export const EDITOR_READY_EVENT = "cm:ts:ready";
-
+export const EDITOR_CHANGE_EVENT = "change";
 
 export class TypeScriptEditor extends HTMLElement {
-    editor: EditorView | null = null;
+    editor: InstanceType<typeof EditorView> | null = null;
  
     static get observedAttributes() {
         return ['value' , "url", "room" , "component"];
+    }
+    
+    attributeChangedCallback(name: string, oldValue: any, newValue: any) {
+        if (name === 'value' && this.editor && newValue !== this.value) {
+            this.value = newValue;
+        }
     }
     
     constructor() {
@@ -77,7 +82,7 @@ export class TypeScriptEditor extends HTMLElement {
         //     type: 'module',
         // });
         const innerWorker= new TSWorker({
-            name:"na"
+            name:"ts-editor-worker",
         })
         // const innerWorker= new ComlinkWorker<typeof import("./worker")>(new URL('./worker.ts', import.meta.url), {
         //             type: 'module',
@@ -89,8 +94,16 @@ export class TypeScriptEditor extends HTMLElement {
         // const  worker= new ComlinkWorker<typeof import("./worker")>(new URL('./worker.ts', import.meta.url), {
         //         type: 'module',
         //     })
+
+        const {doc, awareness} = useStore(this.url, this.room);
+        console.log("doc", doc.getText(this.component).toJSON());
+        const text= useSyncedText(doc.getText(this.component));
+        console.log("text", text.toJSON());
+        text.observe(e => {
+            console.log("text", e);
+        });
         this.editor = new EditorView({
-            extensions: [
+             extensions: [
                 basicSetup,
                 editorTheme,
                 javascript({
@@ -130,15 +143,14 @@ export class TypeScriptEditor extends HTMLElement {
                 tsHoverWorker(),
                 tsGotoWorker(),
                 cmCollab({
-                    url: this.url,
-                    room: this.room,
-                    component: this.component
+                    awareness,
+                    component: text
                 }),
                 codeiumCopilot()
             ],
             parent: editorContainer,
         });
-
+        this.editor.dom.onchange =  this.onValueChanged.bind(this);
         // Dispatch ready event
         this.dispatchEvent(new CustomEvent(EDITOR_READY_EVENT, {
             detail:this.editor,
@@ -146,6 +158,15 @@ export class TypeScriptEditor extends HTMLElement {
             composed: true
         }));
     }
+    
+    onValueChanged(e: Event) {
+        console.debug("cm: value changed",e)
+        this.dispatchEvent(new CustomEvent(EDITOR_CHANGE_EVENT, {
+            detail: this.value,
+            bubbles: true,
+            composed: true
+        }));
+     }
 
     disconnectedCallback() {
         this.editor?.destroy();
@@ -169,3 +190,27 @@ export class TypeScriptEditor extends HTMLElement {
 }
 
 customElements.define('ts-editor', TypeScriptEditor);
+
+export {rooms,connect} from "./connect"
+
+export interface HTMLTypeScriptEditor extends TypeScriptEditor, HTMLElement {
+    readonly editor: InstanceType<typeof EditorView> | null;
+    room: string;
+    url: string;
+    component: string;
+}
+
+declare global {
+    interface HTMLElementTagNameMap {
+        'ts-editor': HTMLTypeScriptEditor
+    }
+}
+
+function useSyncedText(yText: Y.Text) {
+    const doc = new Doc();
+    doc.getText("text").applyDelta(yText.toDelta());
+    yText.observe(e => {
+        doc.getText("text").applyDelta(e.changes.delta);
+    });
+    return doc.getText("text");
+}

@@ -5,7 +5,7 @@ A web component that provides a TypeScript editor with autocomplete, type checki
 ## Installation
 
 ```bash
-npm install @stackblitz/typescript-editor
+npm install @cxai/ide
 ```
 
 ## Usage
@@ -14,31 +14,16 @@ npm install @stackblitz/typescript-editor
 
 ```html
 <script type="module">
-  import '@stackblitz/typescript-editor';
+  import '@cxai/ide';
 </script>
 
-<typescript-editor value="// Your TypeScript code here">
-  <!-- Optional: Add collaboration support -->
-  <collaboration-provider url="wss://your-hocuspocus-server" room="my-room" />
-</typescript-editor>
+<ts-editor value="import { createMachine } from 'xstate';" url="%YJS_URL%" room="%YJS_ROOM%" component="codemirror" > 
+  
+</ts-editor>
+
 ```
 
-### SSR (Server-Side Rendering)
 
-The component is SSR-safe and will only initialize the editor in browser environments.
-
-```jsx
-import '@stackblitz/typescript-editor';
-
-function App() {
-  return (
-    <typescript-editor value="// Your TypeScript code here">
-      {/* Optional: Add collaboration support */}
-      <collaboration-provider url="wss://your-hocuspocus-server" room="my-room" />
-    </typescript-editor>
-  );
-}
-```
 
 ## Properties
 
@@ -47,8 +32,84 @@ function App() {
 
 ### Collaboration Provider
 - `url`: WebSocket URL of the Hocuspocus server
-- `room`: Room name for collaboration (defaults to 'default-room')
-
+- `room`: Room name for collaboration (defaults to 'default-room'), this will be the doc id
+- `component`: The component name in the yjs docm, defaults to 'codemirror'
 ## License
 
 MIT
+
+# YJS Form Components
+
+This package provides form components that integrate with YJS for real-time collaboration.
+
+## Installation
+
+```bash
+npm install yjs-form-components
+```
+
+## Usage
+
+The package provides a `<yjs-text-input>` web component that can be used in any HTML form and automatically syncs with YJS.
+
+```html
+<form>
+  <!-- Basic usage -->
+  <yjs-text-input
+    name="description"
+    url="ws://localhost:1234"
+    room="my-document"
+    required
+  ></yjs-text-input>
+
+  <!-- With all options -->
+  <yjs-text-input
+    name="notes"
+    url="ws://localhost:1234"
+    room="my-document"
+    required
+    disabled
+    value="Initial value"
+  ></yjs-text-input>
+</form>
+```
+
+### Attributes
+
+- `url` (required): WebSocket URL for YJS collaboration
+- `room` (required): Room name for YJS document
+- `name`: Form field name
+- `value`: Initial value
+- `required`: Whether the field is required
+- `disabled`: Whether the field is disabled
+
+### Events
+
+- `change`: Fired when the value changes (either locally or from remote updates)
+
+### Form Integration
+
+The component implements the [Form-Associated Custom Elements](https://html.spec.whatwg.org/multipage/custom-elements.html#form-associated-custom-elements) specification, which means it:
+
+- Works with standard HTML forms
+- Supports form validation
+- Supports form reset
+- Supports form submission
+- Integrates with the Constraint Validation API
+
+## Development
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Build the package:
+```bash
+npm run build
+```
+
+3. Watch for changes during development:
+```bash
+npm run watch
+```
