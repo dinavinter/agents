@@ -8,6 +8,7 @@ import * as Comlink from 'comlink';
 import * as ts from 'typescript';
 import { setupTypeAcquisition } from '@cxai/ata';
 
+console.log('here');
 
 async function createTSEnv() {
   const fsMap = await createDefaultMapFromCDN(
@@ -23,29 +24,9 @@ async function createTSEnv() {
   });
 
   const ata = setupTypeAcquisition({
-    projectName: 'CM ATA Project',
+    projectName: 'My ATA Project',
     typescript: ts,
     logger: console,
-    fetcher: (input: RequestInfo | URL, init?: RequestInit | undefined) => {
-      console.log('fetcher', input, init);
-      const url = typeof input === 'string' ? input :  "url" in input ? input.url : input.toString()
-      const uri =  new URL(url)
-      console.log('fetcher',uri, input);
-
-      switch (uri.protocol) {
-        case "jsr:":
-        case "npm:": 
-          uri.host = "esm.sh"
-          uri.protocol = "https:"
-          uri.searchParams.set("target", uri.searchParams.get("target") ?? "deno")
-          break;
-        case "deno:":
-          uri.host = "deno.land"
-          uri.protocol = "https:"
-       } 
-       return fetch(uri.toString(), init);
-
-    },
     delegate: {
       receivedFile: (code: string, path: string) => {
         env.createFile(path, code);
@@ -60,10 +41,10 @@ async function createTSEnv() {
       finished: (vfs) => {
         console.log('ATA done', vfs);
       },
-     
     },
   });
 
+  console.log('here');
 
   return {
     env,

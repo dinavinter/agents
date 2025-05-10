@@ -1,37 +1,13 @@
 {
-  "files": ["./src/index.ts"],
-  "buildOptions": {
-    "verbose": true,
-    "outDir": "./dist",
-    "incremental": true,
-    
-  },
   "compilerOptions": {
-    "rootDir": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@@/*": ["./*"]
-    },
-    "target": "ESNext",
+    "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "skipLibCheck": false,
- 
-    /* declaration */
-    "declaration": true,
-    "declarationDir": "./types",
-    "emitDeclarationOnly": true,
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "noImplicitReturns": true,
-    "forceConsistentCasingInFileNames": true,
-    "types": ["vite/client"],
-    "listEmittedFiles": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
 
     /* Bundler mode */
-//    "moduleResolution": "Node",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -41,14 +17,10 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    
-    "noEmitOnError": false
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "./src",
-    "@types/deno", "dist/index.d.ts" ,
+    "src",
     "../../node_modules/.pnpm/vite-plugin-comlink@5.1.0_comlink@4.4.2_vite@5.4.11_@types+node@22.10.2_terser@5.37.0_/node_modules/vite-plugin-comlink/client.d.ts"
   ]
-//  "exclude": ["node_modules"]
 }
