@@ -43,6 +43,7 @@ export const agentRunnerPlugin = fp(async (fastify, options) => {
         const id = typeof docId === "string" ? docId : docId.guid
         const doc = docId instanceof Y.Doc ? docId : fastify.docs.getOrCreate(id);
          async function createVM(code:string, id:string) {
+            
 
            //start vm
             return {

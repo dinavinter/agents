@@ -7,6 +7,8 @@ import {revisionHash} from "@/plugins/agent/repl/revision.ts";
 
 function updateAgentSrc(docs: FastifyInstance["docs"], id: string, code: string) {
     const agent = docs.getOrCreate(id);
+    const codeMirror=agent.getText("codemirror")
+
     
     const rev = revisionHash(code);
     agent.transact(() => {
@@ -15,6 +17,12 @@ function updateAgentSrc(docs: FastifyInstance["docs"], id: string, code: string)
             agent.getMap().set("rev", revisionHash(code));
             agent.getMap().set("timestamp", Date.now());
         }
+        
+        codeMirror.insert(0, code)
+        if(codeMirror.length > code.length){
+            codeMirror.delete(code.length, (codeMirror.length - code.length) || 0)
+        }
+
     });
     
     const agents = docs.getOrCreate(":agents");
@@ -223,7 +231,7 @@ export default createMachine({
         url: '/agents/:agent',
         method: 'post',
         schema: {
-            summary: 'Post Specific Agent Code',
+            summary: 'Update Agent',
             description: 'This route is to create an agent definition',
             // params:{
             //     type: 'object',
@@ -270,7 +278,157 @@ export default createMachine({
             return reply.send(agentJson(agent));
         }
     })
+    fastify.route({
+        url: '/agents/:agent/code',
+        method: 'post',
+        schema: {
+            summary: 'Post Specific Agent Code',
+            description: 'This route is to create an agent definition',
+            // params:{
+            //     type: 'object',
+            //     properties: {
+            //         agent: {type: 'string' , examples: ['emit']}
+            //     }
+            // },
+            body: {
+                type: 'string',
+                description: 'The agent javascript code',
+                examples: [`export const val = Math.random();`]
+            },
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+            const code= await request.body as string;
+            console.log(`Code ${code}`, request.body)
+            const {agent:id} = request.params as { agent: string };
+            const agent = fastify.docs.getOrCreate(id);
+            const codeMirror=agent.getText("codemirror")
 
+            agent.transact(()=> {
+                  codeMirror.insert(0, code)
+               if(codeMirror.length > code.length){
+                   codeMirror.delete(code.length, (codeMirror.length - code.length) || 0) 
+               } 
+            })
+            // console.log(`Listening at ${agent.vm.properties.get("href")}.`) 
+            reply.type('application/json');
+            return reply.send(agentJson(agent));
+        }
+    })
+    
+    //route to sync from code mirror to agent src
+    fastify.route({
+        url: '/agents/:agent/sync',
+        method: 'post',
+        schema: {
+            summary: 'Sync Agent Source',
+            description: 'This route is to create an agent definition',
+            // params:{
+            //     type: 'object',
+            //     properties: {
+            //         agent: {type: 'string' , examples: ['emit']}
+            //     }
+            // },
+            body: {
+                type: 'string',
+                description: 'Sync the agent code to src',
+            },
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+            const {agent: id} = request.params as { agent: string };
+            const agent = fastify.docs.getOrCreate(id);
+            const agents = fastify.docs.getOrCreate(":agents");
+            const code = agent.getText("codemirror").toJSON();
+            const rev = revisionHash(code);
+
+            agent.transact(() => {
+                if (agent.getMap().get("rev") !== rev) {
+                    agent.getMap().set("src", code);
+                    agent.getMap().set("rev", revisionHash(code));
+                    agent.getMap().set("timestamp", Date.now());
+                }
+            });
+            
+            agents.transact(() => { 
+                agents.getMap(id).set("rev", agent.getMap().get("rev"))
+                agents.getMap(id).set("timestamp", agent.getMap().get("timestamp"))
+            });
+            reply.type('application/json');
+            return reply.send(agentJson(agent));
+        }
+    })
+    
+    fastify.route({
+        url: '/agents/:agent/src',
+        method: 'post',
+        schema: {
+            summary: 'Post Agent Source',
+            description: 'This route is to create an agent definition', 
+            body: {
+                type: 'string',
+                description: 'The agent javascript code',
+                examples: [`export const val = Math.random();`]
+            },
+            response: {
+                200: {
+                    description: 'Successful response',
+                    type: 'object',
+                    properties: {
+                        id: {type: 'string'},
+                        version: {type: 'string'},
+                        links: {
+                            type: 'object',
+                            properties: {
+                                self: {type: 'string'},
+                                workers: {type: 'string'}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        async handler(request, reply) {
+            const code= await request.body as string;
+            console.log(`Code ${code}`, request.body)
+            const {agent:id} = request.params as { agent: string };
+            const agent= updateAgentSrc(fastify.docs, id, code);
+            reply.type('application/json');
+            return reply.send(agentJson(agent));
+        }
+    })
     fastify.route({
         url: '/agents/:agent',
         method: 'get',
@@ -491,7 +649,7 @@ export default createMachine({
             rev: agent.getMap().get("rev"),
             timestamp: agent.getMap().get("timestamp"),
             src: agent.getMap().get("src"),
-
+             codemirror: agent.getText("codemirror").toJSON(),
             doc: {
                 id: agent.guid,
                 collection: agent.collectionid,
