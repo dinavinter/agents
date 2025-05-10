@@ -54,3 +54,15 @@ export async function * toFragmentAsync(events:AsyncIterable<VNodeAny[]>) {
         }
     }
 }
+
+export async function * iterateYFragment(fragment:Y.XmlFragment) {
+   const pushable =new Y.Array<Y.XmlElement>();
+    fragment.observeDeep((event, tr) => {
+        const changes =  tr.changedParentTypes
+         for (const {action, target} of event.keys) {
+              if (action == "add") {
+                pushable.push([target]);
+              }
+         }
+    });
+}

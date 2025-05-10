@@ -1,6 +1,6 @@
 {
 "extends": "@tsconfig/node22/tsconfig.json", 
-  "include": ["src/**/*", "../../apps/function/crux.ts" ],
+  "include": ["src/**/*" ],
   "exclude": ["node_modules/**/*", "dist/**/*"],
   
 "compilerOptions": {
@@ -15,12 +15,18 @@
     "ESNext.Symbol",
     "DOM",
     "DOM.Iterable",
-    "ESNext"
+    "ESNext",
+    "deno.ns",
+    "deno.worker"
   ],
   "paths": {
     "@/*": [
       "./src/*"
+    ],
+    "@cxai/stream": [
+      "./src/*"
     ]
   }
 }
-}  
+}
+

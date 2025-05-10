@@ -55,11 +55,11 @@ export async function* castAsync<T>(e: AsyncIterable<any>) {
 }
 
 export type BatchAsyncParams<T>={stream: AsyncIterable<T>, split?:(i:T)=> boolean}
-export async function * batchAsync< T extends  any,TIterable extends AsyncIterable<T>=AsyncIterable<T>>(stream: TIterable, split?:(i:T)=> boolean ): AsyncGenerator<T[]> {
+export async function * batchAsync< T extends  any,TIterable extends AsyncIterable<T>=AsyncIterable<T>>(stream: TIterable, split?:(current:T, buffer:T[])=> boolean ): AsyncGenerator<T[]> {
     const buffer:T[] = [];
     for await (const event of stream) {
         buffer.push(event);
-        if (typeof split == "undefined" || split(event)) {
+        if (typeof split == "undefined" || split(event, buffer)) {
             yield buffer.splice(0, buffer.length - 1)
         }
     }
