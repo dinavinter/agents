@@ -3,9 +3,9 @@ applications:
       command: yarn run start
       health-check-type: none
       stack: cflinuxfs4
-      memory: 2GB
+      memory: 10GB
       instances: 1
-      disk_quota: 4GB
+      disk_quota: 10GB
       routes:
         - route: https://yjs.cfapps.us10-001.hana.ondemand.com
       env:
