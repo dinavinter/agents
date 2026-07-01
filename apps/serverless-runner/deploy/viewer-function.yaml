@@ -78,10 +78,14 @@ spec:
 
               // Send existing emitted events
               const emitted = doc.getArray('emitted');
+              function formatSSE(ev) {
+                const lines = ev.data.split('\n').map(l => 'data: ' + l).join('\n');
+                return `event: ${ev.type || 'message'}\n${lines}\n\n`;
+              }
               for (let i = 0; i < emitted.length; i++) {
                 const ev = emitted.get(i);
                 if (ev && ev.data) {
-                  res.write(`event: ${ev.type || 'message'}\ndata: ${ev.data}\n\n`);
+                  res.write(formatSSE(ev));
                 }
               }
 
@@ -90,7 +94,7 @@ spec:
                 event.changes.added.forEach(item => {
                   item.content.getContent().forEach(ev => {
                     if (ev && ev.data) {
-                      res.write(`event: ${ev.type || 'message'}\ndata: ${ev.data}\n\n`);
+                      res.write(formatSSE(ev));
                     }
                   });
                 });
@@ -122,7 +126,7 @@ spec:
               Agent: <b>${agent}</b> | Rev: <code>${rev}</code> | 
               <span class="text-green-500">● Live</span>
             </div>
-            <div sse-swap="message" hx-swap="innerHTML transition:true">
+            <div sse-swap="frontend" hx-swap="innerHTML transition:true">
               <div class="text-center text-gray-400 p-8">Waiting for agent output...</div>
             </div>
           </div>
