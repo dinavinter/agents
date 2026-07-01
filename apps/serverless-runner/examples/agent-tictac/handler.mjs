@@ -1,19 +1,15 @@
 /**
- * Tic-Tac-Toe Agent — runs as a Kyma Function.
+ * Tic-Tac-Toe Agent — with HTML rendering for the viewer.
  * 
- * This is a self-contained agent using XState + AI.
- * The runner detects `export const machine` and wraps it
- * in an HTTP handler automatically.
- * 
- * Uses esm.sh-style imports — the runner rewrites them
- * to npm package names at load time.
+ * Emits HTML fragments via XState emit() → synced to Yjs "emitted" array →
+ * viewer's SSE stream picks them up → HTMX swaps them into the page.
  * 
  * GET  /  → current board state
  * POST / { type: "PLAY", index: 0-8 } → make a move
  * POST / { type: "AI_MOVE" } → let AI pick a move
  */
 
-import { assign, setup, createMachine } from "https://esm.sh/xstate@5.19.0";
+import { assign, setup, emit } from "https://esm.sh/xstate@5.19.0";
 
 // --- Game logic ---
 
@@ -31,18 +27,47 @@ function getWinner(board) {
   return null;
 }
 
-function printBoard(board) {
-  const symbol = (cell) => cell === "" ? "·" : cell;
-  return [
-    `${symbol(board[0])} ${symbol(board[1])} ${symbol(board[2])}`,
-    `${symbol(board[3])} ${symbol(board[4])} ${symbol(board[5])}`,
-    `${symbol(board[6])} ${symbol(board[7])} ${symbol(board[8])}`,
-  ].join("\n");
+function renderBoard(board, winner, winLine) {
+  const cells = board.map((cell, i) => {
+    const isWin = winLine?.includes(i);
+    const symbol = cell === "x" ? "✕" : cell === "o" ? "○" : "";
+    const color = cell === "x" ? "text-blue-500" : "text-red-500";
+    const bg = isWin ? "bg-green-100" : "bg-white";
+    return `<div class="w-20 h-20 border border-gray-300 flex items-center justify-center text-4xl font-bold ${color} ${bg} cursor-pointer hover:bg-gray-50" data-index="${i}">${symbol}</div>`;
+  }).join("");
+
+  const status = winner
+    ? `<div class="text-2xl font-bold text-green-600 mt-4">🎉 ${winner.toUpperCase()} wins!</div>`
+    : board.every(c => c !== "")
+    ? `<div class="text-2xl font-bold text-gray-500 mt-4">Draw!</div>`
+    : `<div class="text-lg text-gray-600 mt-4">Next: <span class="font-bold ${board.filter(c=>c!=="").length % 2 === 0 ? "text-blue-500" : "text-red-500"}">${board.filter(c=>c!=="").length % 2 === 0 ? "X" : "O"}</span></div>`;
+
+  return `
+    <div class="flex flex-col items-center p-6">
+      <h2 class="text-2xl font-bold mb-4">🎮 Tic-Tac-Toe</h2>
+      <div class="grid grid-cols-3 gap-1 bg-gray-200 p-1 rounded-lg shadow-md">
+        ${cells}
+      </div>
+      ${status}
+      <div class="mt-4 text-sm text-gray-400">Running as Kyma Function → synced via Yjs</div>
+    </div>
+  `;
 }
 
 // --- Machine ---
 
-export const machine = createMachine({
+export const machine = setup({
+  actions: {
+    renderBoard: emit(({ context }) => {
+      const winner = getWinner(context.board);
+      return {
+        type: "frontend",
+        event: "board",
+        data: renderBoard(context.board, context.winner, winner?.line),
+      };
+    }),
+  },
+}).createMachine({
   id: "tictactoe",
   initial: "playing",
   context: {
@@ -51,6 +76,8 @@ export const machine = createMachine({
     moves: 0,
     winner: null,
   },
+  // Render initial board on entry
+  entry: "renderBoard",
   states: {
     playing: {
       on: {
@@ -58,37 +85,42 @@ export const machine = createMachine({
           guard: ({ context, event }) => {
             return context.board[event.index] === "" && !context.winner;
           },
-          actions: assign(({ context, event }) => {
-            const board = [...context.board];
-            board[event.index] = context.player;
-            const winner = getWinner(board);
-            return {
-              board,
-              player: context.player === "x" ? "o" : "x",
-              moves: context.moves + 1,
-              winner: winner?.player || null,
-            };
-          }),
+          actions: [
+            assign(({ context, event }) => {
+              const board = [...context.board];
+              board[event.index] = context.player;
+              const winner = getWinner(board);
+              return {
+                board,
+                player: context.player === "x" ? "o" : "x",
+                moves: context.moves + 1,
+                winner: winner?.player || null,
+              };
+            }),
+            "renderBoard",
+          ],
           target: "checkEnd",
         },
         AI_MOVE: {
-          actions: assign(({ context }) => {
-            // Simple AI: pick random empty cell
-            const empty = context.board
-              .map((cell, i) => (cell === "" ? i : -1))
-              .filter((i) => i >= 0);
-            if (empty.length === 0) return {};
-            const index = empty[Math.floor(Math.random() * empty.length)];
-            const board = [...context.board];
-            board[index] = context.player;
-            const winner = getWinner(board);
-            return {
-              board,
-              player: context.player === "x" ? "o" : "x",
-              moves: context.moves + 1,
-              winner: winner?.player || null,
-            };
-          }),
+          actions: [
+            assign(({ context }) => {
+              const empty = context.board
+                .map((cell, i) => (cell === "" ? i : -1))
+                .filter((i) => i >= 0);
+              if (empty.length === 0) return {};
+              const index = empty[Math.floor(Math.random() * empty.length)];
+              const board = [...context.board];
+              board[index] = context.player;
+              const winner = getWinner(board);
+              return {
+                board,
+                player: context.player === "x" ? "o" : "x",
+                moves: context.moves + 1,
+                winner: winner?.player || null,
+              };
+            }),
+            "renderBoard",
+          ],
           target: "checkEnd",
         },
       },
@@ -100,15 +132,13 @@ export const machine = createMachine({
         { target: "playing" },
       ],
     },
-    won: { type: "final" },
-    draw: { type: "final" },
+    won: {
+      type: "final",
+      entry: "renderBoard",
+    },
+    draw: {
+      type: "final",
+      entry: "renderBoard",
+    },
   },
 });
-
-// --- Optional: custom HTTP handler override ---
-// If you export `main`, it takes priority over the machine wrapper.
-// Uncomment to customize:
-
-// export async function main(event, context) {
-//   return { custom: true };
-// }
