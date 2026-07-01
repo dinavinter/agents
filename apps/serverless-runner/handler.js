@@ -264,15 +264,21 @@ function createMachineHandler(machine) {
             writeState(revDoc);
           });
 
-          // Also forward emitted events to the revision doc's "emitted" array
+          // Forward emitted events to the revision doc's "emitted" array
+          // The viewer reads this via yArrayIterator and streams as SSE
+          const startTime = Date.now();
           actor.on("*", (event) => {
+            if (!event.data && !event.type) return;
             revDoc.transact(() => {
               const emitted = revDoc.getArray("emitted");
               emitted.push([{
                 id: (++eventIndex).toString(),
-                type: event.type,
+                type: event.type || "message",
+                data: typeof event.data === "string" ? event.data : JSON.stringify(event.data),
+                format: typeof event.data === "string" ? undefined : "json",
+                offset: Date.now() - startTime,
                 timestamp: Date.now(),
-                ...event,
+                defer: 10,
               }]);
             });
           });

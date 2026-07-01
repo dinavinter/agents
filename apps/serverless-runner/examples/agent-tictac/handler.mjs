@@ -61,8 +61,7 @@ export const machine = setup({
     renderBoard: emit(({ context }) => {
       const winner = getWinner(context.board);
       return {
-        type: "frontend",
-        event: "board",
+        type: "message",
         data: renderBoard(context.board, context.winner, winner?.line),
       };
     }),
