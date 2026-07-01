@@ -22,7 +22,7 @@
     "@cxai/stream": "^1.0.18",
     "@edge-runtime/types": "^3.0.3",
     "@fastify/type-provider-json-schema-to-ts": "^4.0.0",
-    "@hocuspocus/provider": "^2.14.0",
+    "@hocuspocus/provider": "^4.0.0",
     "@types/ws": "^8.5.13",
     "edge-runtime": "^4.0.1",
     "fastify": "^4.28.1",
