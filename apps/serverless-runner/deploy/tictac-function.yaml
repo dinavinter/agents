@@ -26,7 +26,7 @@ spec:
     - name: GITHUB_BRANCH
       value: "restruct"
     - name: YJS_URL
-      value: "wss://yjs.cfapps.us10-001.hana.ondemand.com"
+      value: "ws://hocuspocus.agents.svc.cluster.local:1234"
   resourceConfiguration:
     function:
       resources:
