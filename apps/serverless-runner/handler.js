@@ -169,13 +169,10 @@ function createMachineHandler(machine) {
         const agentId = process.env.AGENT_ID || "default";
 
         if (yjsUrl) {
-          // Sync mode: use ServiceController to sync state to Yjs → visible in viewer
+          // Sync mode: connect to Yjs and write state changes → visible in viewer
           const Y = await import("yjs");
           const { HocuspocusProvider } = await import("@hocuspocus/provider");
           const { createActor } = await import("xstate");
-          const ServiceController = require(
-            require.resolve("@cxai/stream").replace(/dist\/index\.cjs$/, "dist/xstate/index.cjs")
-          ).default;
 
           yjsDoc = new Y.Doc({ guid: agentId });
           yjsProvider = new HocuspocusProvider({
@@ -188,10 +185,10 @@ function createMachineHandler(machine) {
           await new Promise((resolve) => {
             if (yjsProvider.isSynced) return resolve();
             yjsProvider.on("synced", resolve);
-            setTimeout(resolve, 3000); // timeout fallback
+            setTimeout(resolve, 3000);
           });
 
-          // Register agent in the :agents registry
+          // Register in :agents registry
           const agentsDoc = new Y.Doc({ guid: ":agents" });
           const agentsProvider = new HocuspocusProvider({
             url: yjsUrl,
@@ -211,25 +208,34 @@ function createMachineHandler(machine) {
             agentsDoc.getMap(agentId).set("status", "running");
           });
 
-          // Write source to the agent doc (so viewer can show it)
+          // Write source to agent doc
           if (cachedModule) {
-            const src = cachedModule.src || "";
             yjsDoc.transact(() => {
-              yjsDoc.getMap().set("src", src);
+              yjsDoc.getMap().set("src", cachedModule.src || "");
               yjsDoc.getMap().set("rev", rev);
               yjsDoc.getMap().set("timestamp", Date.now());
             });
           }
 
-          // Start via ServiceController — syncs state/context/events to Yjs
-          serviceActor = createActor(ServiceController, {
-            id: "service",
-            input: { logic: machine, doc: yjsDoc },
+          // Create actor and sync state on every transition
+          actor = createActor(machine);
+          actor.subscribe((snapshot) => {
+            yjsDoc.transact(() => {
+              // Write state
+              const stateMap = yjsDoc.getMap("state");
+              stateMap.set("value", snapshot.value);
+              stateMap.set("status", snapshot.status);
+
+              // Write context
+              const contextMap = yjsDoc.getMap("context");
+              if (snapshot.context && typeof snapshot.context === "object") {
+                Object.entries(snapshot.context).forEach(([k, v]) => {
+                  contextMap.set(k, v);
+                });
+              }
+            });
           });
-          serviceActor.start();
-          // ServiceController wraps the machine — use it directly as the actor
-          // Forward events via serviceActor, read state from inner service
-          actor = serviceActor;
+          actor.start();
 
           console.log(`[runner] Agent "${agentId}" syncing to Yjs at ${yjsUrl}`);
         } else {
@@ -246,10 +252,7 @@ function createMachineHandler(machine) {
 
     if (method === "GET") {
       const snapshot = actor.getSnapshot();
-      // If this is a ServiceController, get the inner service snapshot
-      const innerService = snapshot.context?.service;
-      const innerSnap = innerService ? innerService.getSnapshot() : snapshot;
-      return { state: innerSnap.value, context: innerSnap.context, status: innerSnap.status };
+      return { state: snapshot.value, context: snapshot.context, status: snapshot.status };
     }
 
     if (method === "POST") {
@@ -259,15 +262,10 @@ function createMachineHandler(machine) {
       }
       actor.send(machineEvent);
       const snapshot = actor.getSnapshot();
-      const innerService = snapshot.context?.service;
-      const innerSnap = innerService ? innerService.getSnapshot() : snapshot;
-      return { state: innerSnap.value, context: innerSnap.context, status: innerSnap.status, event: machineEvent };
+      return { state: snapshot.value, context: snapshot.context, status: snapshot.status, event: machineEvent };
     }
 
-    const snapshot = actor.getSnapshot();
-    const innerService = snapshot.context?.service;
-    const innerSnap = innerService ? innerService.getSnapshot() : snapshot;
-    return { state: innerSnap.value };
+    return { state: actor.getSnapshot().value };
   };
 }
 
