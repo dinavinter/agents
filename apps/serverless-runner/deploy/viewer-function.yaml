@@ -1,0 +1,165 @@
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: agent-viewer
+  namespace: agents
+  labels:
+    app: agent-viewer
+spec:
+  replicas: 1
+  runtime: nodejs22
+  source:
+    inline:
+      dependencies: |
+        {
+          "name": "agent-viewer",
+          "version": "1.0.0",
+          "dependencies": {
+            "@hocuspocus/provider": "^4.0.0",
+            "yjs": "^13.6.23"
+          }
+        }
+      source: |
+        const Y = require('yjs');
+        const { HocuspocusProvider } = require('@hocuspocus/provider');
+
+        const YJS_URL = process.env.YJS_URL || 'ws://hocuspocus.agents.svc.cluster.local:1234';
+        const providers = new Map();
+
+        function getDoc(id) {
+          if (!providers.has(id)) {
+            const doc = new Y.Doc({ guid: id });
+            const provider = new HocuspocusProvider({ url: YJS_URL, name: id, document: doc });
+            providers.set(id, { doc, provider });
+          }
+          return providers.get(id);
+        }
+
+        module.exports = {
+          main: async function(event, context) {
+            const req = event.extensions.request;
+            const res = event.extensions.response;
+            const path = req.path;
+            const method = req.method;
+
+            // GET / — list available agents
+            if (path === '/' || path === '') {
+              const { doc: agentsDoc } = getDoc(':agents');
+              await new Promise(r => setTimeout(r, 1000));
+              const agents = {};
+              agentsDoc.share.forEach((value, key) => {
+                if (key) agents[key] = agentsDoc.getMap(key).toJSON();
+              });
+              return agents;
+            }
+
+            // GET /view/:agent/:rev — SSE stream of emitted events
+            const viewMatch = path.match(/^\/view\/([^/]+)\/([^/]+)/);
+            if (viewMatch && req.headers.accept?.includes('text/event-stream')) {
+              const [, agent, rev] = viewMatch;
+              const id = `${agent}:${rev}`;
+              const { doc, provider } = getDoc(id);
+
+              // Wait for sync
+              await new Promise((resolve) => {
+                if (provider.isSynced) return resolve();
+                provider.on('synced', () => resolve());
+                setTimeout(resolve, 5000);
+              });
+
+              // SSE response
+              res.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*',
+              });
+              res.write('retry: 3000\n\n');
+
+              // Send existing emitted events
+              const emitted = doc.getArray('emitted');
+              for (let i = 0; i < emitted.length; i++) {
+                const ev = emitted.get(i);
+                if (ev && ev.data) {
+                  res.write(`event: ${ev.type || 'message'}\ndata: ${ev.data}\n\n`);
+                }
+              }
+
+              // Watch for new events
+              const observer = (event) => {
+                event.changes.added.forEach(item => {
+                  item.content.getContent().forEach(ev => {
+                    if (ev && ev.data) {
+                      res.write(`event: ${ev.type || 'message'}\ndata: ${ev.data}\n\n`);
+                    }
+                  });
+                });
+              };
+              emitted.observe(observer);
+
+              // Keep connection alive
+              const keepalive = setInterval(() => res.write(':\n\n'), 15000);
+              req.on('close', () => { emitted.unobserve(observer); clearInterval(keepalive); });
+              return; // Don't end response
+            }
+
+            // GET /page/:agent/:rev — HTML page with HTMX SSE
+            const pageMatch = path.match(/^\/page\/([^/]+)\/([^/]+)/);
+            if (pageMatch) {
+              const [, agent, rev] = pageMatch;
+              res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' });
+              res.end(`<!DOCTYPE html>
+        <html>
+        <head>
+          <title>Agent: ${agent}</title>
+          <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+          <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-gray-50 min-h-screen p-4" hx-ext="sse" sse-connect="/view/${agent}/${rev}">
+          <div class="max-w-2xl mx-auto">
+            <div class="mb-4 text-sm text-gray-500">
+              Agent: <b>${agent}</b> | Rev: <code>${rev}</code> | 
+              <span class="text-green-500">● Live</span>
+            </div>
+            <div sse-swap="message" hx-swap="innerHTML transition:true">
+              <div class="text-center text-gray-400 p-8">Waiting for agent output...</div>
+            </div>
+          </div>
+        </body>
+        </html>`);
+              return;
+            }
+
+            // POST /events/:agent/:rev — push an event to the agent's emitted array
+            const eventsMatch = path.match(/^\/events\/([^/]+)\/([^/]+)/);
+            if (eventsMatch && method === 'POST') {
+              const [, agent, rev] = eventsMatch;
+              const id = `${agent}:${rev}`;
+              const { doc } = getDoc(id);
+              const data = event.data;
+              doc.getArray('emitted').push([{
+                type: data.type || 'message',
+                data: data.data || JSON.stringify(data),
+                timestamp: Date.now(),
+                offset: 0,
+                defer: 10,
+              }]);
+              return { status: 'pushed' };
+            }
+
+            return { endpoints: ['GET /', 'GET /page/:agent/:rev', 'GET /view/:agent/:rev (SSE)', 'POST /events/:agent/:rev'] };
+          }
+        };
+  env:
+    - name: YJS_URL
+      value: "ws://hocuspocus.agents.svc.cluster.local:1234"
+  resourceConfiguration:
+    function:
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
