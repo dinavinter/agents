@@ -25,6 +25,8 @@ spec:
       value: "apps/serverless-runner/examples/agent-tictac/handler.mjs"
     - name: GITHUB_BRANCH
       value: "restruct"
+    - name: YJS_URL
+      value: "wss://yjs.cfapps.us10-001.hana.ondemand.com"
   resourceConfiguration:
     function:
       resources:
