@@ -173,7 +173,7 @@ function createMachineHandler(machine) {
           const Y = await import("yjs");
           const { HocuspocusProvider } = await import("@hocuspocus/provider");
           const { createActor } = await import("xstate");
-          const { ServiceController } = await import("@cxai/stream/dist/xstate/index.mjs");
+          const { default: ServiceController } = require("@cxai/stream/dist/xstate/index.cjs");
 
           yjsDoc = new Y.Doc({ guid: agentId });
           yjsProvider = new HocuspocusProvider({
