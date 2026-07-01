@@ -35,6 +35,8 @@ let cachedHandler = null;
 let cachedRev = null;
 let cachedAt = 0;
 let loadError = null;
+let yjsProvider = null;
+let yjsDoc = null;
 
 // --- Source fetching ---
 
@@ -151,9 +153,11 @@ async function compileAndLoad(src) {
 
 /**
  * Wraps an XState machine in an HTTP handler.
+ * If YJS_URL is set, syncs state to Yjs via ServiceController (visible in agents viewer).
  */
 function createMachineHandler(machine) {
   let actor = null;
+  let serviceActor = null;
 
   return async function machineHandler(event, context) {
     const req = event.extensions.request;
@@ -161,10 +165,77 @@ function createMachineHandler(machine) {
 
     if (!actor) {
       try {
-        const { createActor } = await import("xstate");
-        actor = createActor(machine);
-        actor.start();
+        const yjsUrl = process.env.YJS_URL;
+        const agentId = process.env.AGENT_ID || "default";
+
+        if (yjsUrl) {
+          // Sync mode: use ServiceController to sync state to Yjs → visible in viewer
+          const Y = await import("yjs");
+          const { HocuspocusProvider } = await import("@hocuspocus/provider");
+          const { createActor } = await import("xstate");
+          const { ServiceController } = await import("@cxai/stream/xstate");
+
+          yjsDoc = new Y.Doc({ guid: agentId });
+          yjsProvider = new HocuspocusProvider({
+            url: yjsUrl,
+            name: agentId,
+            document: yjsDoc,
+          });
+
+          // Wait for sync
+          await new Promise((resolve) => {
+            if (yjsProvider.isSynced) return resolve();
+            yjsProvider.on("synced", resolve);
+            setTimeout(resolve, 3000); // timeout fallback
+          });
+
+          // Register agent in the :agents registry
+          const agentsDoc = new Y.Doc({ guid: ":agents" });
+          const agentsProvider = new HocuspocusProvider({
+            url: yjsUrl,
+            name: ":agents",
+            document: agentsDoc,
+          });
+          await new Promise((resolve) => {
+            if (agentsProvider.isSynced) return resolve();
+            agentsProvider.on("synced", resolve);
+            setTimeout(resolve, 3000);
+          });
+
+          const rev = cachedRev || "live";
+          agentsDoc.transact(() => {
+            agentsDoc.getMap(agentId).set("rev", rev);
+            agentsDoc.getMap(agentId).set("timestamp", Date.now());
+            agentsDoc.getMap(agentId).set("status", "running");
+          });
+
+          // Write source to the agent doc (so viewer can show it)
+          if (cachedModule) {
+            const src = cachedModule.src || "";
+            yjsDoc.transact(() => {
+              yjsDoc.getMap().set("src", src);
+              yjsDoc.getMap().set("rev", rev);
+              yjsDoc.getMap().set("timestamp", Date.now());
+            });
+          }
+
+          // Start via ServiceController — syncs state/context/events to Yjs
+          serviceActor = createActor(ServiceController, {
+            id: "service",
+            input: { logic: machine, doc: yjsDoc },
+          });
+          serviceActor.start();
+          actor = serviceActor.getSnapshot().context.service;
+
+          console.log(`[runner] Agent "${agentId}" syncing to Yjs at ${yjsUrl}`);
+        } else {
+          // No Yjs — standalone mode
+          const { createActor } = await import("xstate");
+          actor = createActor(machine);
+          actor.start();
+        }
       } catch (err) {
+        console.error("[runner] Machine start error:", err);
         return { error: "Failed to start machine", message: err.message };
       }
     }

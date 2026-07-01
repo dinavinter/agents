@@ -2,9 +2,12 @@
   "name": "serverless-agent-runner",
   "version": "1.0.0",
   "description": "Kyma Function that dynamically loads and runs agent code from GitHub or API",
-  "main": "src/handler.js",
+  "main": "handler.js",
   "dependencies": {
     "xstate": "^5.19.0",
+    "@cxai/stream": "^1.1.0",
+    "@hocuspocus/provider": "^2.15.0",
+    "yjs": "^13.6.23",
     "ai": "^4.0.0",
     "@ai-sdk/openai": "^1.0.0",
     "zod": "^3.24.0"
