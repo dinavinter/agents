@@ -107,6 +107,18 @@ spec:
               return; // Don't end response
             }
 
+            // GET /page/:agent — auto-resolve latest rev from agent doc
+            const pageAutoMatch = path.match(/^\/page\/([^/]+)$/);
+            if (pageAutoMatch) {
+              const [, agent] = pageAutoMatch;
+              const { doc: agentDoc, provider: agentProv } = getDoc(agent);
+              await new Promise(r => { if (agentProv.isSynced) return r(); agentProv.on('synced', r); setTimeout(r, 3000); });
+              const rev = agentDoc.getMap().get('rev') || 'live';
+              res.writeHead(302, { 'Location': `/page/${agent}/${rev}` });
+              res.end();
+              return;
+            }
+
             // GET /page/:agent/:rev — HTML page with HTMX SSE
             const pageMatch = path.match(/^\/page\/([^/]+)\/([^/]+)/);
             if (pageMatch) {
@@ -126,7 +138,7 @@ spec:
               Agent: <b>${agent}</b> | Rev: <code>${rev}</code> | 
               <span class="text-green-500">● Live</span>
             </div>
-            <div sse-swap="frontend" hx-swap="innerHTML transition:true">
+            <div sse-swap="message" hx-swap="innerHTML transition:true">
               <div class="text-center text-gray-400 p-8">Waiting for agent output...</div>
             </div>
           </div>
