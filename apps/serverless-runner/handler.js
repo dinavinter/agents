@@ -181,12 +181,14 @@ function createMachineHandler(machine) {
             document: yjsDoc,
           });
 
-          // Wait for sync
-          await new Promise((resolve) => {
+          // Wait for sync — must wait for actual synced event
+          await new Promise((resolve, reject) => {
             if (yjsProvider.isSynced) return resolve();
-            yjsProvider.on("synced", resolve);
-            setTimeout(resolve, 3000);
+            yjsProvider.on("synced", () => resolve());
+            yjsProvider.on("authenticationFailed", () => reject(new Error("Yjs auth failed")));
+            setTimeout(() => resolve(), 5000); // fallback
           });
+          console.log(`[runner] Yjs provider synced for "${agentId}"`);
 
           // Register in :agents registry
           const agentsDoc = new Y.Doc({ guid: ":agents" });
@@ -197,8 +199,8 @@ function createMachineHandler(machine) {
           });
           await new Promise((resolve) => {
             if (agentsProvider.isSynced) return resolve();
-            agentsProvider.on("synced", resolve);
-            setTimeout(resolve, 3000);
+            agentsProvider.on("synced", () => resolve());
+            setTimeout(() => resolve(), 5000);
           });
 
           const rev = cachedRev || "live";
