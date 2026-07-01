@@ -219,24 +219,64 @@ function createMachineHandler(machine) {
             });
           }
 
-          // Create actor and sync state on every transition
-          actor = createActor(machine);
-          actor.subscribe((snapshot) => {
-            yjsDoc.transact(() => {
-              // Write state
-              const stateMap = yjsDoc.getMap("state");
-              stateMap.set("value", snapshot.value);
-              stateMap.set("status", snapshot.status);
+          // Also connect the REVISION doc — this is what the viewer's runtime route reads
+          const revDocId = `${agentId}:${rev}`;
+          const revDoc = new (Y.default?.Doc || Y.Doc)({ guid: revDocId });
+          const revProvider = new HocuspocusProvider({
+            url: yjsUrl,
+            name: revDocId,
+            document: revDoc,
+          });
+          await new Promise((resolve) => {
+            if (revProvider.isSynced) return resolve();
+            revProvider.on("synced", () => resolve());
+            setTimeout(() => resolve(), 5000);
+          });
+          console.log(`[runner] Revision doc "${revDocId}" synced`);
 
-              // Write context
-              const contextMap = yjsDoc.getMap("context");
-              if (snapshot.context && typeof snapshot.context === "object") {
-                Object.entries(snapshot.context).forEach(([k, v]) => {
-                  contextMap.set(k, v);
-                });
-              }
+          // Write src to revision doc
+          revDoc.transact(() => {
+            revDoc.getMap().set("src", cachedModule?.src || "");
+            revDoc.getMap().set("rev", rev);
+            revDoc.getMap().set("status", "running");
+            revDoc.getMap().set("timestamp", Date.now());
+          });
+
+          // Create actor and sync state on every transition to BOTH docs
+          actor = createActor(machine);
+          let eventIndex = 0;
+          actor.subscribe((snapshot) => {
+            const writeState = (doc) => {
+              doc.transact(() => {
+                const stateMap = doc.getMap("state");
+                stateMap.set("value", snapshot.value);
+                stateMap.set("status", snapshot.status);
+
+                const contextMap = doc.getMap("context");
+                if (snapshot.context && typeof snapshot.context === "object") {
+                  Object.entries(snapshot.context).forEach(([k, v]) => {
+                    contextMap.set(k, v);
+                  });
+                }
+              });
+            };
+            writeState(yjsDoc);
+            writeState(revDoc);
+          });
+
+          // Also forward emitted events to the revision doc's "emitted" array
+          actor.on("*", (event) => {
+            revDoc.transact(() => {
+              const emitted = revDoc.getArray("emitted");
+              emitted.push([{
+                id: (++eventIndex).toString(),
+                type: event.type,
+                timestamp: Date.now(),
+                ...event,
+              }]);
             });
           });
+
           actor.start();
 
           console.log(`[runner] Agent "${agentId}" syncing to Yjs at ${yjsUrl}`);
