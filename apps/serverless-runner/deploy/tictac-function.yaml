@@ -1,0 +1,36 @@
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: agent-runner-tictac
+  namespace: agents
+  labels:
+    app: agent-runner
+    agent-id: tictac
+spec:
+  replicas: 1
+  runtime: nodejs22
+  source:
+    gitRepository:
+      url: https://github.com/dinavinter/agents.git
+      baseDir: apps/serverless-runner
+      reference: restruct
+  env:
+    - name: AGENT_ID
+      value: "tictac"
+    - name: MODE
+      value: "github"
+    - name: GITHUB_REPO
+      value: "dinavinter/agents"
+    - name: GITHUB_PATH
+      value: "apps/serverless-runner/examples/agent-tictac/handler.mjs"
+    - name: GITHUB_BRANCH
+      value: "restruct"
+  resourceConfiguration:
+    function:
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "50m"
+          memory: "128Mi"

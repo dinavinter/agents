@@ -1,7 +1,6 @@
 {
   "name": "serverless-agent-runner",
   "version": "1.0.0",
-  "type": "module",
   "description": "Kyma Function that dynamically loads and runs agent code from GitHub or API",
   "main": "src/handler.js",
   "dependencies": {
