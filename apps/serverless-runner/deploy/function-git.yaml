@@ -1,0 +1,62 @@
+# Kyma Function — Git-Sourced Agent
+#
+# Deploys a Kyma Function that pulls agent code DIRECTLY from
+# the agent's own GitHub repo/path. Kyma rebuilds on git push.
+#
+# This is the "production" mode — the agent code IS the function code.
+# No dynamic loading, no indirection. Just your code running as a Function.
+#
+# The agent's handler.js must export: module.exports = { main(event, context) {} }
+#
+# Usage:
+#   export AGENT_ID=my-agent GITHUB_REPO=org/agents GITHUB_PATH=agents/my-agent
+#   envsubst < function-git.yaml | kubectl apply -f -
+
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: agent-${AGENT_ID}
+  namespace: ${NAMESPACE:-default}
+  labels:
+    app.kubernetes.io/managed-by: agent-runner
+    app.kubernetes.io/part-of: agents
+    agent-id: ${AGENT_ID}
+spec:
+  runtime: nodejs22
+
+  # Source: the agent's own code in GitHub
+  source:
+    gitRepository:
+      url: https://github.com/${GITHUB_REPO}.git
+      baseDir: ${GITHUB_PATH:-.}
+      reference: ${GITHUB_BRANCH:-main}
+      # For private repos, uncomment:
+      # auth:
+      #   type: basic
+      #   secretName: agent-${AGENT_ID}-git-creds
+
+  env:
+    - name: AGENT_ID
+      value: "${AGENT_ID}"
+
+  resourceConfiguration:
+    function:
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+    build:
+      resources:
+        limits:
+          cpu: "1"
+          memory: "512Mi"
+        requests:
+          cpu: "200m"
+          memory: "256Mi"
+
+  scaleConfig:
+    minReplicas: 0
+    maxReplicas: 5

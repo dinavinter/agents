@@ -1,0 +1,85 @@
+# Kyma Function — Dynamic Runner
+#
+# Deploys the generic runner Function that fetches agent code
+# from GitHub or the Agents API at cold start.
+#
+# One Function per agent. Replace ${...} placeholders before applying.
+#
+# Usage:
+#   export AGENT_ID=my-agent GITHUB_REPO=org/agents GITHUB_PATH=agents/my-agent/handler.js
+#   envsubst < function-runner.yaml | kubectl apply -f -
+
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: agent-${AGENT_ID}
+  namespace: ${NAMESPACE:-default}
+  labels:
+    app.kubernetes.io/managed-by: agent-runner
+    app.kubernetes.io/part-of: agents
+    agent-id: ${AGENT_ID}
+spec:
+  runtime: nodejs22
+  
+  # Source: this repo's runner code (handler.js + package.json)
+  source:
+    gitRepository:
+      url: https://github.com/${RUNNER_REPO:-dinavinter/agents}.git
+      baseDir: apps/serverless-runner
+      reference: ${RUNNER_BRANCH:-main}
+
+  # Environment — configures WHICH agent this function loads
+  env:
+    - name: AGENT_ID
+      value: "${AGENT_ID}"
+    - name: MODE
+      value: "${MODE:-github}"
+    # GitHub source (mode=github)
+    - name: GITHUB_REPO
+      value: "${GITHUB_REPO}"
+    - name: GITHUB_PATH
+      value: "${GITHUB_PATH:-handler.js}"
+    - name: GITHUB_BRANCH
+      value: "${GITHUB_BRANCH:-main}"
+    # API source (mode=api)  
+    - name: API_URL
+      value: "${API_URL:-}"
+    # Cache control
+    - name: CACHE_TTL
+      value: "${CACHE_TTL:-0}"
+    # Webhook secret for GitHub push notifications
+    - name: WEBHOOK_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: agent-${AGENT_ID}-secrets
+          key: webhook-secret
+          optional: true
+    # GitHub token for private repos
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: agent-${AGENT_ID}-secrets
+          key: github-token
+          optional: true
+
+  resourceConfiguration:
+    function:
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+    build:
+      resources:
+        limits:
+          cpu: "1"
+          memory: "512Mi"
+        requests:
+          cpu: "200m"
+          memory: "256Mi"
+
+  scaleConfig:
+    minReplicas: 0
+    maxReplicas: 5
