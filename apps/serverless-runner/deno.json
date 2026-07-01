@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "deploy": "deno run --allow-all src/deploy.ts",
+    "deploy:runner": "deno run --allow-all src/deploy.ts --strategy runner",
+    "deploy:git": "deno run --allow-all src/deploy.ts --strategy git"
+  },
+  "imports": {
+    "xstate": "https://esm.sh/xstate@^5.19.0"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.ns", "deno.unstable"]
+  }
+}

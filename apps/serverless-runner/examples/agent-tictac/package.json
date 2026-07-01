@@ -1,0 +1,9 @@
+{
+  "name": "agent-tictac",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "handler.mjs",
+  "dependencies": {
+    "xstate": "^5.19.0"
+  }
+}
