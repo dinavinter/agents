@@ -227,7 +227,9 @@ function createMachineHandler(machine) {
             input: { logic: machine, doc: yjsDoc },
           });
           serviceActor.start();
-          actor = serviceActor.getSnapshot().context.service;
+          // ServiceController wraps the machine — use it directly as the actor
+          // Forward events via serviceActor, read state from inner service
+          actor = serviceActor;
 
           console.log(`[runner] Agent "${agentId}" syncing to Yjs at ${yjsUrl}`);
         } else {
@@ -244,7 +246,10 @@ function createMachineHandler(machine) {
 
     if (method === "GET") {
       const snapshot = actor.getSnapshot();
-      return { state: snapshot.value, context: snapshot.context, status: snapshot.status };
+      // If this is a ServiceController, get the inner service snapshot
+      const innerService = snapshot.context?.service;
+      const innerSnap = innerService ? innerService.getSnapshot() : snapshot;
+      return { state: innerSnap.value, context: innerSnap.context, status: innerSnap.status };
     }
 
     if (method === "POST") {
@@ -254,10 +259,15 @@ function createMachineHandler(machine) {
       }
       actor.send(machineEvent);
       const snapshot = actor.getSnapshot();
-      return { state: snapshot.value, context: snapshot.context, status: snapshot.status, event: machineEvent };
+      const innerService = snapshot.context?.service;
+      const innerSnap = innerService ? innerService.getSnapshot() : snapshot;
+      return { state: innerSnap.value, context: innerSnap.context, status: innerSnap.status, event: machineEvent };
     }
 
-    return { state: actor.getSnapshot().value };
+    const snapshot = actor.getSnapshot();
+    const innerService = snapshot.context?.service;
+    const innerSnap = innerService ? innerService.getSnapshot() : snapshot;
+    return { state: innerSnap.value };
   };
 }
 
