@@ -96,7 +96,7 @@ async function compileAndLoad(src) {
   const rev = createHash("md5").update(src).digest("hex").slice(0, 10);
   const rewritten = rewriteImports(src);
 
-  // Write temp .mjs — Kyma function runs from /usr/src/app/
+  // Write temp .mjs — Kyma function runs from /usr/src/app/function/
   // Use /tmp which is writable in Kyma containers
   const tmpDir = path.join(os.tmpdir(), "agent-cache");
   await fs.mkdir(tmpDir, { recursive: true });
@@ -106,10 +106,11 @@ async function compileAndLoad(src) {
   try {
     await fs.access(nmLink);
   } catch {
-    // Find the real node_modules (Kyma puts deps in /usr/src/app/node_modules)
+    // Kyma puts function deps in /usr/src/app/function/node_modules
     const candidates = [
-      path.join(__dirname, "..", "node_modules"),
       path.join(__dirname, "node_modules"),
+      path.join(__dirname, "..", "node_modules"),
+      "/usr/src/app/function/node_modules",
       "/usr/src/app/node_modules",
       path.join(process.cwd(), "node_modules"),
     ];
@@ -117,6 +118,7 @@ async function compileAndLoad(src) {
       try {
         await fs.access(nm);
         await fs.symlink(nm, nmLink, "dir");
+        console.log(`[runner] Linked node_modules from ${nm}`);
         break;
       } catch { /* try next */ }
     }
