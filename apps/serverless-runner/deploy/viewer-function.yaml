@@ -76,16 +76,16 @@ spec:
               });
               res.write('retry: 3000\n\n');
 
-              // Send existing emitted events
+              // Send only the LAST emitted event (current state, not full history)
               const emitted = doc.getArray('emitted');
               function formatSSE(ev) {
                 const lines = ev.data.split('\n').map(l => 'data: ' + l).join('\n');
                 return `event: ${ev.type || 'message'}\n${lines}\n\n`;
               }
-              for (let i = 0; i < emitted.length; i++) {
-                const ev = emitted.get(i);
-                if (ev && ev.data) {
-                  res.write(formatSSE(ev));
+              if (emitted.length > 0) {
+                const last = emitted.get(emitted.length - 1);
+                if (last && last.data) {
+                  res.write(formatSSE(last));
                 }
               }
 

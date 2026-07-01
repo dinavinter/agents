@@ -399,6 +399,39 @@ module.exports = {
       }
     }
 
+    // New session — reset machine and clear emitted events
+    if (reqPath === "/_new" && method === "POST") {
+      // Force reload the handler (which recreates the actor from scratch)
+      cachedHandler = null; cachedRev = null; cachedAt = 0; loadError = null;
+      // Clear emitted array in revision doc
+      if (yjsDoc) {
+        const Y = await import("yjs");
+        const { HocuspocusProvider } = await import("@hocuspocus/provider");
+        const rev = cachedRev || "live";
+        const revDocId = `${process.env.AGENT_ID}:${rev}`;
+        // Connect to revision doc and clear emitted
+        const clearDoc = new Y.Doc({ guid: revDocId });
+        const clearProvider = new HocuspocusProvider({
+          url: process.env.YJS_URL || 'ws://hocuspocus.agents.svc.cluster.local:1234',
+          name: revDocId,
+          document: clearDoc,
+        });
+        await new Promise(r => { clearProvider.on('synced', r); setTimeout(r, 3000); });
+        const arr = clearDoc.getArray('emitted');
+        if (arr.length > 0) arr.delete(0, arr.length);
+        await new Promise(r => setTimeout(r, 500)); // let sync propagate
+        clearProvider.destroy();
+      }
+      yjsDoc = null; yjsProvider = null;
+      try {
+        await ensureLoaded();
+        return { status: "new_session", rev: cachedRev };
+      } catch (err) {
+        loadError = err;
+        return { status: "failed", error: err.message };
+      }
+    }
+
     // Load agent
     try {
       await ensureLoaded();
