@@ -106,36 +106,34 @@ export const machine = setup({
       always: [
         { guard: ({ context }) => !!context.winner, target: "won" },
         { guard: ({ context }) => context.moves >= 9, target: "draw" },
-        // If it's O's turn, auto-play AI
+        // If it's O's turn, auto-play AI immediately
         { guard: ({ context }) => context.player === "o", target: "aiTurn" },
         { target: "playing" },
       ],
     },
     aiTurn: {
-      // AI plays automatically after a short delay
-      after: {
-        500: {
-          actions: [
-            assign(({ context }) => {
-              const empty = context.board
-                .map((cell, i) => (cell === "" ? i : -1))
-                .filter((i) => i >= 0);
-              if (empty.length === 0) return {};
-              const index = empty[Math.floor(Math.random() * empty.length)];
-              const board = [...context.board];
-              board[index] = "o";
-              const winner = getWinner(board);
-              return {
-                board,
-                player: "x",
-                moves: context.moves + 1,
-                winner: winner?.player || null,
-              };
-            }),
-            "renderBoard",
-          ],
-          target: "checkEnd",
-        },
+      // AI plays immediately (no delay — timers don't work well in serverless)
+      always: {
+        actions: [
+          assign(({ context }) => {
+            const empty = context.board
+              .map((cell, i) => (cell === "" ? i : -1))
+              .filter((i) => i >= 0);
+            if (empty.length === 0) return {};
+            const index = empty[Math.floor(Math.random() * empty.length)];
+            const board = [...context.board];
+            board[index] = "o";
+            const winner = getWinner(board);
+            return {
+              board,
+              player: "x",
+              moves: context.moves + 1,
+              winner: winner?.player || null,
+            };
+          }),
+          "renderBoard",
+        ],
+        target: "checkEnd",
       },
     },
     won: {
