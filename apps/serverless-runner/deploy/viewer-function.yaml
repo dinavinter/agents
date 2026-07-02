@@ -53,6 +53,159 @@ spec:
               return agents;
             }
 
+            // GET /ide/:agent — CodeMirror editor for agent source code
+            const ideMatch = path.match(/^\/ide\/([^/]+)$/);
+            if (ideMatch && method === 'GET') {
+              const [, agent] = ideMatch;
+              // Fetch current source from the function
+              const fnUrl = `https://agent-runner-${agent}-agents.c-127c9ef.stage.kyma.ondemand.com`;
+              let src = '';
+              try {
+                const srcResp = await fetch(`${fnUrl}/_status`);
+                const status = await srcResp.json();
+                // Fetch from GitHub
+                const ghResp = await fetch(`https://raw.githubusercontent.com/${status.source?.split('@')[0] || 'dinavinter/agents/apps/serverless-runner/examples/agent-tictac/handler.mjs'}/${status.source?.split('@')[1] || 'restruct'}`);
+                if (ghResp.ok) src = await ghResp.text();
+              } catch(e) {}
+              // If no source from GitHub, try fetching from Yjs
+              if (!src) {
+                const { doc: agentDoc, provider } = getDoc(agent);
+                await new Promise(r => { if (provider.isSynced) return r(); provider.on('synced', r); setTimeout(r, 3000); });
+                src = agentDoc.getMap().get('src') || '// new agent\nexport const machine = createMachine({});';
+              }
+
+              res.writeHead(200, { 'Content-Type': 'text/html' });
+              res.end(`<!DOCTYPE html>
+        <html>
+        <head>
+          <title>IDE: ${agent}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/dracula.min.css">
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/javascript/javascript.min.js"></script>
+        </head>
+        <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+          <div class="flex items-center justify-between p-3 bg-gray-800 border-b border-gray-700">
+            <div class="flex items-center gap-3">
+              <span class="text-lg font-bold">Agent: ${agent}</span>
+              <span id="status" class="text-sm text-gray-400">ready</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="deploy()" class="px-4 py-1.5 bg-green-600 hover:bg-green-500 rounded text-sm font-medium">
+                Deploy & Run
+              </button>
+              <a href="/page/${agent}" target="_blank" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-sm font-medium">
+                View
+              </a>
+            </div>
+          </div>
+          <div class="flex-1" id="editor-wrapper">
+            <textarea id="code">${src.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+          </div>
+          <script>
+            const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+              mode: 'javascript',
+              theme: 'dracula',
+              lineNumbers: true,
+              tabSize: 2,
+              indentWithTabs: false,
+              lineWrapping: true,
+            });
+            editor.setSize('100%', '100%');
+            document.getElementById('editor-wrapper').style.height = 'calc(100vh - 52px)';
+            editor.getWrapperElement().style.height = '100%';
+
+            async function deploy() {
+              const status = document.getElementById('status');
+              const code = editor.getValue();
+              status.textContent = 'deploying...';
+              status.className = 'text-sm text-yellow-400';
+              try {
+                const resp = await fetch('/deploy/${agent}', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ code }),
+                });
+                const result = await resp.json();
+                if (result.status === 'deployed') {
+                  status.textContent = 'deployed ✓ rev: ' + (result.rev || '');
+                  status.className = 'text-sm text-green-400';
+                } else {
+                  status.textContent = 'error: ' + (result.error || 'unknown');
+                  status.className = 'text-sm text-red-400';
+                }
+              } catch(e) {
+                status.textContent = 'error: ' + e.message;
+                status.className = 'text-sm text-red-400';
+              }
+            }
+
+            // Ctrl+S / Cmd+S to deploy
+            document.addEventListener('keydown', (e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                deploy();
+              }
+            });
+          </script>
+        </body>
+        </html>`);
+              return;
+            }
+
+            // POST /deploy/:agent — save code to GitHub and reload function
+            const deployMatch = path.match(/^\/deploy\/([^/]+)$/);
+            if (deployMatch && method === 'POST') {
+              const [, agent] = deployMatch;
+              const { code } = event.data;
+              if (!code) return { error: 'no code provided' };
+
+              const ghToken = process.env.GITHUB_TOKEN;
+              const repo = 'dinavinter/agents';
+              const filePath = `apps/serverless-runner/examples/agent-${agent}/handler.mjs`;
+              const branch = 'restruct';
+
+              try {
+                // Get current file SHA (needed for update)
+                const getResp = await fetch(
+                  `https://api.github.com/repos/${repo}/contents/${filePath}?ref=${branch}`,
+                  { headers: { Authorization: `token ${ghToken}`, 'User-Agent': 'kyma-agent-ide' } }
+                );
+                const fileData = getResp.ok ? await getResp.json() : null;
+                const sha = fileData?.sha;
+
+                // Commit new code
+                const putResp = await fetch(
+                  `https://api.github.com/repos/${repo}/contents/${filePath}`,
+                  {
+                    method: 'PUT',
+                    headers: { Authorization: `token ${ghToken}`, 'User-Agent': 'kyma-agent-ide', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      message: `update agent ${agent} from IDE`,
+                      content: Buffer.from(code).toString('base64'),
+                      branch,
+                      ...(sha ? { sha } : {}),
+                    }),
+                  }
+                );
+
+                if (!putResp.ok) {
+                  const err = await putResp.text();
+                  return { error: `GitHub: ${putResp.status} ${err}` };
+                }
+
+                // Reload the function
+                const fnUrl = `https://agent-runner-${agent}-agents.c-127c9ef.stage.kyma.ondemand.com`;
+                const reloadResp = await fetch(`${fnUrl}/_reload`, { method: 'POST' });
+                const reloadResult = await reloadResp.json();
+
+                return { status: 'deployed', rev: reloadResult.rev, github: 'committed' };
+              } catch(e) {
+                return { error: e.message };
+              }
+            }
+
             // GET /view/:agent/:rev — SSE stream of emitted events
             const viewMatch = path.match(/^\/view\/([^/]+)\/([^/]+)/);
             if (viewMatch && req.headers.accept?.includes('text/event-stream')) {
@@ -204,6 +357,12 @@ spec:
   env:
     - name: YJS_URL
       value: "ws://hocuspocus.agents.svc.cluster.local:1234"
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-token
+          key: token
+          optional: true
   resourceConfiguration:
     function:
       resources:
