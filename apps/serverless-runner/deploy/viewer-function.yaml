@@ -167,6 +167,20 @@ spec:
               return;
             }
 
+            // POST /play/:agent/:index — proxy move to the agent function (same-origin)
+            const playMatch = path.match(/^\/play\/([^/]+)\/(\d+)/);
+            if (playMatch && method === 'POST') {
+              const [, agent, index] = playMatch;
+              const fnUrl = `https://agent-runner-${agent}-agents.c-127c9ef.stage.kyma.ondemand.com/`;
+              const resp = await fetch(fnUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'PLAY', index: parseInt(index) }),
+              });
+              const result = await resp.json();
+              return result;
+            }
+
             // POST /events/:agent/:rev — push an event to the agent's emitted array
             const eventsMatch = path.match(/^\/events\/([^/]+)\/([^/]+)/);
             if (eventsMatch && method === 'POST') {
