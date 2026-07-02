@@ -31,16 +31,20 @@ function renderBoard(board, winner, winLine) {
   const cells = board.map((cell, i) => {
     const isWin = winLine?.includes(i);
     const symbol = cell === "x" ? "✕" : cell === "o" ? "○" : "";
-    const color = cell === "x" ? "text-blue-500" : "text-red-500";
+    const color = cell === "x" ? "text-blue-500" : cell === "o" ? "text-red-500" : "";
     const bg = isWin ? "bg-green-100" : "bg-white";
-    return `<div class="w-20 h-20 border border-gray-300 flex items-center justify-center text-4xl font-bold ${color} ${bg} cursor-pointer hover:bg-gray-50" data-index="${i}">${symbol}</div>`;
+    const clickable = cell === "" && !winner;
+    const hxAttrs = clickable
+      ? `hx-post="https://agent-runner-tictac-agents.c-127c9ef.stage.kyma.ondemand.com/" hx-vals='{"type":"PLAY","index":${i}}' hx-swap="none" class="w-20 h-20 border border-gray-300 flex items-center justify-center text-4xl font-bold ${bg} cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"`
+      : `class="w-20 h-20 border border-gray-300 flex items-center justify-center text-4xl font-bold ${color} ${bg}"`;
+    return `<div ${hxAttrs} data-index="${i}">${symbol}</div>`;
   }).join("");
 
   const status = winner
     ? `<div class="text-2xl font-bold text-green-600 mt-4">🎉 ${winner.toUpperCase()} wins!</div>`
     : board.every(c => c !== "")
     ? `<div class="text-2xl font-bold text-gray-500 mt-4">Draw!</div>`
-    : `<div class="text-lg text-gray-600 mt-4">Next: <span class="font-bold ${board.filter(c=>c!=="").length % 2 === 0 ? "text-blue-500" : "text-red-500"}">${board.filter(c=>c!=="").length % 2 === 0 ? "X" : "O"}</span></div>`;
+    : `<div class="text-lg text-gray-600 mt-4">Your turn (X) — click a cell</div>`;
 
   return `
     <div class="flex flex-col items-center p-6">
