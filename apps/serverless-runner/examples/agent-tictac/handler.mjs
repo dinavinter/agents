@@ -35,7 +35,7 @@ function renderBoard(board, winner, winLine) {
     const bg = isWin ? "bg-green-100" : "bg-white";
     const clickable = cell === "" && !winner;
     const hxAttrs = clickable
-      ? `hx-post="https://agent-runner-tictac-agents.c-127c9ef.stage.kyma.ondemand.com/" hx-vals='{"type":"PLAY","index":${i}}' hx-swap="none" class="w-20 h-20 border border-gray-300 flex items-center justify-center text-4xl font-bold ${bg} cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"`
+      ? `hx-post="/play/tictac/${i}" hx-swap="none" class="w-20 h-20 border border-gray-300 flex items-center justify-center text-4xl font-bold ${bg} cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"`
       : `class="w-20 h-20 border border-gray-300 flex items-center justify-center text-4xl font-bold ${color} ${bg}"`;
     return `<div ${hxAttrs} data-index="${i}">${symbol}</div>`;
   }).join("");
