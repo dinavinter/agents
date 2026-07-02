@@ -85,16 +85,29 @@ export const machine = setup({
             return context.board[event.index] === "" && !context.winner && context.player === "x";
           },
           actions: [
+            // Human plays X
             assign(({ context, event }) => {
               const board = [...context.board];
               board[event.index] = "x";
-              const winner = getWinner(board);
-              return {
-                board,
-                player: "o",
-                moves: context.moves + 1,
-                winner: winner?.player || null,
-              };
+              let winner = getWinner(board);
+              let moves = context.moves + 1;
+              let player = "o";
+
+              // AI immediately responds with O (if game not over)
+              if (!winner && moves < 9) {
+                const empty = board
+                  .map((cell, i) => (cell === "" ? i : -1))
+                  .filter((i) => i >= 0);
+                if (empty.length > 0) {
+                  const aiIndex = empty[Math.floor(Math.random() * empty.length)];
+                  board[aiIndex] = "o";
+                  winner = getWinner(board);
+                  moves++;
+                  player = "x";
+                }
+              }
+
+              return { board, player, moves, winner: winner?.player || null };
             }),
             "renderBoard",
           ],
@@ -106,35 +119,8 @@ export const machine = setup({
       always: [
         { guard: ({ context }) => !!context.winner, target: "won" },
         { guard: ({ context }) => context.moves >= 9, target: "draw" },
-        // If it's O's turn, auto-play AI immediately
-        { guard: ({ context }) => context.player === "o", target: "aiTurn" },
         { target: "playing" },
       ],
-    },
-    aiTurn: {
-      // AI plays immediately (no delay — timers don't work well in serverless)
-      always: {
-        actions: [
-          assign(({ context }) => {
-            const empty = context.board
-              .map((cell, i) => (cell === "" ? i : -1))
-              .filter((i) => i >= 0);
-            if (empty.length === 0) return {};
-            const index = empty[Math.floor(Math.random() * empty.length)];
-            const board = [...context.board];
-            board[index] = "o";
-            const winner = getWinner(board);
-            return {
-              board,
-              player: "x",
-              moves: context.moves + 1,
-              winner: winner?.player || null,
-            };
-          }),
-          "renderBoard",
-        ],
-        target: "checkEnd",
-      },
     },
     won: {
       type: "final",
