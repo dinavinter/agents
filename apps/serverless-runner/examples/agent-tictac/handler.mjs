@@ -82,38 +82,16 @@ export const machine = setup({
       on: {
         PLAY: {
           guard: ({ context, event }) => {
-            return context.board[event.index] === "" && !context.winner;
+            return context.board[event.index] === "" && !context.winner && context.player === "x";
           },
           actions: [
             assign(({ context, event }) => {
               const board = [...context.board];
-              board[event.index] = context.player;
+              board[event.index] = "x";
               const winner = getWinner(board);
               return {
                 board,
-                player: context.player === "x" ? "o" : "x",
-                moves: context.moves + 1,
-                winner: winner?.player || null,
-              };
-            }),
-            "renderBoard",
-          ],
-          target: "checkEnd",
-        },
-        AI_MOVE: {
-          actions: [
-            assign(({ context }) => {
-              const empty = context.board
-                .map((cell, i) => (cell === "" ? i : -1))
-                .filter((i) => i >= 0);
-              if (empty.length === 0) return {};
-              const index = empty[Math.floor(Math.random() * empty.length)];
-              const board = [...context.board];
-              board[index] = context.player;
-              const winner = getWinner(board);
-              return {
-                board,
-                player: context.player === "x" ? "o" : "x",
+                player: "o",
                 moves: context.moves + 1,
                 winner: winner?.player || null,
               };
@@ -128,8 +106,37 @@ export const machine = setup({
       always: [
         { guard: ({ context }) => !!context.winner, target: "won" },
         { guard: ({ context }) => context.moves >= 9, target: "draw" },
+        // If it's O's turn, auto-play AI
+        { guard: ({ context }) => context.player === "o", target: "aiTurn" },
         { target: "playing" },
       ],
+    },
+    aiTurn: {
+      // AI plays automatically after a short delay
+      after: {
+        500: {
+          actions: [
+            assign(({ context }) => {
+              const empty = context.board
+                .map((cell, i) => (cell === "" ? i : -1))
+                .filter((i) => i >= 0);
+              if (empty.length === 0) return {};
+              const index = empty[Math.floor(Math.random() * empty.length)];
+              const board = [...context.board];
+              board[index] = "o";
+              const winner = getWinner(board);
+              return {
+                board,
+                player: "x",
+                moves: context.moves + 1,
+                winner: winner?.player || null,
+              };
+            }),
+            "renderBoard",
+          ],
+          target: "checkEnd",
+        },
+      },
     },
     won: {
       type: "final",
