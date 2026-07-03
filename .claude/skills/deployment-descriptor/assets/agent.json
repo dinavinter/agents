@@ -1,0 +1,739 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "agent Asset",
+  "description": "Schema for agent asset with inheritance from: agent → base-service → base",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Required: unique asset identifier used by the deployer (DNS-compatible: lowercase, hyphens)",
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional: human-readable display name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Optional: semantic version"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for the application",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Runtime type (nodejs, java, python, etc.)"
+        },
+        "language": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Application-level configuration overrides",
+      "additionalProperties": true
+    },
+    "custom": {
+      "type": "object",
+      "description": "Opaque custom configuration for platform-specific properties.\n\nThis section is NOT validated by the type system and allows\nany structure. Use for:\n- Platform-specific deployment config (Vercel, CAP, Cloud Foundry)\n- Tool-specific extensions\n- Experimental features\n- Gradual migration paths\n\nCommon namespaces:\n- custom.vercel.*    - Vercel deployment config\n- custom.cap.*       - CAP framework config\n- custom.cf.*        - Cloud Foundry config\n- custom.k8s.*       - Kubernetes config\n- custom.tooling.*   - Custom tooling\n",
+      "additionalProperties": true
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Asset kind must be 'Asset' (capital A)"
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["http", "https", "grpc", "tcp"]
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "External host (FQDN) exposed by APIRule/VirtualService"
+        },
+        "corsPolicy": {
+          "type": "object",
+          "description": "CORS policy configuration",
+          "properties": {
+            "allowOrigins": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "regex": {
+                    "type": "string"
+                  },
+                  "exact": {
+                    "type": "string"
+                  },
+                  "prefix": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "allowMethods": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]
+              }
+            },
+            "allowHeaders": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "exposeHeaders": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "maxAge": {
+              "type": "string"
+            },
+            "allowCredentials": {
+              "type": "boolean"
+            }
+          }
+        },
+        "apiAuth": {
+          "oneOf": [
+            {
+              "type": "object",
+              "description": "Single authentication rule",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["jwt", "no_auth"]
+                },
+                "methods": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+                  }
+                },
+                "jwt": {
+                  "type": "object",
+                  "properties": {
+                    "issuer": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "jwksUri": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "audiences": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "requiredScopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "array",
+              "description": "Multiple authentication rules",
+              "items": {
+                "type": "object",
+                "required": ["path", "type"],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["jwt", "no_auth"]
+                  },
+                  "methods": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+                    }
+                  },
+                  "jwt": {
+                    "type": "object",
+                    "properties": {
+                      "issuer": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "jwksUri": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "audiences": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "requiredScopes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {}
+        }
+      }
+    },
+    "provides": {
+      "type": "object",
+      "required": ["protocols"],
+      "properties": {
+        "runtime": {
+          "type": "string"
+        },
+        "protocols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["http", "https", "odata-v4", "odata-v2", "rest", "grpc", "graphql"]
+          }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "protocol": {
+              "type": "string"
+            },
+            "endpoints": {
+              "type": "array"
+            }
+          }
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "description": "Required services for binding",
+      "items": {
+        "type": "object",
+        "required": ["name", "service"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "type": {
+      "type": "string",
+      "const": "agent"
+    },
+    "agentCard": {
+      "type": "object",
+      "description": "A2A Agent Card configuration for /.well-known/agent.json",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Agent name for A2A discovery (max 64 chars)",
+          "maxLength": 64
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of the agent (e.g., '1.0.0')",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of what the agent does",
+          "maxLength": 500
+        },
+        "capabilities": {
+          "type": "object",
+          "description": "Agent capabilities declaration",
+          "properties": {
+            "skills": {
+              "type": "array",
+              "description": "List of skills the agent provides",
+              "items": {
+                "type": "object",
+                "required": ["name", "description"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Skill name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Skill description"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "description": "JSON Schema for skill inputs"
+                  },
+                  "outputSchema": {
+                    "type": "object",
+                    "description": "JSON Schema for skill outputs"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "authentication": {
+          "type": "object",
+          "description": "Authentication requirements for the agent",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["none", "bearer", "api-key", "oauth2"],
+              "description": "Type of authentication",
+              "default": "bearer"
+            },
+            "header": {
+              "type": "string",
+              "description": "Header name for authentication"
+            }
+          }
+        },
+        "supportedContentTypes": {
+          "type": "array",
+          "description": "MIME types the agent can send/receive",
+          "items": {
+            "type": "string"
+          },
+          "default": ["application/json"]
+        },
+        "streaming": {
+          "type": "object",
+          "description": "Streaming configuration for the agent",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether agent supports streaming responses",
+              "default": false
+            }
+          }
+        },
+        "model": {
+          "type": "string",
+          "description": "Primary LLM model used by this agent"
+        }
+      }
+    },
+    "container": {
+      "type": "object",
+      "required": ["port"],
+      "properties": {
+        "buildPath": {
+          "type": "string",
+          "description": "Path to build application image",
+          "default": "."
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker registry image path (alternative to buildPath)"
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port for container binding",
+          "default": 5000
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables as a flat key-value map (e.g. PYTHONUNBUFFERED: \"1\")",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "envFrom": {
+          "type": "array",
+          "description": "Environment variables from ConfigMaps/Secrets",
+          "items": {
+            "type": "object",
+            "properties": {
+              "configMapRef": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "optional": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "secretRef": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "optional": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "object",
+          "properties": {
+            "memory": {
+              "type": "string",
+              "description": "Memory request (e.g., '512Mi', '1Gi')",
+              "default": "512Mi"
+            },
+            "cpu": {
+              "type": "string",
+              "description": "CPU request (e.g., '100m', '1')",
+              "default": "100m"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "memory": {
+              "type": "string",
+              "description": "Memory limit (should match request for agents)",
+              "default": "512Mi"
+            },
+            "cpu": {
+              "type": "string",
+              "description": "CPU limit"
+            }
+          }
+        }
+      }
+    },
+    "probes": {
+      "type": "object",
+      "properties": {
+        "readiness": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "/health"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "default": 5
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "default": 5
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "default": 3
+            },
+            "successThreshold": {
+              "type": "integer",
+              "default": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "default": 3
+            }
+          }
+        },
+        "liveness": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "/health"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "default": 15
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "default": 10
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "default": 5
+            },
+            "successThreshold": {
+              "type": "integer",
+              "default": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "default": 3
+            }
+          }
+        },
+        "startup": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "/health"
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "default": 0
+            },
+            "periodSeconds": {
+              "type": "integer",
+              "default": 5
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "default": 3
+            },
+            "successThreshold": {
+              "type": "integer",
+              "default": 1
+            },
+            "failureThreshold": {
+              "type": "integer",
+              "default": 18
+            }
+          }
+        }
+      }
+    },
+    "hpa": {
+      "type": "object",
+      "properties": {
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10
+        },
+        "targetCPUUtilization": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 70
+        },
+        "targetMemoryUtilization": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 80
+        },
+        "scaleDownStabilizationWindowSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 60
+        }
+      }
+    },
+    "models": {
+      "type": "array",
+      "description": "AI models used by this agent",
+      "items": {
+        "type": "object",
+        "required": ["executableId", "name"],
+        "properties": {
+          "executableId": {
+            "type": "string",
+            "description": "Model provider/executor ID (e.g., aws-bedrock, azure-openai)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Model name (e.g., anthropic--claude-4.5-sonnet)"
+          },
+          "version": {
+            "type": "string",
+            "description": "Model version"
+          }
+        }
+      }
+    },
+    "secrets": {
+      "type": "array",
+      "description": "Secret mounts for the agent",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "Additional imagePullSecrets",
+      "items": {
+        "type": "string"
+      }
+    },
+    "extraSecretMounts": {
+      "type": "array",
+      "description": "Explicit Secret mounts (secretName -> mountPath)",
+      "items": {
+        "type": "object",
+        "required": ["secretName", "mountPath"],
+        "properties": {
+          "secretName": {
+            "type": "string"
+          },
+          "mountPath": {
+            "type": "string"
+          },
+          "readOnly": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "virtualService": {
+      "type": "object",
+      "description": "Istio VirtualService configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "gateways": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "match": {
+          "type": "object",
+          "properties": {
+            "uriPrefix": {
+              "type": "string"
+            },
+            "methodRegex": {
+              "type": "string"
+            },
+            "hostHeaderRegex": {
+              "type": "string"
+            }
+          }
+        },
+        "corsPolicy": {
+          "type": "object",
+          "properties": {
+            "allowHeaders": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "allowMethods": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "allowOrigins": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["regex"],
+                "properties": {
+                  "regex": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sourceRoot": {
+      "type": "string",
+      "description": "Source code root directory (Optional, defaults to \".\" if omitted)",
+      "default": "."
+    }
+  },
+  "required": ["kind", "metadata"],
+  "_metadata": {
+    "generatedFrom": "agent",
+    "inheritanceChain": ["agent", "base-service", "base"],
+    "assetKind": "service",
+    "generatedAt": "2026-03-12T20:42:06.286Z"
+  },
+  "x-implicit-defaults": {
+    "sourceRoot": {
+      "default": ".",
+      "description": "Source root defaults to current directory if omitted",
+      "introduced": "v3.0.0"
+    }
+  },
+  "x-spec-version": "v3.0.0",
+  "x-generated": "2026-03-12T20:42:06.287Z"
+}

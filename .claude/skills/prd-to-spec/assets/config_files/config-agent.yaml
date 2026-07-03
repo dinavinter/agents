@@ -1,0 +1,95 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Python 3.13 and guidelines given in the sap-agent-bootstrap skill
+  
+  Purpose: Build a fully working Pro-Code AI Agent per product-requirements-document.md requirements.
+  
+  Key constraints:
+  - You MUST follow the guidelines in the sap-agent-bootstrap skill
+  - Follow the instructions in the sap-agent-bootstrap skill to set up the project structure. Use the copy commands, DO NOT create the files manually.
+  - You MUST use the agent framework defined in the sap-agent-bootstrap skill
+  - Use context7 MCP Server for framework documentation
+  - Local execution only (in-memory storage, no deployment)
+  - Only use public APIs, mock any private systems (like S/4HANA). Use minimal mock data.
+  - Exception: AI Core is fully available at runtime via LiteLLM (environment variables provided)
+  - No Git operations, no authentication, no documentation/READMEs
+  - Update requirements.txt for any new dependencies
+  - Never modify sys.path
+  - Map SAP Joule Studio/Skills concepts to standard agent tools
+  
+  Code quality:
+  - All Python code must compile with valid imports
+  - No src. import patterns
+  - All function parameters must be used in function body
+  - Consult context7 MCP server before using framework APIs
+  
+  Testing:
+  - Add pytest and pytest-cov to requirements.txt
+  - Unit tests: write exactly one unit test per tool; mock all external dependencies (LiteLLM, AI Core, private APIs); run each test immediately after writing it
+  - Integration test: write one integration test that executes an end-to-end agent flow using the real LLM (environment variables are present); mock only private/external non-AI systems (e.g. S/4HANA)
+  - After all tests are written, run: pytest --cov --cov-report=term-missing --cov-fail-under=80
+  - If coverage is below 80%, add targeted tests until the threshold is met before proceeding
+  - Never consider the testing task complete until the coverage report confirms ≥ 80%
+  
+  Validation:
+  - Fix validation failures immediately before proceeding
+  - Validate that the project structure matches the guidelines in the sap-agent-bootstrap skill
+  - Required structure: solution/solution.yaml, solution/agent/asset.yaml, solution/agent/Dockerfile, solution/agent/app/
+  - The Dockerfile MUST be inside solution/agent/ (co-located with asset.yaml)
+  - asset.yaml must use buildPath: . and /.well-known/agent.json for all health probes
+
+  MCP tool integration (only when mcp-translation.json is present in the project):
+  - gatewaySDK.py will be placed in app/ — import as: from gatewaySDK import MCP
+  - Add langchain-mcp-adapters to requirements.txt
+  - Use MultiServerMCPClient from langchain_mcp_adapters.client to load tools from MCP URLs
+  - Build one MCP server entry per distinct ordId found in mcp-translation.json
+  - Dual mode: during tests ("pytest" in sys.modules) use in-memory @lc_tool mocks;
+    otherwise load real MCP tools via gatewaySDK — canonical pattern:
+        import sys
+        import asyncio
+
+        from gatewaySDK import MCP
+        from langchain_mcp_adapters.client import MultiServerMCPClient
+
+        class MyClass:
+            def __init__(self):
+                self.client = None
+                self.tools = None
+
+            async def init(self):
+                if "pytest" in sys.modules:
+                    self.tools = MOCK_TOOLS
+                    return
+
+                self.client = MultiServerMCPClient({
+                    "<server-name>": {
+                        "url": MCP.get_url("<ord-id>"),
+                        "transport": "streamable_http",
+                    },
+                })
+
+                await self.client.__aenter__()
+                self.tools = self.client.get_tools()
+
+            async def close(self):
+                if self.client:
+                    await self.client.__aexit__(None, None, None)
+
+
+rules:
+  proposal:
+    - You MUST read the sap-agent-bootstrap skill before creating the proposal to understand the patterns and framework for the agent
+    - Ensure all tasks align with sap-agent-bootstrap patterns
+    - Only create tasks fulfillable by the agent (no human tasks)
+
+  tasks:
+    - First task MUST be to re-read product-requirements-document.md
+    - Second task MUST be to follow the instructions in the sap-agent-bootstrap skill to set up the project structure
+    - All tasks must be agent-executable (no human intervention)
+    - During openspec-apply-change, implement ALL tasks from tasks.md
+    - Periodically review tasks.md to ensure complete coverage
+    - Never stop after partial implementation—complete all functionality
+    - If mcp-translation.json is present: include a task to copy gatewaySDK.py from the project root into app/
+    - If mcp-translation.json is present: include a task to add langchain-mcp-adapters to requirements.txt
+    - If mcp-translation.json is present: include a task to wire dual-mode tool loading in agent.py, MCP via gatewaySDK in production, @lc_tool mocks when "pytest" in sys.modules

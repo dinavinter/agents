@@ -1,0 +1,317 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mcp-hub.api.sap/v1alpha1/tool-centric-translation.schema.json",
+  "title": "MCP Server Tool-Centric Translation Configuration",
+  "description": "Configuration format for defining MCP server tools in a tool-centric manner, where each tool explicitly defines its mapping to OData or OpenAPI operations.",
+  "type": "object",
+  "required": ["serverInfo"],
+  "properties": {
+    "serverInfo": {
+      "type": "object",
+      "required": ["name", "version", "description"],
+      "description": "Information about the MCP server being defined",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the MCP server"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title for the MCP server"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version of the MCP server (supports semantic versioning: major.minor or major.minor.patch with optional pre-release)",
+          "pattern": "^\\d+\\.\\d+(\\.\\d+)?(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the MCP server functionality"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "array",
+      "description": "Array of MCP tools to be generated",
+      "items": {
+        "$ref": "#/definitions/ToolDefinition"
+      }
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Array of MCP prompts to be exposed",
+      "items": {
+        "$ref": "#/definitions/PromptDefinition"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "ToolDefinition": {
+      "type": "object",
+      "required": ["name", "inputReference"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+          "description": "Unique name for the MCP tool (letters, numbers, and underscores, starting with a letter)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title for the tool"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what the tool does"
+        },
+        "inputReference": {
+          "$ref": "#/definitions/InputReference"
+        },
+        "odataType": {
+          "$ref": "#/definitions/ODataType"
+        },
+        "openApiType": {
+          "$ref": "#/definitions/OpenApiType"
+        },
+        "annotations": {
+          "$ref": "#/definitions/Annotations"
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Parameter overrides and configurations. Base parameters are automatically derived from the operation type and can be modified here.",
+          "items": {
+            "$ref": "#/definitions/ParameterOverride"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": ["odataType"]
+        },
+        {
+          "required": ["openApiType"]
+        }
+      ]
+    },
+    "InputReference": {
+      "type": "object",
+      "required": ["systemNamespace", "ordId"],
+      "properties": {
+        "systemNamespace": {
+          "type": "string",
+          "description": "System namespace identifier (design-time known, for blueprint/template)"
+        },
+        "systemInstanceId": {
+          "type": "string",
+          "description": "Tenant instance ID (optional, for customer-specific instances)"
+        },
+        "ordId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._-]+:[a-zA-Z0-9._:-]+$",
+          "description": "Open Resource Discovery (ORD) identifier for the system (format: namespace:id, where id can contain colons)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ODataType": {
+      "type": "object",
+      "description": "OData-specific type definition for the tool. Must define either entity.crudOperation OR operation, but not both.",
+      "properties": {
+        "entity": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Fully qualified entity name (e.g., Namespace.EntityContainer.EntityName)"
+            },
+            "crudOperation": {
+              "type": "string",
+              "enum": ["read", "create", "update", "delete"],
+              "description": "CRUD operation type"
+            }
+          },
+          "additionalProperties": false
+        },
+        "operation": {
+          "type": "object",
+          "description": "OData action or function definition",
+          "required": ["name", "type"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the OData action or function"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["action", "function"],
+              "description": "Type of OData operation"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": ["entity"],
+          "properties": {
+            "entity": {
+              "required": ["name", "crudOperation"]
+            }
+          }
+        },
+        {
+          "required": ["entity", "operation"],
+          "properties": {
+            "entity": {
+              "required": ["name"],
+              "not": {
+                "required": ["crudOperation"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "OpenApiType": {
+      "type": "object",
+      "description": "OpenAPI-specific type definition for the tool (structure to be defined)",
+      "additionalProperties": true,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "operationId": {
+          "type": "string",
+          "enum": ["get", "post", "put", "patch", "delete"]
+        }
+      }
+    },
+    "Annotations": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "ParameterOverride": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the base parameter to override"
+        },
+        "newParameterName": {
+          "type": "string",
+          "description": "New name for the parameter in the generated tool"
+        },
+        "description": {
+          "type": "string",
+          "description": "Override description for the parameter"
+        },
+        "deactivate": {
+          "type": "boolean",
+          "description": "If true, this base parameter will not be exposed in the tool. Mutually exclusive with 'value'.",
+          "default": false
+        },
+        "value": {
+          "description": "Hardcoded value for the parameter. When set, the parameter is not exposed in the tool but this value is used when making the request. Mutually exclusive with 'deactivate'.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "object" },
+            { "type": "array" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "not": {
+        "required": ["deactivate", "value"]
+      }
+    },
+    "PromptDefinition": {
+      "type": "object",
+      "required": ["name", "title", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Unique identifier for the prompt in snake_case format"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title for the prompt"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what the prompt does"
+        },
+        "arguments": {
+          "type": "array",
+          "description": "Arguments that the prompt accepts",
+          "items": {
+            "$ref": "#/definitions/PromptArgument"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "description": "Template messages for the prompt",
+          "items": {
+            "$ref": "#/definitions/PromptMessage"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "PromptArgument": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the prompt argument"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the argument"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this argument is required",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "PromptMessage": {
+      "type": "object",
+      "required": ["role", "context"],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant"],
+          "description": "Role of the message sender"
+        },
+        "context": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["text", "image", "resource"],
+              "description": "Type of context content"
+            },
+            "text": {
+              "type": "string",
+              "description": "Text content (when type is 'text')"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

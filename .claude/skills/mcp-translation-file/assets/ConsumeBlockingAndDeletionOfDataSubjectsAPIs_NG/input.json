@@ -1,0 +1,488 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Consume Data Subject Blocking or Deletion in Data Privacy Integration NextGen",
+    "description": "The APIs offered by Data Privacy Integration NextGen Retention Management (DPI NextGen RM) allow applications to initiate the blocking and deletion of data subjects. DPI NextGen RM will manage the process of blocking and/or deleting data based on the customer's defined residence and retention rules for a particular data subject role in the application. Once the residence period has elapsed, the applications should block the data subject's data.\n\nThe URL prefix for the following APIs is **/sap/cp/kernel/dpi/retention/v1**",
+    "version": "1.0.0"
+  },
+  "externalDocs": {
+    "description": "More Information available in help.sap.com",
+    "url": "https://help.sap.com/docs/data-privacy-integration/end-user-information-for-data-privacy-integration/deleting-data-subject-information"
+  },
+  "servers": [
+    {
+      "url": "https://api.{region}.dpinextgen.dpp.cloud.sap/sap/cp/kernel/dpi/retention/v1",
+      "description": "Production URL",
+      "variables": {
+        "region": {
+          "description": "BTP Region from where DPI NextGen is getting consumed from",
+          "default": "eu10",
+          "enum": [
+            "ap10",
+            "ap11",
+            "ap20",
+            "ap30",
+            "br10",
+            "br30",
+            "ca20",
+            "ch20",
+            "cn20",
+            "eu01",
+            "eu10",
+            "eu11",
+            "eu30",
+            "il30",
+            "in30",
+            "jp31",
+            "sa30",
+            "sa31",
+            "us10",
+            "us11",
+            "us20",
+            "us21",
+            "us30"
+          ]
+        }
+      }
+    },
+    {
+      "url": "https://sandbox.api.sap.com/dpinextgen/retention/v1",
+      "description": "Sandbox URL"
+    }
+  ],
+  "security": [
+    {
+      "OAuth2": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Data Subjects Blocking or Deletion",
+      "description": "The endpoint to manage the blocking or deletion of data subjects"
+    }
+  ],
+  "paths": {
+    "/blocking/application/dataSubjectBlocking": {
+      "put": {
+        "tags": ["Data Subjects Blocking or Deletion"],
+        "summary": "This endpoint allows for the synchronous blocking or deletion of a specific data subject in an application, based on their role",
+        "description": "This endpoint allows the consuming business application to make a request to the DPI NextGen Retention Management for blocking or deleting a data subject associated with a specific role in an application. The process is synchronous, ensuring that the blocking or deletion occurs immediately, and the response containing the outcome of the blocking operation is returned.",
+        "requestBody": {
+          "description": "The request payload for blocking or deleting a data subject in an application",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/DataSubjectBlockingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "For successful data subject blocking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSubjectBlockingResponseSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - reason:\n1. Invalid payload\n2. Missing/Invalid Data Controller/Business Purpose/Retention Rule configuration\n3. Erroneous response received from application's end\n4. End of Residence/End of Business not reached for the data subject\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - reason: invalid authentication token to access the API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - reason: error with the application while processing the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/blocking/application/dataSubjectBlocking/async": {
+      "put": {
+        "tags": ["Data Subjects Blocking or Deletion"],
+        "summary": "This endpoint allows for the asynchronous initiation of blocking or deletion of a data subject in an application, based on their role as a particular data subject",
+        "description": "This endpoint allows the consuming application to trigger the DPI NextGen Retention Management to block or delete a data subject associated with a specific role in an application. The endpoint operates asynchronously, and the status of the blocking or deletion process can be checked using the data subject blocking status endpoint.",
+        "requestBody": {
+          "description": "The request payload for blocking or deleting a data subject in an application",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/DataSubjectBlockingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Data subject blocking request initiated successfully and the requestId is returned for tracking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSubjectBlockingResponseAccepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - reason:\n1. Invalid payload\n2. Missing/invalid data controller/ purpose/ rule configuration\n3. Erroneous response received from application's end\n4. End of residence/ end of business not reached for the data subject\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - reason: invalid authentication token to access the API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient scope - reason: missing scope to access the API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - reason: error with accepting the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/blocking/application/dataSubjectBlocking/requests/{requestId}": {
+      "get": {
+        "tags": ["Data Subjects Blocking or Deletion"],
+        "summary": "This endpoint is used to get the progress of the asynchronous process for blocking or deleting the data subject's information",
+        "description": "The consuming application can trigger this endpoint to check the status of a data subject blocking or deletion request in the DPI NextGen Retention Management. The identifier of the request, which was returned as part of the async request, should be provided as a path parameter.",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "description": "The identifier of the request for which the status of the data subject blocking or deletion request is being checked",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "For successful data subject blocking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataSubjectBlockingStatusResponseSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - reason: invalid request Id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - reason: invalid authentication token to access the API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DefaultErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["code", "message"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "innererror": {
+                "type": "object",
+                "description": "The structure of this object is service-specific"
+              }
+            }
+          }
+        }
+      },
+      "DataSubjectBlockingRequest": {
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string",
+            "description": "Name of the application registered with DPI NextGen Retention Management for which the blocking or deletion of data subject has been requested"
+          },
+          "dataSubjectRoleName": {
+            "type": "string",
+            "description": "Name of the role of the data subject in the application that is registered with DPI NextGen Retention Management for which the blocking or deletion has been requested"
+          },
+          "dataSubjectId": {
+            "type": "string",
+            "description": "Identifier of the data subject in the application for whom the blocking or deletion is requested"
+          }
+        },
+        "example": {
+          "applicationName": "employee-management-showcase-retention",
+          "dataSubjectRoleName": "employee",
+          "dataSubjectId": "Z012345"
+        }
+      },
+      "DataSubjectBlockingResponseFailure": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Identifier of the request that is created for the data subject blocking or deletion request"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Identifier of the request that is created for the data subject blocking or deletion request"
+          },
+          "requestType": {
+            "type": "string",
+            "description": "Indicates the type of request like DataSubjectBlocking"
+          },
+          "requestStatus": {
+            "type": "integer",
+            "description": "1. blocking or deletion failed - 1\n2. blocking or deletion successful - 2\n"
+          },
+          "requestStatusText": {
+            "type": "string",
+            "description": "Indicates the overall status of the blocking request (completed/failed)"
+          },
+          "messageCode": {
+            "type": "integer",
+            "description": "1. Successful blocking or deletion message code - 2\n2. Failed blocking or deletion failed message code - 3\n"
+          },
+          "messageText": {
+            "type": "string",
+            "description": "Error message summary"
+          },
+          "messageDetailText": {
+            "type": "string",
+            "description": "Error message details"
+          }
+        },
+        "example": {
+          "requestId": "6b1f518a-c9f9-4185-804e-6d051aee34a9",
+          "requestType": "DataSubjectBlocking",
+          "requestStatus": 1,
+          "requestStatusText": "FAILED",
+          "messageCode": 3,
+          "messageText": "FAILED",
+          "messageDetailText": ""
+        }
+      },
+      "DataSubjectBlockingResponseSuccess": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier of the request that is created for the data subject blocking or deletion request"
+          },
+          "requestType": {
+            "type": "string",
+            "description": "Indicates the type of request like DataSubjectBlocking"
+          },
+          "requestStatus": {
+            "type": "integer",
+            "description": "1. blocking or deletion failed - 1\n2. blocking or deletion successful - 2\n"
+          },
+          "requestStatusText": {
+            "type": "string",
+            "description": "Indicates the overall status of the blocking request (completed or failed)"
+          },
+          "messageCode": {
+            "type": "integer",
+            "description": "1. Successful blocking or deletion message code - 2\n2. Failed blocking or deletion failed message code - 3\n"
+          },
+          "messageText": {
+            "type": "string",
+            "description": "Application response message summary"
+          },
+          "messageDetailText": {
+            "type": "string",
+            "description": "Application response message details"
+          }
+        },
+        "example": {
+          "requestId": "6b1f518a-c9f9-4185-804e-6d051aee34a9",
+          "requestType": "DataSubjectBlocking",
+          "requestStatus": 2,
+          "requestStatusText": "COMPLETED",
+          "messageCode": 2,
+          "messageText": "COMPLETED",
+          "messageDetailText": ""
+        }
+      },
+      "DataSubjectBlockingResponseAccepted": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier of the request that is created for the data subject blocking or deletion request"
+          }
+        },
+        "example": {
+          "requestId": "6b1f518a-c9f9-4185-804e-6d051aee34a9"
+        }
+      },
+      "DataSubjectBlockingStatusResponseSuccess": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier of the request that is created for the data subject blocking or deletion request"
+          },
+          "status": {
+            "type": "integer",
+            "description": "1. blocking or deletion failed - 1\n2. blocking or deletion successful - 2\n"
+          },
+          "logMessage": {
+            "type": "string",
+            "description": "Final response message of the data subject blocking or deletion request (stringified JSON)"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "Instance ID obtained from the token to create the data subject blocking or deletion request"
+          },
+          "createdOn": {
+            "type": "string",
+            "description": "Timestamp when the request was created"
+          },
+          "changedBy": {
+            "type": "string",
+            "description": "Instance ID obtained from the token to create the data subject blocking or deletion that last modified the request"
+          },
+          "changedOn": {
+            "type": "string",
+            "description": "Timestamp when the request was last modified"
+          }
+        },
+        "example": {
+          "requestId": "6b1f518a-c9f9-4185-804e-6d051aee34a9",
+          "status": 2,
+          "logMessage": "{\"requestId\":\"05ca277f-430a-4571-92c1-f6c2bd922239\",\"requestType\":\"DataSubjectBlocking\",\"requestStatus\":2,\"requestStatusText\":\"Completed\",\"messageCode\":5,\"messageText\":\"Completed\"}",
+          "createdBy": "96ad52c5-a2a5-4e35-90ee-8c0abf3588f8",
+          "createdOn": "2024-01-08T05:32:33.494Z",
+          "changedBy": "96ad52c5-a2a5-4e35-90ee-8c0abf3588f8",
+          "changedOn": "2024-01-08T05:39:33.494Z"
+        }
+      }
+    },
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "description": "oAuth",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://{subdomain}.authentication.{token-domain}/oauth/token?grant_type=client_credentials",
+            "scopes": {}
+          }
+        }
+      }
+    }
+  },
+  "x-sap-shortText": "The APIs offered by DPI NextGen Retention Management allow consuming applications to initiate or trigger the blocking or deletion of data subjects.",
+  "x-servers": [
+    {
+      "url": "https://api.us10.dpinextgen.dpp.cloud.sap/sap/cp/kernel/dpi/retention/v1",
+      "description": "Production URL for the API",
+      "templates": {
+        "region": {
+          "description": "BTP Region where DPI NextGen is available"
+        }
+      }
+    }
+  ],
+  "x-sap-api-type": "REST",
+  "x-original-swagger-version": "2.0",
+  "x-sap-hub-capabilities": {
+    "try-out": false
+  }
+}

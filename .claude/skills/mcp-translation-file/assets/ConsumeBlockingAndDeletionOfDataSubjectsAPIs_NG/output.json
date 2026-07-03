@@ -1,0 +1,66 @@
+{
+  "serverInfo": {
+    "name": "ConsumeBlockingAndDeletionOfDataSubjectsAPIs_NG MCP Server",
+    "version": "1.0",
+    "description": "Consume Data Subject Blocking or Deletion in Data Privacy Integration NextGen"
+  },
+  "tools": [
+    {
+      "name": "PUT_blocking_application_dataSubjectBlocking",
+      "inputReference": {
+        "systemNamespace": "sap.dpi",
+        "ordId": "sap.dpi:apiResource:ConsumeBlockingAndDeletionOfDataSubjectsAPIs_NG:v1"
+      },
+      "openApiType": {
+        "path": "/blocking/application/dataSubjectBlocking",
+        "operationId": "put"
+      },
+      "title": "PUT_blocking_application_dataSubjectBlocking",
+      "description": "This endpoint allows the consuming business application to make a request to the DPI NextGen Retention Management for blocking or deleting a data subject associated with a specific role in an application. The process is synchronous, ensuring that the blocking or deletion occurs immediately, and the response containing the outcome of the blocking operation is returned.",
+      "parameters": [
+        {
+          "name": "requestBody",
+          "description": "The request payload for blocking or deleting a data subject in an application"
+        }
+      ]
+    },
+    {
+      "name": "PUT_blocking_application_dataSubjectBlocking_async",
+      "inputReference": {
+        "systemNamespace": "sap.dpi",
+        "ordId": "sap.dpi:apiResource:ConsumeBlockingAndDeletionOfDataSubjectsAPIs_NG:v1"
+      },
+      "openApiType": {
+        "path": "/blocking/application/dataSubjectBlocking/async",
+        "operationId": "put"
+      },
+      "title": "PUT_blocking_application_dataSubjectBlocking_async",
+      "description": "This endpoint allows the consuming application to trigger the DPI NextGen Retention Management to block or delete a data subject associated with a specific role in an application. The endpoint operates asynchronously, and the status of the blocking or deletion process can be checked using the data subject blocking status endpoint.",
+      "parameters": [
+        {
+          "name": "requestBody",
+          "description": "The request payload for blocking or deleting a data subject in an application"
+        }
+      ]
+    },
+    {
+      "name": "GET_blocking_application_dataSubjectBlocking_requests_requestId",
+      "inputReference": {
+        "systemNamespace": "sap.dpi",
+        "ordId": "sap.dpi:apiResource:ConsumeBlockingAndDeletionOfDataSubjectsAPIs_NG:v1"
+      },
+      "openApiType": {
+        "path": "/blocking/application/dataSubjectBlocking/requests/{requestId}",
+        "operationId": "get"
+      },
+      "title": "GET_blocking_application_dataSubjectBlocking_requests_requestId",
+      "description": "The consuming application can trigger this endpoint to check the status of a data subject blocking or deletion request in the DPI NextGen Retention Management. The identifier of the request, which was returned as part of the async request, should be provided as a path parameter.",
+      "parameters": [
+        {
+          "name": "requestId",
+          "description": "The identifier of the request for which the status of the data subject blocking or deletion request is being checked"
+        }
+      ]
+    }
+  ]
+}

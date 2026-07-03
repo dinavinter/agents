@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ibd": {
+      "type": "http",
+      "url": "https://intent-based-development-main-ibd-mcp-server.cfapps.eu12.hana.ondemand.com/mcp",
+      "oauth": {
+        "clientId": "ffac7de1-4511-478f-bf07-428f6c7c54bc",
+        "callbackPort": 8090,
+        "authServerMetadataUrl": "https://aejozkyqz.accounts400.ondemand.com/.well-known/openid-configuration"
+      }
+    }
+  }
+}

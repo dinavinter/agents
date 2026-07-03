@@ -1,0 +1,353 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "vercel-app Asset",
+  "description": "Schema for vercel-app asset with inheritance from: vercel-app → base-ui → base",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Required: unique asset identifier used by the deployer (DNS-compatible: lowercase, hyphens)",
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional: human-readable display name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Optional: semantic version"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for the application",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Runtime type",
+          "default": "vercel"
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Application-level configuration overrides",
+      "additionalProperties": true
+    },
+    "custom": {
+      "type": "object",
+      "description": "Opaque custom configuration for platform-specific properties.\n\nThis section is NOT validated by the type system and allows\nany structure. Use for:\n- Platform-specific deployment config (Vercel, CAP, Cloud Foundry)\n- Tool-specific extensions\n- Experimental features\n- Gradual migration paths\n\nCommon namespaces:\n- custom.vercel.*    - Vercel deployment config\n- custom.cap.*       - CAP framework config\n- custom.cf.*        - Cloud Foundry config\n- custom.k8s.*       - Kubernetes config\n- custom.tooling.*   - Custom tooling\n",
+      "additionalProperties": true
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Asset kind must be 'Asset' (capital A)"
+    },
+    "provides": {
+      "type": "object",
+      "required": ["framework"],
+      "properties": {
+        "framework": {
+          "type": "string",
+          "description": "UI framework (sapui5, react, vue, angular, etc.)"
+        },
+        "type": {
+          "type": "string"
+        },
+        "ui": {
+          "type": "object",
+          "properties": {
+            "framework": {
+              "type": "string"
+            },
+            "flpConfig": {
+              "type": "object",
+              "description": "Fiori Launchpad configuration"
+            },
+            "routes": {
+              "type": "array",
+              "description": "UI routes"
+            },
+            "type": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "framework": {
+      "type": "object",
+      "description": "Framework configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Framework name (nextjs, react, vue, angular, etc.)",
+          "enum": [
+            "nextjs",
+            "react",
+            "vue",
+            "svelte",
+            "astro",
+            "nuxt",
+            "remix",
+            "gatsby",
+            "static"
+          ],
+          "default": "nextjs"
+        },
+        "version": {
+          "type": "string",
+          "description": "Framework version"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "description": "Build configuration",
+      "properties": {
+        "installCommand": {
+          "type": "string",
+          "description": "Package install command"
+        },
+        "buildCommand": {
+          "type": "string",
+          "description": "Build command"
+        },
+        "devCommand": {
+          "type": "string",
+          "description": "Development server command"
+        },
+        "outputDirectory": {
+          "type": "string",
+          "description": "Build output directory"
+        },
+        "packageManager": {
+          "type": "string",
+          "enum": ["npm", "yarn", "pnpm", "bun"],
+          "description": "Package manager"
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "description": "Multiple components within a single UI asset.\n\nUse for:\n- Monorepo patterns (Nx, Turborepo, Lerna)\n- Next.js with multiple apps\n- Micro-frontends\n",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Component identifier"
+          },
+          "buildPath": {
+            "type": "string",
+            "default": ".",
+            "description": "Relative path to component source"
+          },
+          "port": {
+            "type": "integer",
+            "description": "Component-specific port"
+          },
+          "requires": {
+            "type": "array",
+            "description": "Component-specific dependencies"
+          },
+          "env": {
+            "type": "object",
+            "description": "Component-specific environment variables"
+          },
+          "custom": {
+            "type": "object",
+            "description": "Component-specific opaque config",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "description": "Dependencies on services/APIs",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Reference to a solution-level dependency by its id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "type": {
+      "type": "string",
+      "const": "vercel-app"
+    },
+    "vercel": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "description": "Vercel project ID"
+        },
+        "teamId": {
+          "type": "string",
+          "description": "Vercel team ID (optional)"
+        },
+        "buildCommand": {
+          "type": "string",
+          "description": "Custom build command"
+        },
+        "outputDirectory": {
+          "type": "string",
+          "description": "Build output directory",
+          "default": ".vercel/output"
+        },
+        "installCommand": {
+          "type": "string",
+          "description": "Package install command",
+          "default": "npm install"
+        },
+        "devCommand": {
+          "type": "string",
+          "description": "Development server command",
+          "default": "npm run dev"
+        },
+        "framework": {
+          "type": "string",
+          "description": "Framework preset"
+        },
+        "nodeVersion": {
+          "type": "string",
+          "description": "Node.js version",
+          "default": "18.x"
+        },
+        "regions": {
+          "type": "array",
+          "description": "Deployment regions",
+          "items": {
+            "type": "string"
+          }
+        },
+        "functions": {
+          "type": "object",
+          "properties": {
+            "maxDuration": {
+              "type": "integer",
+              "description": "Function timeout in seconds",
+              "default": 10
+            },
+            "memory": {
+              "type": "integer",
+              "description": "Function memory in MB"
+            }
+          }
+        },
+        "rewrites": {
+          "type": "array",
+          "description": "URL rewrites",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "destination": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "redirects": {
+          "type": "array",
+          "description": "URL redirects",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "destination": {
+                "type": "string"
+              },
+              "permanent": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "headers": {
+          "type": "array",
+          "description": "Custom headers",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "sourceRoot": {
+      "type": "string",
+      "description": "Source code root directory (Optional, defaults to \".\" if omitted)",
+      "default": "."
+    }
+  },
+  "required": ["kind", "metadata"],
+  "_metadata": {
+    "generatedFrom": "vercel-app",
+    "inheritanceChain": ["vercel-app", "base-ui", "base"],
+    "assetKind": "ui",
+    "generatedAt": "2026-03-12T20:09:28.496Z"
+  },
+  "x-inheritance": [
+    {
+      "name": "vercel-app",
+      "version": "1.0.0"
+    },
+    {
+      "name": "base-ui",
+      "version": "2.1.0"
+    },
+    {
+      "name": "base",
+      "version": "2.4.0"
+    }
+  ],
+  "x-implicit-defaults": {
+    "sourceRoot": {
+      "default": ".",
+      "description": "Source root defaults to current directory if omitted",
+      "introduced": "v3.0.0"
+    }
+  },
+  "x-spec-version": "v3.0.0",
+  "x-generated": "2026-03-12T20:09:28.496Z"
+}

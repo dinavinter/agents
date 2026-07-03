@@ -57,22 +57,16 @@ spec:
             const ideMatch = path.match(/^\/ide\/([^/]+)$/);
             if (ideMatch && method === 'GET') {
               const [, agent] = ideMatch;
-              // Fetch current source from the function
-              const fnUrl = `https://agent-runner-${agent}-agents.c-127c9ef.stage.kyma.ondemand.com`;
               let src = '';
+              // Fetch source directly from GitHub
+              const repo = 'dinavinter/agents';
+              const branch = 'restruct';
+              const filePath = `apps/serverless-runner/examples/agent-${agent}/handler.mjs`;
               try {
-                const srcResp = await fetch(`${fnUrl}/_status`);
-                const status = await srcResp.json();
-                // Fetch from GitHub
-                const ghResp = await fetch(`https://raw.githubusercontent.com/${status.source?.split('@')[0] || 'dinavinter/agents/apps/serverless-runner/examples/agent-tictac/handler.mjs'}/${status.source?.split('@')[1] || 'restruct'}`);
+                const ghResp = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/${filePath}`);
                 if (ghResp.ok) src = await ghResp.text();
               } catch(e) {}
-              // If no source from GitHub, try fetching from Yjs
-              if (!src) {
-                const { doc: agentDoc, provider } = getDoc(agent);
-                await new Promise(r => { if (provider.isSynced) return r(); provider.on('synced', r); setTimeout(r, 3000); });
-                src = agentDoc.getMap().get('src') || '// new agent\nexport const machine = createMachine({});';
-              }
+              if (!src) src = `// agent: ${agent}\nimport { assign, setup, emit, createMachine } from "https://esm.sh/xstate@5.19.0";\n\nexport const machine = createMachine({\n  id: "${agent}",\n  initial: "idle",\n  states: {\n    idle: {}\n  }\n});\n`;
 
               res.writeHead(200, { 'Content-Type': 'text/html' });
               res.end(`<!DOCTYPE html>

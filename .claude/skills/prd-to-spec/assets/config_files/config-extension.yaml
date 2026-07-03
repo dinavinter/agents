@@ -1,0 +1,76 @@
+schema: spec-driven
+
+context: |
+  Tech stack:
+  - SAP Business Technology Platform (BTP)
+  - CAP (Cloud Application Programming Model)
+  - UI5 version 1.139.4
+  
+  Purpose: Build a fully working application per product-requirements-document.md requirements.
+  
+  MCP servers (MUST use):
+  - cds-mcp for CAP/CDS model guidance
+  - ui5-mcp for UI5 controllers, views, components, and linting
+  
+  Key constraints:
+  - Follow all SAP-specific instructions in AGENTS.md
+  - Local execution only (no BTP deployment in this stage)
+  - Only use public APIs, mock any private systems (like S/4HANA)
+  - Use minimal mock data for unavailable systems
+  - No Git operations, no authentication, no documentation/READMEs
+  - No .env files (environment variables supplied at runtime)
+  
+  Backend (CAP):
+  - Initialize the CAP project before proceeding with backend implementation
+  - When running `cds watch`, ensure you're in the generated app directory (e.g., `cd <path-to-cap-app> && cds watch`)
+  - Implement ALL entities defined in the PRD in the CAP data model
+  - Implement backend services for EVERY API the UI uses
+  - CRUD capabilities must match what the UI expects (check that modifiable entities are not read-only)
+  - After implementing a service, run `cds watch` and verify each endpoint returns expected mock data before proceeding
+  
+  Frontend (UI5):
+  - Use `create_ui5_app` function of UI5 MCP server to create the app
+  - Use `get_api_reference` function of UI5 MCP server consistently to ensure valid UI5 code
+  - Create ONLY ONE webapp. If multiple views needed, place inside this app with navigation between them
+  - Navigation MUST allow switching between views without manual URL entry. Preferred: menu bar with links to all views
+  - Implement ALL features from PRD. NEVER build a reduced UI
+  - Verify EVERY required button, view, and interaction from PRD is visible and functional
+  - Frontend API calls must use correct URLs and ensure corresponding backend API exists
+  - DO NOT create Fiori elements application. Create custom UI components with detailed implementation steps
+  - Ensure all used UI5 components and their aggregations actually exist
+  - Treat UI as CORE of application: all required components exist, all actions visible, all buttons work
+  - When building apps with multiple views: use <customHeader> aggregation on <Page>, NEVER on <App> or <Shell>. <customHeader> is NOT a control, just an aggregation of <Page>
+  
+  Code quality:
+  - All source code must compile, all imports must resolve
+  - Use UI5 version 1.139.4 consistently, ensure all used UI5 resources exist in that version
+  - Ensure all packages in package.json exist
+  - manifest.json service URLs MUST point to local backend, NOT SAP cloud system (frequent error causing metadata loading failures)
+  - OData version syntax must be consistent across entire application and match manifest.json
+  - Consult documentation to verify all UI5 components actually exist
+  
+  Validation:
+  - Run `cds dir/file.cds` regularly to validate CDS files
+  - Ensure all backend services implement every API endpoint used by UI
+  - Ensure CRUD capabilities match UI expectations
+  - After finishing, run `cds watch` to confirm app starts correctly
+  - Call all backend APIs with curl to verify endpoints work and return correct data
+  - Custom UI components are frequent error source—MUST verify they work as expected
+  - Use UI5 MCP linter (`run_ui5_linter`) to detect and fix UI5 issues
+  - Add final validation task reviewing all UI5 views/controllers for issues. If unsure, consult UI5 MCP server
+  - If browser access available: open app and check it loads without issues (examine javascript console)
+  - If browser interaction available: comprehensive test navigating through views
+  - No explicit unit tests needed
+  - Fix validation failures immediately before proceeding
+
+rules:
+  tasks:
+    - First task MUST be to re-read product-requirements-document.md
+    - All tasks must be agent-executable (no human intervention)
+    - Integrate MCP server usage into tasks wherever needed to ensure they're actually used during development
+    - During openspec-apply-change, implement ALL tasks from tasks.md
+    - Periodically review tasks.md to ensure complete coverage
+    - Never stop after partial implementation—complete all functionality
+    - Implement all backend functionality from PRD also in the UI. Nothing may remain backend-only
+    - Lay out detailed implementation steps for custom UI components
+    - Include final validation task to review all UI5 views and controllers for apparent issues
