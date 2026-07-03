@@ -63,7 +63,7 @@ spec:
               const branch = 'restruct';
               const filePath = `apps/serverless-runner/examples/agent-${agent}/handler.mjs`;
               try {
-                const ghResp = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/${filePath}`);
+                const ghResp = await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/${filePath}?t=${Date.now()}`);
                 if (ghResp.ok) src = await ghResp.text();
               } catch(e) {}
               if (!src) src = `// agent: ${agent}\nimport { assign, setup, emit, createMachine } from "https://esm.sh/xstate@5.19.0";\n\nexport const machine = createMachine({\n  id: "${agent}",\n  initial: "idle",\n  states: {\n    idle: {}\n  }\n});\n`;
