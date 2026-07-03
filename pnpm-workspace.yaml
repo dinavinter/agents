@@ -4,3 +4,7 @@ packages:
   - apps/ysweet/app
   - apps/ysweet/debugger
   - apps/ysweet/next
+allowBuilds:
+  esbuild: set this to true or false
+  nx: set this to true or false
+  sqlite3: set this to true or false

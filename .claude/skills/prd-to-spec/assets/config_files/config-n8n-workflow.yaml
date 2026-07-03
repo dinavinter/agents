@@ -1,0 +1,19 @@
+schema: spec-driven
+
+context: |
+  Tech stack: n8n workflow automation
+  Purpose: Build workflow automations using n8n per product-requirements-document.md requirements.
+
+  Key constraints:
+  - NEVER use MCP to create or update workflows — only for node discovery and deletion.
+  - Write *.n8n.json files to the filesystem in `<intent-name>-workflow/workflows/`.
+  - If the solution also requires a CAP application, create CAP FIRST before any n8n workflow.
+  - `connections` in the JSON reference nodes by `name`, not `id`.
+
+rules:
+  skills:
+    - Use the `n8n-workflow` skill for all workflow creation and editing tasks.
+  tasks:
+    - re-read product-requirements-document.md
+    - All tasks must be agent-executable (no human intervention)
+    - Implement ALL tasks from tasks.md — never stop after partial implementation

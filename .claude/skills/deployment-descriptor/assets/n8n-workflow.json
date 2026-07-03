@@ -1,0 +1,234 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "n8n-workflow Asset",
+  "description": "Schema for n8n-workflow asset with inheritance from: n8n-workflow → base-service → base",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Required: unique asset identifier used by the deployer (DNS-compatible: lowercase, hyphens)",
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional: human-readable display name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Optional: semantic version"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for the application",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Runtime type (nodejs, java, python, etc.)",
+          "default": "n8n"
+        },
+        "language": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "default": "latest"
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Application-level configuration overrides",
+      "additionalProperties": true
+    },
+    "custom": {
+      "type": "object",
+      "description": "Opaque custom configuration for platform-specific properties.\n\nThis section is NOT validated by the type system and allows\nany structure. Use for:\n- Platform-specific deployment config (Vercel, CAP, Cloud Foundry)\n- Tool-specific extensions\n- Experimental features\n- Gradual migration paths\n\nCommon namespaces:\n- custom.vercel.*    - Vercel deployment config\n- custom.cap.*       - CAP framework config\n- custom.cf.*        - Cloud Foundry config\n- custom.k8s.*       - Kubernetes config\n- custom.tooling.*   - Custom tooling\n",
+      "additionalProperties": true
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Asset kind must be 'Asset' (capital A)"
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["http", "https", "grpc", "tcp"]
+        }
+      }
+    },
+    "provides": {
+      "type": "object",
+      "properties": {
+        "runtime": {
+          "type": "string"
+        },
+        "protocols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["http", "https", "odata-v4", "odata-v2", "rest", "grpc", "graphql"]
+          }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "workflow": {
+          "type": "object",
+          "description": "Workflow exposure configuration",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "triggers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["webhook", "schedule", "manual", "event"]
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "requires": {
+      "type": "array",
+      "description": "Dependencies on other assets or services",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "type": {
+      "type": "string",
+      "const": "n8n-workflow"
+    },
+    "workflow": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Workflow name"
+        },
+        "definitionFile": {
+          "type": "string",
+          "description": "Path to n8n workflow JSON file",
+          "default": "workflow.json"
+        },
+        "dataFile": {
+          "type": "string",
+          "description": "Path to JSON data file used by workflow",
+          "default": "data.json"
+        },
+        "triggers": {
+          "type": "array",
+          "description": "Workflow triggers",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["webhook", "schedule", "manual", "event"]
+              },
+              "path": {
+                "type": "string"
+              },
+              "schedule": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "executionMode": {
+          "type": "string",
+          "enum": ["main", "queue"],
+          "default": "main"
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Execution timeout in seconds",
+          "default": 120
+        },
+        "retryOnFailure": {
+          "type": "boolean",
+          "default": true
+        },
+        "maxRetries": {
+          "type": "integer",
+          "default": 3
+        }
+      }
+    },
+    "sourceRoot": {
+      "type": "string",
+      "description": "Source code root directory (Optional, defaults to \".\" if omitted)",
+      "default": "."
+    }
+  },
+  "required": ["kind", "metadata"],
+  "_metadata": {
+    "generatedFrom": "n8n-workflow",
+    "inheritanceChain": ["n8n-workflow", "base-service", "base"],
+    "assetKind": "workflow",
+    "generatedAt": "2026-03-12T20:42:06.287Z"
+  },
+  "x-implicit-defaults": {
+    "sourceRoot": {
+      "default": ".",
+      "description": "Source root defaults to current directory if omitted",
+      "introduced": "v3.0.0"
+    }
+  },
+  "x-spec-version": "v3.0.0",
+  "x-generated": "2026-03-12T20:42:06.287Z"
+}

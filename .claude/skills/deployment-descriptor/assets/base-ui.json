@@ -1,0 +1,221 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "base-ui Asset",
+  "description": "Schema for base-ui asset with inheritance from: base-ui → base",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Required: unique asset identifier used by the deployer (DNS-compatible: lowercase, hyphens)",
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional: human-readable display name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Optional: semantic version"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for the application",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {}
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Runtime type",
+          "default": "web"
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Application-level configuration overrides",
+      "additionalProperties": true
+    },
+    "custom": {
+      "type": "object",
+      "description": "Opaque custom configuration for platform-specific properties.\n\nThis section is NOT validated by the type system and allows\nany structure. Use for:\n- Platform-specific deployment config (Vercel, CAP, Cloud Foundry)\n- Tool-specific extensions\n- Experimental features\n- Gradual migration paths\n\nCommon namespaces:\n- custom.vercel.*    - Vercel deployment config\n- custom.cap.*       - CAP framework config\n- custom.cf.*        - Cloud Foundry config\n- custom.k8s.*       - Kubernetes config\n- custom.tooling.*   - Custom tooling\n",
+      "additionalProperties": true
+    },
+    "kind": {
+      "type": "string",
+      "const": "Asset",
+      "description": "Asset kind must be 'Asset' (capital A)"
+    },
+    "provides": {
+      "type": "object",
+      "required": ["framework"],
+      "properties": {
+        "framework": {
+          "type": "string",
+          "description": "UI framework (sapui5, react, vue, angular, etc.)"
+        },
+        "type": {
+          "type": "string"
+        },
+        "ui": {
+          "type": "object",
+          "properties": {
+            "framework": {
+              "type": "string"
+            },
+            "flpConfig": {
+              "type": "object",
+              "description": "Fiori Launchpad configuration"
+            },
+            "routes": {
+              "type": "array",
+              "description": "UI routes"
+            }
+          }
+        }
+      }
+    },
+    "framework": {
+      "type": "object",
+      "description": "Framework configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Framework name (nextjs, react, vue, angular, etc.)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Framework version"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "description": "Build configuration",
+      "properties": {
+        "installCommand": {
+          "type": "string",
+          "description": "Package install command",
+          "default": "npm install"
+        },
+        "buildCommand": {
+          "type": "string",
+          "description": "Build command",
+          "default": "npm run build"
+        },
+        "devCommand": {
+          "type": "string",
+          "description": "Development server command",
+          "default": "npm run dev"
+        },
+        "outputDirectory": {
+          "type": "string",
+          "description": "Build output directory"
+        },
+        "packageManager": {
+          "type": "string",
+          "enum": ["npm", "yarn", "pnpm", "bun"],
+          "description": "Package manager",
+          "default": "npm"
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "description": "Multiple components within a single UI asset.\n\nUse for:\n- Monorepo patterns (Nx, Turborepo, Lerna)\n- Next.js with multiple apps\n- Micro-frontends\n",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Component identifier"
+          },
+          "buildPath": {
+            "type": "string",
+            "default": ".",
+            "description": "Relative path to component source"
+          },
+          "port": {
+            "type": "integer",
+            "description": "Component-specific port"
+          },
+          "requires": {
+            "type": "array",
+            "description": "Component-specific dependencies"
+          },
+          "env": {
+            "type": "object",
+            "description": "Component-specific environment variables"
+          },
+          "custom": {
+            "type": "object",
+            "description": "Component-specific opaque config",
+            "additionalProperties": true
+          }
+        }
+      },
+      "default": []
+    },
+    "requires": {
+      "type": "array",
+      "description": "UI dependencies (typically backend services)",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Reference to a solution-level dependency by its id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "sourceRoot": {
+      "type": "string",
+      "description": "Source code root directory (Optional, defaults to \".\" if omitted)",
+      "default": "."
+    }
+  },
+  "required": ["kind", "metadata"],
+  "_metadata": {
+    "generatedFrom": "base-ui",
+    "inheritanceChain": ["base-ui", "base"],
+    "assetKind": "ui",
+    "generatedAt": "2026-03-12T20:42:06.287Z"
+  },
+  "x-implicit-defaults": {
+    "sourceRoot": {
+      "default": ".",
+      "description": "Source root defaults to current directory if omitted",
+      "introduced": "v3.0.0"
+    }
+  },
+  "x-spec-version": "v3.0.0",
+  "x-generated": "2026-03-12T20:42:06.287Z"
+}

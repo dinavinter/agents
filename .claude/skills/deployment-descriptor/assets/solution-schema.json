@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "composite Solution",
+  "description": "Schema for composite solution with inheritance from: composite → base",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Solution name (DNS-compatible)",
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Key-value labels for the application",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {}
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "version"]
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Runtime type",
+          "default": "generic"
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Solution-level configuration overrides",
+      "additionalProperties": true
+    },
+    "custom": {
+      "type": "object",
+      "description": "Opaque custom configuration for platform-specific properties.\n\nThis section is NOT validated by the type system and allows\nany structure. Use for:\n- Platform-specific deployment config (Vercel, CAP, Cloud Foundry)\n- Tool-specific extensions\n- Experimental features\n- Gradual migration paths\n\nCommon namespaces:\n- custom.vercel.*    - Vercel deployment config\n- custom.cap.*       - CAP framework config\n- custom.cf.*        - Cloud Foundry config\n- custom.k8s.*       - Kubernetes config\n- custom.tooling.*   - Custom tooling\n",
+      "additionalProperties": true,
+      "properties": {}
+    },
+    "requires": {
+      "type": "array",
+      "description": "Solution-wide dependencies inherited by all assets",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["service", "platform-service", "asset"]
+              },
+              "plan": {
+                "type": "string",
+                "description": "Service plan (required for platform-service)"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Array of assets composing this solution",
+      "items": {
+        "type": "object",
+        "oneOf": [
+          {
+            "required": ["ref"],
+            "properties": {
+              "ref": {
+                "type": "string",
+                "description": "Path or Git URI to asset.yaml"
+              },
+              "version": {
+                "type": "string",
+                "description": "Version constraint for referenced asset"
+              },
+              "alias": {
+                "type": "string",
+                "description": "Optional alias for the asset"
+              },
+              "spec": {
+                "type": "object",
+                "description": "Inline overrides (deep merged with ref)"
+              }
+            }
+          },
+          {
+            "required": ["id", "type"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+                "description": "Unique asset identifier"
+              },
+              "type": {
+                "type": "string",
+                "description": "Asset type identifier (kind comes from type definition)"
+              },
+              "sourceRoot": {
+                "type": "string",
+                "description": "Source code root directory"
+              },
+              "requires": {
+                "type": "array",
+                "description": "Asset-specific dependencies"
+              },
+              "provides": {
+                "type": "object",
+                "description": "What this asset provides"
+              }
+            }
+          },
+          {
+            "required": ["id", "kind"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+                "description": "Unique asset identifier"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable asset name"
+              },
+              "kind": {
+                "type": "string",
+                "enum": ["service", "ui", "process", "data-product", "sap-build"],
+                "description": "Asset category (explicit for inline assets)"
+              },
+              "type": {
+                "type": "string",
+                "description": "Asset type identifier"
+              },
+              "sourceRoot": {
+                "type": "string",
+                "description": "Source code root directory"
+              },
+              "requires": {
+                "type": "array",
+                "description": "Asset-specific dependencies (merged with solution requires)"
+              },
+              "provides": {
+                "type": "object",
+                "description": "What this asset provides"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "type": {
+      "type": "string",
+      "description": "Solution type (Optional, defaults to \"composite\" if omitted)",
+      "default": "composite"
+    }
+  },
+  "required": ["assets"],
+  "_metadata": {
+    "generatedFrom": "composite",
+    "inheritanceChain": ["composite", "base"],
+    "appliedTraits": [],
+    "generatedAt": "2026-03-12T20:42:06.283Z"
+  },
+  "x-implicit-defaults": {
+    "type": {
+      "default": "composite",
+      "description": "Solution type defaults to \"composite\" if omitted",
+      "introduced": "v3.0.0"
+    }
+  },
+  "x-spec-version": "v3.0.0",
+  "x-generated": "2026-03-12T20:42:06.286Z"
+}
