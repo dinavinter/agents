@@ -153,11 +153,75 @@ async function compileAndLoad(src) {
 
 /**
  * Wraps an XState machine in an HTTP handler.
+ * Provides AI actors (aiStream, aiElementStream) if the machine uses them.
  * If YJS_URL is set, syncs state to Yjs via ServiceController (visible in agents viewer).
  */
 function createMachineHandler(machine) {
   let actor = null;
   let serviceActor = null;
+
+  // Provide AI actors to machines that need them
+  async function provideMachine(rawMachine) {
+    try {
+      const { fromAIEventStream, fromAIElementStream } = await import("@cxai/stream");
+      const { createOpenAI } = await import("@ai-sdk/openai");
+
+      // SAP AI Core proxy — uses OAuth token for auth
+      const sapAIUrl = process.env.SAP_AI_API_URL;
+      const deploymentId = process.env.SAP_AI_DEPLOYMENT_ID;
+      const tokenUrl = process.env.SAP_TOKEN_URL;
+      const clientId = process.env.SAP_CLIENT_ID;
+      const clientSecret = process.env.SAP_CLIENT_SECRET;
+      const apiVersion = process.env.OPENAI_API_VERSION || "2024-02-01";
+
+      let model;
+      if (sapAIUrl && deploymentId) {
+        // Get OAuth token from SAP token service
+        let accessToken = "";
+        if (tokenUrl && clientId && clientSecret) {
+          const tokenResp = await fetch(tokenUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `grant_type=client_credentials&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`,
+          });
+          const tokenData = await tokenResp.json();
+          accessToken = tokenData.access_token;
+        }
+
+        const baseURL = `${sapAIUrl}/v2/inference/deployments/${deploymentId}`;
+        const openai = createOpenAI({
+          apiKey: "sap-ai-core",
+          baseURL,
+          fetch: (url, opts) => fetch(`${url}?api-version=${apiVersion}`, {
+            ...opts,
+            headers: {
+              ...opts?.headers,
+              "ai-resource-group": "default",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+        });
+        model = openai.chat(process.env.AI_MODEL || "gpt-4o");
+      } else if (process.env.OPENAI_API_KEY) {
+        // Direct OpenAI fallback
+        const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        model = openai.chat(process.env.AI_MODEL || "gpt-4o");
+      } else {
+        console.log("[runner] No AI config found (SAP_AI_API_URL or OPENAI_API_KEY)");
+        return rawMachine;
+      }
+
+      return rawMachine.provide({
+        actors: {
+          aiStream: fromAIEventStream({ model, temperature: 0.9 }),
+          aiElementStream: fromAIElementStream({ model, temperature: 0.9 }),
+        },
+      });
+    } catch (e) {
+      console.log("[runner] AI actors not available:", e.message);
+      return rawMachine;
+    }
+  }
 
   return async function machineHandler(event, context) {
     const req = event.extensions.request;
@@ -167,6 +231,7 @@ function createMachineHandler(machine) {
       try {
         const yjsUrl = process.env.YJS_URL;
         const agentId = process.env.AGENT_ID || "default";
+        const providedMachine = await provideMachine(machine);
 
         if (yjsUrl) {
           // Sync mode: connect to Yjs and write state changes → visible in viewer
@@ -243,7 +308,7 @@ function createMachineHandler(machine) {
           });
 
           // Create actor and sync state on every transition to BOTH docs
-          actor = createActor(machine);
+          actor = createActor(providedMachine);
           let eventIndex = 0;
           actor.subscribe((snapshot) => {
             const writeState = (doc) => {
@@ -289,7 +354,7 @@ function createMachineHandler(machine) {
         } else {
           // No Yjs — standalone mode
           const { createActor } = await import("xstate");
-          actor = createActor(machine);
+          actor = createActor(providedMachine);
           actor.start();
         }
       } catch (err) {
