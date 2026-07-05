@@ -1,25 +1,13 @@
-import "https://esm.sh/yjs";
-import { AnyEventObject, assign, emit, setup, UnknownActorLogic } from "https://esm.sh/xstate";
-import { fromAIEventStream , fromAIElementStream} from "https://esm.sh/@cxai/stream";
-import type { LanguageModelV1 } from "https://esm.sh/@ai-sdk/provider";
+import { assign, emit, setup } from "https://esm.sh/xstate";
+import { fromAIEventStream, fromAIElementStream } from "https://esm.sh/@cxai/stream";
 import { z } from "https://esm.sh/zod";
 
-type Actors = {
-    aiStream:  ReturnType< typeof fromAIEventStream<{ model: LanguageModelV1 }> >;
-    aiElementStream: ReturnType<typeof fromAIElementStream>;
-} & Record<string, UnknownActorLogic>;
-
 export const machine = setup({
-    actors: {} as Actors,
+    actors: {},
     types: {
-        emitted: {} as AnyEventObject,
-        input: {} as any,
-        context: {} as {
-            request?: string;
-            draft?: any[];
-            fields?: [];
-            css?: [];
-        },
+        emitted: {},
+        input: {},
+        context: {},
     },
 }).createMachine({
     id: "form",
