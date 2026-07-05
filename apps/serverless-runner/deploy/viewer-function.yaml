@@ -328,6 +328,27 @@ spec:
               return result;
             }
 
+            // POST /**/events/:event — proxy form submissions to the agent function
+            // Handles relative hx-post="events/request" from agent-rendered HTML
+            const eventsProxyMatch = path.match(/\/(?:page\/)?([^/]+)(?:\/[^/]+)?\/events\/(.+)/);
+            if (eventsProxyMatch && method === 'POST') {
+              const [, agent, eventType] = eventsProxyMatch;
+              const fnUrl = `https://agent-runner-${agent}-agents.c-127c9ef.stage.kyma.ondemand.com/`;
+              // Forward the form data as an event
+              const body = event.data || {};
+              const payload = typeof body === 'string' ? { type: eventType, [eventType]: body } : { type: eventType, ...body };
+              const resp = await fetch(fnUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              const result = await resp.json();
+              // Return HTML snippet so hx-swap works
+              res.writeHead(200, { 'Content-Type': 'text/html' });
+              res.end(`<span class="text-green-500">✓ ${result.state || 'sent'}</span>`);
+              return;
+            }
+
             // POST /events/:agent/:rev — push an event to the agent's emitted array
             const eventsMatch = path.match(/^\/events\/([^/]+)\/([^/]+)/);
             if (eventsMatch && method === 'POST') {
