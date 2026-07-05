@@ -134,18 +134,23 @@ async function compileAndLoad(src) {
 
   // Extract handler — supports multiple conventions
   let handler = null;
-  const exports = mod.default || mod;
+  const defaultExport = mod.default;
+  const namedExports = mod;
 
-  if (typeof exports === "function") {
-    handler = exports;
-  } else if (typeof exports.main === "function") {
-    handler = exports.main;
-  } else if (typeof exports.fetch === "function") {
-    handler = exports.fetch;
-  } else if (typeof exports.handler === "function") {
-    handler = exports.handler;
-  } else if (typeof exports.machine === "object") {
-    handler = createMachineHandler(exports.machine);
+  if (typeof defaultExport === "function") {
+    handler = defaultExport;
+  } else if (typeof namedExports.main === "function") {
+    handler = namedExports.main;
+  } else if (typeof namedExports.fetch === "function") {
+    handler = namedExports.fetch;
+  } else if (typeof namedExports.handler === "function") {
+    handler = namedExports.handler;
+  } else if (typeof namedExports.machine === "object" && namedExports.machine !== null) {
+    // Named export: export const machine = ...
+    handler = createMachineHandler(namedExports.machine);
+  } else if (defaultExport && typeof defaultExport === "object" && defaultExport.config) {
+    // Default export IS a machine (has .config property)
+    handler = createMachineHandler(defaultExport);
   }
 
   return { handler, rev, module: mod };
