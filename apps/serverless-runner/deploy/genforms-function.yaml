@@ -1,0 +1,64 @@
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: agent-runner-genforms
+  namespace: agents
+  labels:
+    app: agent-runner
+    agent-id: genforms
+spec:
+  replicas: 1
+  runtime: nodejs22
+  source:
+    gitRepository:
+      url: https://github.com/dinavinter/agents.git
+      baseDir: apps/serverless-runner
+      reference: restruct
+  env:
+    - name: AGENT_ID
+      value: "genforms"
+    - name: MODE
+      value: "github"
+    - name: GITHUB_REPO
+      value: "dinavinter/agents"
+    - name: GITHUB_PATH
+      value: "apps/serverless-runner/examples/agent-genforms/handler.mjs"
+    - name: GITHUB_BRANCH
+      value: "restruct"
+    - name: YJS_URL
+      value: "ws://hocuspocus.agents.svc.cluster.local:1234"
+    - name: AI_MODEL
+      value: "gpt-4o"
+    - name: OPENAI_API_VERSION
+      value: "2024-02-01"
+    - name: SAP_AI_API_URL
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_AI_API_URL
+    - name: SAP_AI_DEPLOYMENT_ID
+      value: "ddfc8f6dae703087"
+    - name: SAP_TOKEN_URL
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_TOKEN_URL
+    - name: SAP_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_CLIENT_ID
+    - name: SAP_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_CLIENT_SECRET
+  resourceConfiguration:
+    function:
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
