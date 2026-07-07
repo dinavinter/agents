@@ -53,6 +53,11 @@ class PlaywrightMCP {
       throw new Error("No result in SSE response");
     }
 
+    // Non-SSE response
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`MCP ${res.status}: ${text}`);
+    }
     const json = await res.json();
     if (json.error) throw new Error(json.error.message);
     return json.result;
@@ -86,8 +91,7 @@ class PlaywrightMCP {
 const connectPlaywright = fromPromise(async ({ input }) => {
   const pw = new PlaywrightMCP(input.url);
   await pw.init();
-  // Start tracing for evidence
-  await pw.code(`await page.context().tracing.start({ name: "${input.session}", screenshots: true, snapshots: true });`);
+  // Note: tracing starts after first navigation (no page yet)
   return pw;
 });
 
