@@ -11,7 +11,7 @@
  *         requirements → solution → testing → deployment → deployed → done
  */
 
-import { assign, emit, fromCallback, fromPromise, setup } from "https://esm.sh/xstate@5";
+import { assign, emit, fromCallback, fromPromise, setup } from "https://esm.sh/xstate";
 import "https://esm.sh/yjs";
 
 // ─── Playwright MCP Client (HTTP streamable transport) ──────────────────────
