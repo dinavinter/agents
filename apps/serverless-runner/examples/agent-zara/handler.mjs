@@ -1,23 +1,25 @@
 /**
  * Zara — E2E Testing Agent (Serverless Handler)
  *
- * Flat XState machine that drives Joule Studio E2E testing via Playwright MCP.
- *
  * Architecture:
- *   - On init: connects to Playwright MCP, lists available tools, stores in context
- *   - AI stream uses tool schemas as element schema → AI emits tool-call elements
- *   - On "playwright.*" events: downstream MCP tool call, result feeds back as context
- *   - State transitions driven by AI observing page state via snapshots
+ *   - On request: connects to Playwright MCP, lists tools, stores in context
+ *   - Each workflow state is a LOOP: AI proposes tool call → execute on MCP → feed result back
+ *   - Loop repeats until AI emits __done__ → transitions to next state
+ *   - playwright.* events on the wildcard handler execute MCP calls synchronously
+ *
+ * The key pattern is: thinking → acting → thinking → acting → ... → transition
+ *   "thinking" invokes AI with current snapshot + history → AI picks a tool
+ *   "acting" executes that tool on Playwright MCP → stores result
+ *   Loop back to "thinking" with updated context
  *
  * States: idle → connecting → authenticating → create → intent →
  *         requirements → solution → testing → deployment → deployed → done
  */
 
-import { assign, emit, fromCallback, fromPromise, setup } from "https://esm.sh/xstate";
-import { fromAIEventStream, fromAIElementStream } from "https://esm.sh/@cxai/stream";
-import { z } from "https://esm.sh/zod";
+import { assign, emit, fromPromise, setup } from "https://esm.sh/xstate";
+import { fromAIEventStream } from "https://esm.sh/@cxai/stream";
 
-// ─── Playwright MCP Client (HTTP streamable transport) ──────────────────────
+// ─── Playwright MCP Client ──────────────────────────────────────────────────
 
 class PlaywrightMCP {
   #url;
@@ -66,15 +68,13 @@ class PlaywrightMCP {
   }
 
   async init() {
-    const result = await this.call("initialize", {
+    await this.call("initialize", {
       protocolVersion: "2025-03-26",
       capabilities: {},
       clientInfo: { name: "zara", version: "1.0" },
     });
-    // List tools after init
     const toolsResult = await this.call("tools/list", {});
     this.tools = toolsResult?.tools || [];
-    return result;
   }
 
   async tool(name, args = {}) {
@@ -82,38 +82,26 @@ class PlaywrightMCP {
   }
 
   async close() { try { await this.tool("browser_close"); } catch {} }
-
   get id() { return this.#sessionId; }
 }
 
-// ─── Build Zod schema from MCP tool definitions ─────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Convert MCP tool list into a Zod discriminated union schema.
- * Each tool becomes an element the AI can emit:
- *   { tool: "browser_navigate", args: { url: "..." } }
- */
-function buildToolCallSchema(tools) {
-  // Simple schema: the AI picks a tool name and provides args
-  return z.object({
-    tool: z.enum(tools.map(t => t.name)).describe("The Playwright MCP tool to call"),
-    args: z.record(z.any()).describe("Arguments for the tool call"),
-    reasoning: z.string().optional().describe("Why this tool call is needed"),
-  }).describe("A Playwright browser action to perform");
-}
-
-/**
- * Build a tool catalog string for the AI system prompt.
- */
 function buildToolCatalog(tools) {
   return tools.map(t => {
     const params = t.inputSchema?.properties
       ? Object.entries(t.inputSchema.properties)
         .map(([k, v]) => `  ${k}: ${v.description || v.type || "any"}`)
         .join("\n")
-      : "  (no parameters)";
-    return `### ${t.name}\n${t.description || ""}\nParameters:\n${params}`;
-  }).join("\n\n");
+      : "";
+    return `- ${t.name}: ${t.description || ""}${params ? "\n" + params : ""}`;
+  }).join("\n");
+}
+
+function formatHistory(history, limit = 10) {
+  return history.slice(-limit).map(h =>
+    `[${h.tool}] ${h.error ? "ERROR: " + h.error : JSON.stringify(h.result).substring(0, 300)}`
+  ).join("\n");
 }
 
 // ─── Actors ─────────────────────────────────────────────────────────────────
@@ -125,13 +113,30 @@ const connectPlaywright = fromPromise(async ({ input }) => {
 });
 
 /**
- * Execute a Playwright MCP tool call.
- * Used as the downstream handler for playwright.* events.
+ * The core turn: AI decides what tool to call next.
+ * Returns { tool, args } or { tool: "__done__", args: {...} } to signal completion.
  */
-const execPlaywrightTool = fromPromise(async ({ input }) => {
+const aiDecide = fromPromise(async ({ input }) => {
+  // This will be replaced by the runner's AI actor at runtime
+  // For now, use a simple fetch to the AI model
+  throw new Error("aiDecide should be overridden by the runner's AI infrastructure");
+});
+
+/**
+ * Execute a single Playwright MCP tool call and return the result.
+ */
+const execTool = fromPromise(async ({ input }) => {
   const { pw, tool, args } = input;
-  const result = await pw.tool(tool, args || {});
-  return { tool, result };
+  try {
+    const result = await pw.tool(tool, args || {});
+    // Extract text content from MCP result
+    const text = result?.content
+      ?.map(c => c.text || c.data || "")
+      .join("\n") || JSON.stringify(result);
+    return { tool, args, result: text, error: null };
+  } catch (e) {
+    return { tool, args, result: null, error: e.message };
+  }
 });
 
 // ─── The Machine ────────────────────────────────────────────────────────────
@@ -139,46 +144,32 @@ const execPlaywrightTool = fromPromise(async ({ input }) => {
 export const machine = setup({
   actors: {
     connectPlaywright,
-    execPlaywrightTool,
-    aiStream: fromAIElementStream(),
-    aiChat: fromAIEventStream(),
+    execTool,
+    aiDecide: fromAIEventStream(),
   },
-  types: {
-    input: {},
-    context: {},
-    emitted: {},
-  },
+  types: { input: {}, context: {}, emitted: {} },
 }).createMachine({
   id: "zara",
   initial: "idle",
   context: ({ input }) => ({
-    // Playwright MCP
     pw: null,
-    tools: [],          // MCP tool definitions
-    toolCatalog: "",    // Formatted tool descriptions for AI prompt
-    toolSchema: null,   // Zod schema built from tools
-
-    // Session
+    tools: [],
+    toolCatalog: "",
     projectId: input?.projectId || "",
     prompt: input?.prompt || "",
+    phase: "authenticating",  // current workflow phase
     solutionId: null,
     solutionUrl: null,
-
-    // Browser state (updated after each tool call)
-    lastSnapshot: null,
-    lastScreenshot: null,
-    lastUrl: "",
-
-    // History of tool calls + results (fed back to AI)
-    history: [],
-
-    // State
+    lastSnapshot: "",
+    history: [],  // { tool, args, result, error }[]
+    pendingAction: null,  // { tool, args } — next action to execute
     error: null,
     retries: 0,
+    maxTurns: 50,
+    turn: 0,
     ...input,
   }),
 
-  // Initial UI
   entry: emit({
     type: "message",
     data: `<main class="mx-auto bg-gray-900 min-h-screen p-6 text-gray-100">
@@ -186,8 +177,7 @@ export const machine = setup({
         <span class="text-lg font-semibold text-purple-400">Zara — E2E Tester</span>
         <span class="text-sm" sse-swap="@status" hx-swap="innerHTML">● idle</span>
       </header>
-      <div class="mt-4 space-y-2" sse-swap="@progress" hx-swap="beforeend"></div>
-      <div class="mt-2" sse-swap="@snapshot" hx-swap="innerHTML"></div>
+      <div class="mt-4 space-y-1 max-h-96 overflow-y-auto" sse-swap="@progress" hx-swap="beforeend"></div>
       <form class="mt-4 flex gap-2">
         <input type="text" name="prompt" placeholder="Describe what to test..."
                class="flex-1 p-3 bg-gray-800 border border-gray-600 rounded-lg" />
@@ -198,7 +188,7 @@ export const machine = setup({
   }),
 
   states: {
-    // ─── Idle ─────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════
     idle: {
       entry: emit({ type: "@status", data: `<span class="text-green-400">● idle</span>` }),
       on: {
@@ -206,17 +196,20 @@ export const machine = setup({
           target: "connecting",
           actions: assign({
             prompt: ({ event }) => event.prompt || "",
-            projectId: ({ event }) => event.projectId || `session-${Date.now()}`,
+            projectId: ({ event }) => event.projectId || `s-${Date.now()}`,
             error: () => null,
             retries: () => 0,
+            turn: () => 0,
             history: () => [],
-            lastSnapshot: () => null,
+            phase: () => "authenticating",
+            pendingAction: () => null,
+            lastSnapshot: () => "",
           }),
         },
       },
     },
 
-    // ─── Connect to Playwright MCP + list tools ───────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════
     connecting: {
       entry: emit({ type: "@status", data: `<span class="text-yellow-400">● connecting</span>` }),
       invoke: {
@@ -225,310 +218,173 @@ export const machine = setup({
           url: globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp:8931/mcp",
         }),
         onDone: {
-          target: "authenticating",
+          target: "thinking",
           actions: [
             assign({
               pw: ({ event }) => event.output.pw,
               tools: ({ event }) => event.output.tools,
               toolCatalog: ({ event }) => buildToolCatalog(event.output.tools),
-              toolSchema: ({ event }) => buildToolCallSchema(event.output.tools),
             }),
             emit(({ event }) => ({
               type: "@progress",
-              data: `<div class="text-xs text-green-400">✓ Connected — ${event.output.tools.length} tools available</div>`,
+              data: `<div class="text-xs text-green-400">✓ Playwright connected (${event.output.tools.length} tools)</div>`,
             })),
           ],
         },
         onError: {
           target: "error",
-          actions: assign({ error: ({ event }) => `Connection failed: ${event.error?.message || "unknown"}` }),
+          actions: assign({ error: ({ event }) => `Connection: ${event.error?.message}` }),
         },
       },
     },
 
-    // ─── Authenticating: AI drives login via tool calls ───────────────────
-    authenticating: {
+    // ═══════════════════════════════════════════════════════════════════════
+    // THINKING: Ask AI what tool to call next
+    // ═══════════════════════════════════════════════════════════════════════
+    thinking: {
       entry: [
-        emit({ type: "@status", data: `<span class="text-blue-400">● authenticating</span>` }),
-        emit({ type: "@progress", data: `<div class="text-xs text-gray-400">AI driving IAS login...</div>` }),
-      ],
-      invoke: {
-        src: "aiStream",
-        input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent. You have access to these Playwright MCP tools:
-
-${context.toolCatalog}
-
-Your task: Log into Joule Studio.
-1. Navigate to ${globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com"}/new/build
-2. If you see a login page (IAS), fill email "${globalThis.process?.env?.IAS_USERNAME || ""}" and password "${globalThis.process?.env?.IAS_PASSWORD || ""}"
-3. Click Continue/Sign In/Log On
-4. Wait for redirect to Studio
-
-Emit tool calls one at a time. After each, you'll see the result in the next turn.
-When login is complete (you see Conversations/Spaces/Develop in snapshot), emit a tool call with tool="__done__" and args={}.
-
-Current page state:
-${context.lastSnapshot ? JSON.stringify(context.lastSnapshot).substring(0, 2000) : "No page loaded yet"}
-
-Previous actions:
-${context.history.map(h => `→ ${h.tool}(${JSON.stringify(h.args)}) = ${JSON.stringify(h.result).substring(0, 200)}`).join("\n") || "None"}`,
-          template: "Perform the next browser action to log in.",
-        }),
-      },
-      on: {
-        // AI emits tool-call elements → execute on Playwright MCP
-        "*": {
-          actions: [
-            // Forward to playwright execution
-            emit(({ event }) => ({
-              type: `playwright.${event.tool}`,
-              event: `playwright.${event.tool}`,
-              data: JSON.stringify({ tool: event.tool, args: event.args, reasoning: event.reasoning }),
-            })),
-            // Show progress
-            emit(({ event }) => ({
-              type: "@progress",
-              data: `<div class="text-xs text-blue-300">→ ${event.tool}(${JSON.stringify(event.args || {}).substring(0, 100)})</div>`,
-            })),
-          ],
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
-        },
-        // AI signals done
-        output: {
-          target: "create",
-          actions: [
-            emit({ type: "@progress", data: `<div class="text-xs text-green-400">✓ Authenticated</div>` }),
-          ],
-        },
-      },
-    },
-
-    // ─── Create: AI prompts Joule Studio ──────────────────────────────────
-    create: {
-      entry: [
-        emit({ type: "@status", data: `<span class="text-blue-400">● create</span>` }),
+        assign({ turn: ({ context }) => context.turn + 1 }),
         emit(({ context }) => ({
-          type: "@progress",
-          data: `<div class="text-xs text-gray-400">Prompting Joule: "${(context.prompt || "").substring(0, 60)}"</div>`,
+          type: "@status",
+          data: `<span class="text-blue-400">● ${context.phase}</span> — thinking (turn ${context.turn})`,
         })),
       ],
+      always: {
+        guard: ({ context }) => context.turn > context.maxTurns,
+        target: "error",
+        actions: assign({ error: () => "Max turns exceeded" }),
+      },
       invoke: {
-        src: "aiStream",
+        src: "aiDecide",
         input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent with these tools:
-
-${context.toolCatalog}
-
-Your task: Create a new solution in Joule Studio.
-1. Find the chat input (placeholder "Message Joule..." or textbox role)
-2. Type the solution description: "${context.prompt}"
-3. Submit (Enter or click Send)
-4. Answer any clarifying questions Joule asks
-5. When the URL changes to contain a solution UUID (/solutions/xxxxxxxx-...), emit tool="__done__" args={"solutionId": "<uuid>", "solutionUrl": "<url>"}
-
-Current snapshot:
-${context.lastSnapshot ? JSON.stringify(context.lastSnapshot).substring(0, 3000) : ""}
-
-History:
-${context.history.slice(-5).map(h => `→ ${h.tool}: ${JSON.stringify(h.result).substring(0, 150)}`).join("\n")}`,
-          template: "Perform the next action to create the solution in Joule.",
+          system: buildSystemPrompt(context),
+          prompt: buildUserPrompt(context),
         }),
+        onError: {
+          target: "error",
+          actions: assign({ error: ({ event }) => `AI: ${event.error?.message}` }),
+        },
       },
       on: {
-        "*": {
+        // AI streams text — parse for tool call JSON
+        "output": {
+          actions: assign({
+            pendingAction: ({ event, context }) => {
+              const text = event.output || "";
+              // Try to parse a JSON tool call from the AI output
+              try {
+                // Look for JSON in the response
+                const match = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+                if (match) return JSON.parse(match[0]);
+              } catch {}
+              // Fallback: treat as done if no tool call found
+              return { tool: "__done__", args: {} };
+            },
+          }),
+        },
+        // After AI finishes, check what it decided
+        "text-delta": { /* accumulate — handled by output */ },
+      },
+      // When invoke completes (actor done), transition based on pendingAction
+      onDone: [
+        {
+          guard: ({ context }) => context.pendingAction?.tool === "__done__",
+          target: "transition",
+        },
+        {
+          guard: ({ context }) => !!context.pendingAction?.tool,
+          target: "acting",
+        },
+        {
+          target: "transition", // no action = phase complete
+        },
+      ],
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ACTING: Execute the tool call on Playwright MCP
+    // ═══════════════════════════════════════════════════════════════════════
+    acting: {
+      entry: emit(({ context }) => ({
+        type: "@progress",
+        data: `<div class="text-xs text-blue-300">→ ${context.pendingAction?.tool}(${JSON.stringify(context.pendingAction?.args || {}).substring(0, 80)})</div>`,
+      })),
+      invoke: {
+        src: "execTool",
+        input: ({ context }) => ({
+          pw: context.pw,
+          tool: context.pendingAction.tool,
+          args: context.pendingAction.args,
+        }),
+        onDone: {
+          target: "thinking",  // Loop back to AI with result
           actions: [
-            emit(({ event }) => ({
-              type: `playwright.${event.tool}`,
-              event: `playwright.${event.tool}`,
-              data: JSON.stringify({ tool: event.tool, args: event.args }),
-            })),
+            assign({
+              history: ({ context, event }) => [...context.history, event.output],
+              lastSnapshot: ({ context, event }) => {
+                // Update snapshot if it was a snapshot call
+                if (event.output.tool === "browser_snapshot") return event.output.result || context.lastSnapshot;
+                return context.lastSnapshot;
+              },
+              pendingAction: () => null,
+            }),
             emit(({ event }) => ({
               type: "@progress",
-              data: `<div class="text-xs text-blue-300">→ ${event.tool}(${JSON.stringify(event.args || {}).substring(0, 80)})</div>`,
+              data: `<div class="text-xs text-gray-500">  ← ${(event.output.result || event.output.error || "").substring(0, 120)}</div>`,
             })),
           ],
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
         },
-        output: {
-          target: "intent",
+        onError: {
+          target: "thinking",  // Even on error, loop back
           actions: assign({
-            solutionId: ({ event }) => event.output?.[0]?.args?.solutionId || null,
-            solutionUrl: ({ event }) => event.output?.[0]?.args?.solutionUrl || null,
+            history: ({ context, event }) => [
+              ...context.history,
+              { tool: context.pendingAction?.tool, args: context.pendingAction?.args, result: null, error: event.error?.message },
+            ],
+            pendingAction: () => null,
           }),
         },
       },
     },
 
-    // ─── Intent ───────────────────────────────────────────────────────────
-    intent: {
-      entry: emit({ type: "@status", data: `<span class="text-indigo-400">● intent</span>` }),
-      invoke: {
-        src: "aiStream",
-        input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent. Tools:\n${context.toolCatalog}\n\nTask: Monitor Joule Studio Intent phase. Take snapshots. When Intent step shows ✓ or Requirements becomes active, emit tool="__done__". Current: ${JSON.stringify(context.lastSnapshot).substring(0, 2000)}`,
-          template: "Check if Intent phase is complete.",
-        }),
-      },
-      on: {
-        "*": {
-          actions: emit(({ event }) => ({
-            type: `playwright.${event.tool}`,
-            event: `playwright.${event.tool}`,
-            data: JSON.stringify({ tool: event.tool, args: event.args }),
-          })),
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
-        },
-        output: { target: "requirements" },
-      },
+    // ═══════════════════════════════════════════════════════════════════════
+    // TRANSITION: Move to next workflow phase
+    // ═══════════════════════════════════════════════════════════════════════
+    transition: {
+      always: [
+        { guard: ({ context }) => context.phase === "authenticating", target: "thinking", actions: assign({ phase: () => "create", turn: () => 0, history: () => [] }) },
+        { guard: ({ context }) => context.phase === "create", target: "thinking", actions: assign({ phase: () => "intent", turn: () => 0 }) },
+        { guard: ({ context }) => context.phase === "intent", target: "thinking", actions: assign({ phase: () => "requirements", turn: () => 0 }) },
+        { guard: ({ context }) => context.phase === "requirements", target: "thinking", actions: assign({ phase: () => "solution", turn: () => 0 }) },
+        { guard: ({ context }) => context.phase === "solution", target: "thinking", actions: assign({ phase: () => "testing", turn: () => 0 }) },
+        { guard: ({ context }) => context.phase === "testing", target: "thinking", actions: assign({ phase: () => "deployment", turn: () => 0 }) },
+        { guard: ({ context }) => context.phase === "deployment", target: "thinking", actions: assign({ phase: () => "deployed", turn: () => 0 }) },
+        { guard: ({ context }) => context.phase === "deployed", target: "done" },
+        { target: "done" },
+      ],
+      entry: emit(({ context }) => ({
+        type: "@progress",
+        data: `<div class="text-xs text-green-400 font-semibold">✓ Phase complete: ${context.phase}</div>`,
+      })),
     },
 
-    // ─── Requirements ─────────────────────────────────────────────────────
-    requirements: {
-      entry: emit({ type: "@status", data: `<span class="text-indigo-400">● requirements</span>` }),
-      invoke: {
-        src: "aiStream",
-        input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent. Tools:\n${context.toolCatalog}\n\nTask: Monitor Joule Requirements phase. When Requirements ✓ or Solution becomes active, emit tool="__done__". Snapshot: ${JSON.stringify(context.lastSnapshot).substring(0, 2000)}`,
-          template: "Check requirements phase.",
-        }),
-      },
-      on: {
-        "*": {
-          actions: emit(({ event }) => ({
-            type: `playwright.${event.tool}`,
-            event: `playwright.${event.tool}`,
-            data: JSON.stringify({ tool: event.tool, args: event.args }),
-          })),
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
-        },
-        output: { target: "solution" },
-      },
-    },
-
-    // ─── Solution ─────────────────────────────────────────────────────────
-    solution: {
-      entry: emit({ type: "@status", data: `<span class="text-indigo-400">● solution</span>` }),
-      invoke: {
-        src: "aiStream",
-        input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent. Tools:\n${context.toolCatalog}\n\nTask: Monitor Solution generation. When Solution ✓ or Try/Test button appears, emit tool="__done__". Snapshot: ${JSON.stringify(context.lastSnapshot).substring(0, 2000)}`,
-          template: "Check solution phase.",
-        }),
-      },
-      on: {
-        "*": {
-          actions: emit(({ event }) => ({
-            type: `playwright.${event.tool}`,
-            event: `playwright.${event.tool}`,
-            data: JSON.stringify({ tool: event.tool, args: event.args }),
-          })),
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
-        },
-        output: { target: "testing" },
-      },
-    },
-
-    // ─── Testing ──────────────────────────────────────────────────────────
-    testing: {
-      entry: emit({ type: "@status", data: `<span class="text-orange-400">● testing</span>` }),
-      invoke: {
-        src: "aiStream",
-        input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent. Tools:\n${context.toolCatalog}\n\nTask: Test the solution in sandbox. Click Try/Test, send a test message, verify response. When tests pass (Deploy button enabled), emit tool="__done__". Snapshot: ${JSON.stringify(context.lastSnapshot).substring(0, 2000)}`,
-          template: "Run sandbox tests.",
-        }),
-      },
-      on: {
-        "*": {
-          actions: emit(({ event }) => ({
-            type: `playwright.${event.tool}`,
-            event: `playwright.${event.tool}`,
-            data: JSON.stringify({ tool: event.tool, args: event.args }),
-          })),
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
-        },
-        output: { target: "deployment" },
-      },
-    },
-
-    // ─── Deployment ───────────────────────────────────────────────────────
-    deployment: {
-      entry: emit({ type: "@status", data: `<span class="text-orange-400">● deployment</span>` }),
-      invoke: {
-        src: "aiStream",
-        input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent. Tools:\n${context.toolCatalog}\n\nTask: Deploy the solution. Click Deploy, wait for status=Running/Deployed. When deployed, emit tool="__done__". Snapshot: ${JSON.stringify(context.lastSnapshot).substring(0, 2000)}`,
-          template: "Deploy the solution.",
-        }),
-      },
-      on: {
-        "*": {
-          actions: emit(({ event }) => ({
-            type: `playwright.${event.tool}`,
-            event: `playwright.${event.tool}`,
-            data: JSON.stringify({ tool: event.tool, args: event.args }),
-          })),
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
-        },
-        output: { target: "deployed" },
-      },
-    },
-
-    // ─── Deployed: verify ─────────────────────────────────────────────────
-    deployed: {
-      entry: emit({ type: "@status", data: `<span class="text-cyan-400">● deployed</span>` }),
-      invoke: {
-        src: "aiStream",
-        input: ({ context }) => ({
-          schema: context.toolSchema,
-          system: `You are a browser automation agent. Tools:\n${context.toolCatalog}\n\nTask: Verify the deployed solution. Navigate to Conversations, @mention the agent, send a test message. If response is sensible, emit tool="__done__". Snapshot: ${JSON.stringify(context.lastSnapshot).substring(0, 2000)}`,
-          template: "Verify deployment.",
-        }),
-      },
-      on: {
-        "*": {
-          actions: emit(({ event }) => ({
-            type: `playwright.${event.tool}`,
-            event: `playwright.${event.tool}`,
-            data: JSON.stringify({ tool: event.tool, args: event.args }),
-          })),
-          guard: ({ event }) => event.tool && event.tool !== "__done__" && event.type !== "output",
-        },
-        output: { target: "done" },
-      },
-    },
-
-    // ─── Done ─────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════
     done: {
       type: "final",
       entry: [
         emit({ type: "@status", data: `<span class="text-green-400">● done ✓</span>` }),
         emit(({ context }) => ({
           type: "@progress",
-          data: `<div class="text-sm text-green-400 font-semibold">✓ Complete — ${context.history.length} actions performed</div>`,
+          data: `<div class="text-sm text-green-400 font-bold mt-4">✓ All phases complete — ${context.history.length} actions in ${context.turn} turns</div>`,
         })),
       ],
     },
 
-    // ─── Error ────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════
     error: {
       entry: [
-        emit(({ context }) => ({
-          type: "@status",
-          data: `<span class="text-red-400">● error</span> — ${context.error || "Unknown"}`,
-        })),
-        emit(({ context }) => ({
-          type: "@progress",
-          data: `<div class="text-xs text-red-400">✗ ${context.error}</div>`,
-        })),
+        emit(({ context }) => ({ type: "@status", data: `<span class="text-red-400">● error — ${context.error}</span>` })),
+        emit(({ context }) => ({ type: "@progress", data: `<div class="text-xs text-red-400">✗ ${context.error}</div>` })),
       ],
       on: {
         retry: {
@@ -540,42 +396,53 @@ ${context.history.slice(-5).map(h => `→ ${h.tool}: ${JSON.stringify(h.result).
           target: "connecting",
           actions: assign({
             prompt: ({ event }) => event.prompt || "",
-            projectId: ({ event }) => event.projectId || `session-${Date.now()}`,
-            error: () => null,
-            retries: () => 0,
-            history: () => [],
+            projectId: ({ event }) => event.projectId || `s-${Date.now()}`,
+            error: () => null, retries: () => 0, turn: () => 0, history: () => [],
           }),
         },
       },
     },
   },
-
-  // ─── Global event handler: playwright.* → execute MCP tool downstream ──
-  on: {
-    "playwright.*": {
-      actions: [
-        // Execute the tool call and store result in history
-        assign({
-          history: ({ context, event }) => {
-            const data = typeof event.data === "string" ? JSON.parse(event.data) : event;
-            // Fire-and-forget the actual MCP call — result updates context asynchronously
-            if (context.pw && data.tool) {
-              context.pw.tool(data.tool, data.args || {}).then(result => {
-                // The result will be available on next AI invocation via context.history
-                context.history.push({ tool: data.tool, args: data.args, result, ts: Date.now() });
-                // Update snapshot if it was a snapshot/navigate call
-                if (data.tool === "browser_snapshot") context.lastSnapshot = result;
-                if (data.tool === "browser_navigate") context.lastUrl = data.args?.url || context.lastUrl;
-              }).catch(err => {
-                context.history.push({ tool: data.tool, args: data.args, error: err.message, ts: Date.now() });
-              });
-            }
-            return context.history;
-          },
-        }),
-      ],
-    },
-  },
 });
+
+// ─── Prompt Builders ────────────────────────────────────────────────────────
+
+function buildSystemPrompt(context) {
+  return `You are Zara, a browser automation agent testing Joule Studio.
+You have access to these Playwright MCP tools:
+${context.toolCatalog}
+
+IMPORTANT: Respond with ONLY a JSON object specifying the next tool to call:
+{"tool": "browser_navigate", "args": {"url": "..."}}
+
+When the current phase objective is complete, respond with:
+{"tool": "__done__", "args": {}}
+
+Current phase: ${context.phase}
+Phase objectives:
+- authenticating: Navigate to ${globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com"}/new/build, login with ${globalThis.process?.env?.IAS_USERNAME || "user@example.com"} / ${globalThis.process?.env?.IAS_PASSWORD || "***"}. Done when you see Conversations/Spaces/Develop nav.
+- create: Type the solution prompt in chat input, submit. Done when URL contains /solutions/<uuid>.
+- intent: Answer Joule's clarifying questions. Done when Intent step shows ✓.
+- requirements: Wait/answer. Done when Requirements shows ✓.
+- solution: Wait for code generation. Done when Solution shows ✓ or Try/Test button appears.
+- testing: Click Try, test the solution. Done when Deploy button is enabled.
+- deployment: Click Deploy, wait. Done when status shows Running/Deployed.
+- deployed: Verify in Conversations. Done when agent responds correctly.
+
+RESPOND ONLY WITH JSON. No explanations.`;
+}
+
+function buildUserPrompt(context) {
+  const parts = [`Phase: ${context.phase}`, `Turn: ${context.turn}`];
+  if (context.prompt) parts.push(`Task: ${context.prompt}`);
+  if (context.lastSnapshot) parts.push(`Current page snapshot:\n${context.lastSnapshot.substring(0, 3000)}`);
+  if (context.history.length > 0) {
+    parts.push(`Last ${Math.min(5, context.history.length)} actions:\n${formatHistory(context.history, 5)}`);
+  } else {
+    parts.push("No actions taken yet. Start by navigating or taking a snapshot.");
+  }
+  parts.push("\nRespond with the next tool call as JSON:");
+  return parts.join("\n\n");
+}
 
 export default machine;
