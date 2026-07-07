@@ -29,6 +29,7 @@ class PlaywrightMCP {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream",
         ...(this.#sessionId ? { "Mcp-Session-Id": this.#sessionId } : {}),
       },
       body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
