@@ -36,6 +36,23 @@ class PlaywrightMCP {
     });
     const sid = res.headers.get("mcp-session-id");
     if (sid) this.#sessionId = sid;
+
+    // Handle SSE vs JSON response
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("text/event-stream")) {
+      const text = await res.text();
+      for (const line of text.split("\n")) {
+        if (line.startsWith("data: ")) {
+          try {
+            const msg = JSON.parse(line.slice(6));
+            if (msg.error) throw new Error(msg.error.message || JSON.stringify(msg.error));
+            if (msg.result !== undefined) return msg.result;
+          } catch (e) { if (e.message && !e.message.includes("JSON")) throw e; }
+        }
+      }
+      throw new Error("No result in SSE response");
+    }
+
     const json = await res.json();
     if (json.error) throw new Error(json.error.message);
     return json.result;
