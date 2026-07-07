@@ -1,0 +1,78 @@
+apiVersion: serverless.kyma-project.io/v1alpha2
+kind: Function
+metadata:
+  name: agent-runner-zara
+  namespace: agents
+  labels:
+    app: agent-runner
+    agent-id: zara
+spec:
+  replicas: 1
+  runtime: nodejs22
+  source:
+    gitRepository:
+      url: https://github.com/dinavinter/agents.git
+      baseDir: apps/serverless-runner
+      reference: restruct
+  env:
+    - name: AGENT_ID
+      value: "zara"
+    - name: MODE
+      value: "github"
+    - name: GITHUB_REPO
+      value: "dinavinter/agents"
+    - name: GITHUB_PATH
+      value: "apps/serverless-runner/examples/agent-zara/handler.mjs"
+    - name: GITHUB_BRANCH
+      value: "restruct"
+    - name: YJS_URL
+      value: "ws://hocuspocus.agents.svc.cluster.local:1234"
+    - name: PLAYWRIGHT_MCP_URL
+      value: "http://playwright-mcp.agents.svc.cluster.local:8931/mcp"
+    - name: DAS_HOST
+      value: "https://0210498507.eu12.sapdas-dev.cloud.sap"
+    - name: IAS_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: ias-test-credentials
+          key: username
+    - name: IAS_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: ias-test-credentials
+          key: password
+    - name: AI_MODEL
+      value: "gpt-4o"
+    - name: OPENAI_API_VERSION
+      value: "2024-02-01"
+    - name: SAP_AI_API_URL
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_AI_API_URL
+    - name: SAP_AI_DEPLOYMENT_ID
+      value: "ddfc8f6dae703087"
+    - name: SAP_TOKEN_URL
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_TOKEN_URL
+    - name: SAP_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_CLIENT_ID
+    - name: SAP_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: aicore-credentials
+          key: SAP_CLIENT_SECRET
+  resourceConfiguration:
+    function:
+      resources:
+        limits:
+          cpu: "1000m"
+          memory: "1Gi"
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
