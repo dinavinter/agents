@@ -74,13 +74,23 @@ class PlaywrightMCP {
   }
 
   async init() {
-    await this.call("initialize", {
+    const result = await this.call("initialize", {
       protocolVersion: "2025-03-26",
       capabilities: {},
       clientInfo: { name: "zara", version: "1.0" },
     });
-    const toolsResult = await this.call("tools/list", {});
-    this.tools = toolsResult?.tools || [];
+    // Get tools (preserve session from initialize)
+    const savedSession = this.sessionId;
+    try {
+      const toolsResult = await this.call("tools/list", {});
+      this.tools = toolsResult?.tools || [];
+    } catch {
+      this.tools = [];
+    }
+    // Restore session if tools/list changed it
+    if (savedSession && this.sessionId !== savedSession) {
+      this.sessionId = savedSession;
+    }
   }
 
   async tool(name, args = {}) {
