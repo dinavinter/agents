@@ -200,7 +200,9 @@ const execTool = fromPromise(async ({ input }) => {
  */
 const performLogin = fromPromise(async ({ input }) => {
   const { targetUrl, username, password } = input;
-  const pw = _pw;  // use module-level instance
+  if (!_pw) throw new Error("Playwright not connected (_pw is null)");
+  if (!_pw.sessionId) throw new Error(`Playwright session lost (sessionId=${_pw.sessionId}, url=${_pw.url})`);
+  const pw = _pw;
   const log = [];
 
   // 1. Navigate to target
