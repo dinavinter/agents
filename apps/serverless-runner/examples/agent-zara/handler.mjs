@@ -88,6 +88,9 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
       try {
         const { targetUrl, username, password } = event;
         const log = [];
+        log.push({ tool: "__debug__", result: `sessionId=${sessionId}` });
+
+        if (!sessionId) throw new Error("No session ID — init may not have completed");
 
         // Navigate
         await callTool("browser_navigate", { url: targetUrl });
