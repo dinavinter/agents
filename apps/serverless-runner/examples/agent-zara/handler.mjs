@@ -134,12 +134,85 @@ function parseToolCall(text) {
 // ─── Module-level Playwright session (survives xstate context serialization) ─
 let _pw = null;
 
-const connectPlaywright = fromPromise(async ({ input }) => {
-  _pw = new PlaywrightMCP(input.url);
+const connectAndLogin = fromPromise(async ({ input }) => {
+  const { url, targetUrl, username, password } = input;
+  _pw = new PlaywrightMCP(url);
   await _pw.init();
-  // Verify session works by navigating to about:blank
-  await _pw.tool("browser_navigate", { url: "about:blank" });
-  return { tools: _pw.tools, sessionId: _pw.sessionId };
+  
+  const log = [];
+  log.push({ tool: "init", result: `session=${_pw.sessionId}, tools=${_pw.tools.length}` });
+
+  // Navigate to target URL
+  await _pw.tool("browser_navigate", { url: targetUrl });
+  log.push({ tool: "browser_navigate", args: { url: targetUrl }, result: "navigated" });
+  await _pw.tool("browser_wait_for", { time: 3 });
+
+  // Snapshot to see what we got
+  const snap1 = await _pw.tool("browser_snapshot", {});
+  const snapText = snap1?.content?.map(c => c.text || "").join("\n") || "";
+  log.push({ tool: "browser_snapshot", result: snapText.substring(0, 200) });
+
+  // Check if already logged in
+  if (snapText.includes("Conversations") || snapText.includes("Spaces") || snapText.includes("Develop")) {
+    return { success: true, tools: _pw.tools, log, snapshot: snapText };
+  }
+
+  // Fill email
+  try {
+    await _pw.tool("browser_type", { target: "textbox \"E-Mail or User Name\"", text: username, submit: false });
+    log.push({ tool: "type_email", result: "ok" });
+  } catch {
+    try {
+      await _pw.tool("browser_run_code_unsafe", { 
+        code: `async (page) => { const i = page.locator('input[type="email"], input[type="text"]').first(); await i.fill('${username}'); }`
+      });
+      log.push({ tool: "code_email", result: "ok" });
+    } catch (e) { log.push({ tool: "email", error: e.message }); }
+  }
+
+  // Click Continue
+  await _pw.tool("browser_wait_for", { time: 1 });
+  try { await _pw.tool("browser_click", { target: "button \"Continue\"" }); }
+  catch { 
+    try { await _pw.tool("browser_click", { target: "button \"Log On\"" }); }
+    catch { await _pw.tool("browser_run_code_unsafe", { code: `async (page) => { await page.locator('button, input[type="submit"]').filter({hasText: /continue|log on/i}).first().click(); }` }); }
+  }
+  log.push({ tool: "click_continue", result: "ok" });
+
+  // Wait for password page
+  await _pw.tool("browser_wait_for", { time: 2 });
+
+  // Fill password
+  try {
+    await _pw.tool("browser_type", { target: "textbox \"Password\"", text: password, submit: false });
+    log.push({ tool: "type_password", result: "ok" });
+  } catch {
+    await _pw.tool("browser_run_code_unsafe", { 
+      code: `async (page) => { await page.locator('input[type="password"]').first().fill('${password}'); }`
+    });
+    log.push({ tool: "code_password", result: "ok" });
+  }
+
+  // Submit
+  await _pw.tool("browser_wait_for", { time: 1 });
+  try { await _pw.tool("browser_click", { target: "button \"Log On\"" }); }
+  catch { 
+    try { await _pw.tool("browser_click", { target: "button \"Continue\"" }); }
+    catch { await _pw.tool("browser_run_code_unsafe", { code: `async (page) => { await page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first().click(); }` }); }
+  }
+  log.push({ tool: "click_submit", result: "ok" });
+
+  // Wait for redirect
+  await _pw.tool("browser_wait_for", { time: 5 });
+
+  // Final verification
+  const snap2 = await _pw.tool("browser_snapshot", {});
+  const finalSnap = snap2?.content?.map(c => c.text || "").join("\n") || "";
+  log.push({ tool: "final_snapshot", result: finalSnap.substring(0, 200) });
+
+  const success = finalSnap.includes("Conversations") || finalSnap.includes("Spaces") || 
+                  finalSnap.includes("Develop") || finalSnap.includes("Build") || finalSnap.includes("/new");
+  return { success, tools: _pw.tools, log, snapshot: finalSnap };
 });
 
 /**
@@ -198,118 +271,14 @@ const execTool = fromPromise(async ({ input }) => {
  * Deterministic IAS login — no AI needed for this predictable form.
  * Steps: navigate → snapshot → fill email → continue → fill password → sign in → verify
  */
-const performLogin = fromPromise(async ({ input }) => {
-  const { targetUrl, username, password } = input;
-  if (!_pw) throw new Error("Playwright not connected (_pw is null)");
-  if (!_pw.sessionId) throw new Error(`Playwright session lost (sessionId=${_pw.sessionId}, url=${_pw.url})`);
-  const pw = _pw;
-  const log = [];
-
-  // 1. Navigate to target
-  const navResult = await pw.tool("browser_navigate", { url: targetUrl });
-  log.push({ tool: "browser_navigate", args: { url: targetUrl }, result: "navigated" });
-
-  // 2. Wait for page load
-  await pw.tool("browser_wait_for", { time: 3 });
-
-  // 3. Take snapshot to see what we got
-  const snap1 = await pw.tool("browser_snapshot", {});
-  const snapText = snap1?.content?.map(c => c.text || "").join("\n") || "";
-  log.push({ tool: "browser_snapshot", result: snapText.substring(0, 200) });
-
-  // 4. Check if we're on IAS login page or already authenticated
-  if (snapText.includes("Conversations") || snapText.includes("Spaces") || snapText.includes("Develop")) {
-    log.push({ tool: "__done__", result: "Already authenticated" });
-    return { success: true, log, snapshot: snapText };
-  }
-
-  // 5. IAS login — try filling email field
-  // The IAS form has: textbox "E-Mail or User Name" and button "Continue"
-  try {
-    await pw.tool("browser_type", { target: "textbox \"E-Mail or User Name\"", text: username, submit: false });
-    log.push({ tool: "browser_type", args: { target: "email field" }, result: "filled" });
-  } catch (e1) {
-    // Fallback: try other selectors
-    try {
-      await pw.tool("browser_type", { target: "input[name=\"j_username\"]", text: username, submit: false });
-      log.push({ tool: "browser_type", args: { target: "j_username" }, result: "filled" });
-    } catch (e2) {
-      // Last resort: use code
-      await pw.tool("browser_run_code_unsafe", { 
-        code: `async (page) => { const input = page.locator('input[type="email"], input[type="text"], input[name*="user"], input[name*="email"]').first(); await input.fill('${username}'); }` 
-      });
-      log.push({ tool: "browser_run_code_unsafe", result: "filled via code" });
-    }
-  }
-
-  // 6. Click Continue/Log On
-  await pw.tool("browser_wait_for", { time: 1 });
-  try {
-    await pw.tool("browser_click", { target: "button \"Continue\"" });
-    log.push({ tool: "browser_click", args: { target: "Continue" }, result: "clicked" });
-  } catch {
-    try {
-      await pw.tool("browser_click", { target: "button \"Log On\"" });
-      log.push({ tool: "browser_click", args: { target: "Log On" }, result: "clicked" });
-    } catch {
-      await pw.tool("browser_run_code_unsafe", { 
-        code: `async (page) => { const btn = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first(); await btn.click(); }` 
-      });
-      log.push({ tool: "code_click", result: "clicked via code" });
-    }
-  }
-
-  // 7. Wait for password page
-  await pw.tool("browser_wait_for", { time: 2 });
-
-  // 8. Fill password
-  try {
-    await pw.tool("browser_type", { target: "textbox \"Password\"", text: password, submit: false });
-    log.push({ tool: "browser_type", args: { target: "password" }, result: "filled" });
-  } catch {
-    await pw.tool("browser_run_code_unsafe", { 
-      code: `async (page) => { const input = page.locator('input[type="password"]').first(); await input.fill('${password}'); }` 
-    });
-    log.push({ tool: "code_fill_password", result: "filled via code" });
-  }
-
-  // 9. Click Log On / Sign In
-  await pw.tool("browser_wait_for", { time: 1 });
-  try {
-    await pw.tool("browser_click", { target: "button \"Log On\"" });
-  } catch {
-    try {
-      await pw.tool("browser_click", { target: "button \"Continue\"" });
-    } catch {
-      await pw.tool("browser_run_code_unsafe", { 
-        code: `async (page) => { const btn = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first(); await btn.click(); }` 
-      });
-    }
-  }
-  log.push({ tool: "browser_click", args: { target: "submit" }, result: "clicked" });
-
-  // 10. Wait for redirect back to app
-  await pw.tool("browser_wait_for", { time: 5 });
-
-  // 11. Final snapshot to verify
-  const snap2 = await pw.tool("browser_snapshot", {});
-  const finalSnap = snap2?.content?.map(c => c.text || "").join("\n") || "";
-  log.push({ tool: "browser_snapshot", result: finalSnap.substring(0, 200) });
-
-  const success = finalSnap.includes("Conversations") || finalSnap.includes("Spaces") || 
-                  finalSnap.includes("Develop") || finalSnap.includes("Build") ||
-                  finalSnap.includes("/new");
-
-  return { success, log, snapshot: finalSnap };
-});
+// (performLogin merged into connectAndLogin above)
 
 // ─── The Machine ────────────────────────────────────────────────────────────
 
 export const machine = setup({
   actors: {
-    connectPlaywright,
+    connectAndLogin,
     execTool,
-    performLogin,
     aiDecide,
   },
   types: { input: {}, context: {}, emitted: {} },
@@ -375,43 +344,11 @@ export const machine = setup({
 
     // ═══════════════════════════════════════════════════════════════════════
     connecting: {
-      entry: emit({ type: "@status", data: `<span class="text-yellow-400">● connecting</span>` }),
+      entry: emit({ type: "@status", data: `<span class="text-yellow-400">● connecting + logging in</span>` }),
       invoke: {
-        src: "connectPlaywright",
-        input: () => ({
-          url: globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp:8931/mcp",
-        }),
-        onDone: {
-          target: "authenticating",
-          actions: [
-            assign({
-              tools: ({ event }) => event.output.tools,
-              toolCatalog: ({ event }) => buildToolCatalog(event.output.tools),
-            }),
-            emit(({ event }) => ({
-              type: "@progress",
-              data: `<div class="text-xs text-green-400">✓ Playwright connected (${event.output.tools.length} tools, session=${event.output.sessionId})</div>`,
-            })),
-          ],
-        },
-        onError: {
-          target: "error",
-          actions: assign({ error: ({ event }) => `Connection: ${event.error?.message}` }),
-        },
-      },
-    },
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // AUTHENTICATING: Deterministic IAS login (no AI needed)
-    // ═══════════════════════════════════════════════════════════════════════
-    authenticating: {
-      entry: [
-        emit({ type: "@status", data: `<span class="text-blue-400">● authenticating</span>` }),
-        emit({ type: "@progress", data: `<div class="text-xs text-gray-400">Logging in to Joule Studio...</div>` }),
-      ],
-      invoke: {
-        src: "performLogin",
-        input: () => ({
+        src: "connectAndLogin",
+        input: ({ context }) => ({
+          url: globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp-local:8931/mcp",
           targetUrl: (globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com") + "/new/build",
           username: globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com",
           password: globalThis.process?.env?.IAS_PASSWORD || "openCODE1!",
@@ -423,23 +360,27 @@ export const machine = setup({
             actions: [
               assign({
                 phase: () => "create",
+                tools: ({ event }) => event.output.tools,
+                toolCatalog: ({ event }) => buildToolCatalog(event.output.tools),
                 lastSnapshot: ({ event }) => event.output.snapshot || "",
                 history: ({ event }) => event.output.log || [],
               }),
-              emit({ type: "@progress", data: `<div class="text-xs text-green-400">✓ Logged in</div>` }),
+              emit({ type: "@progress", data: `<div class="text-xs text-green-400">✓ Connected + Logged in</div>` }),
             ],
           },
           {
             target: "error",
             actions: assign({
-              error: ({ event }) => `Login failed — page: ${(event.output.snapshot || "").substring(0, 100)}`,
+              error: ({ event }) => `Login failed: ${(event.output.snapshot || "").substring(0, 150)}`,
               history: ({ event }) => event.output.log || [],
+              tools: ({ event }) => event.output.tools || [],
+              toolCatalog: ({ event }) => buildToolCatalog(event.output.tools || []),
             }),
           },
         ],
         onError: {
           target: "error",
-          actions: assign({ error: ({ event }) => `Login error: ${event.error?.message}` }),
+          actions: assign({ error: ({ event }) => `Connect/Login: ${event.error?.message}` }),
         },
       },
     },
