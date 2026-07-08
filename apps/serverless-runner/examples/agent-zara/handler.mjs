@@ -116,11 +116,14 @@ OBJECTIVES:
 - deployed: Verify via Conversations. DONE when agent responds
 
 HINTS:
-- Chat input: look for textbox, textarea, or role="textbox" in snapshot
-- Submit: Enter key (submit:true) or Send button
+- Chat input: may NOT appear in snapshot (custom web component / shadow DOM)
+- If snapshot shows empty main area, use browser_run_code_unsafe to find and interact with elements
+- Example: {"tool":"browser_run_code_unsafe","args":{"code":"async (page) => { const input = page.locator('[placeholder*=\"Message\"], [placeholder*=\"Type\"], textarea, [contenteditable=\"true\"]').first(); await input.fill('my prompt'); await input.press('Enter'); return 'sent'; }"}}
+- After typing, wait 5-10s for Joule to respond before taking next snapshot
 - If URL already has /solutions/ at start of create phase → already done
 - Stepper phases may be tabs, breadcrumbs, or status badges
 - After navigation, always wait 2-3s then snapshot
+- Use browser_wait_for with time:5 between actions that trigger page changes
 
 ${ctx.hints ? `LEARNED:\n${ctx.hints}` : ""}
 
