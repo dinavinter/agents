@@ -112,7 +112,12 @@ function buildUserPrompt(ctx) {
     parts.push(`Snapshot:\n${ctx.lastSnapshot.substring(0, 3000)}`);
   }
   if (ctx.history.length) {
-    parts.push(`Last actions:\n${ctx.history.slice(-5).map(h => `[${h.tool}] ${(h.error || h.result || "ok").substring(0, 120)}`).join("\n")}`);
+    const timeline = ctx.history.slice(-8).map(h => {
+      const t = new Date(h.ts).toISOString().slice(11, 19);
+      const status = h.error ? `ERROR: ${h.error.substring(0, 100)}` : (h.result || "ok").substring(0, 150);
+      return `[${t}] ${h.tool}(${JSON.stringify(h.args || {}).substring(0, 60)}) → ${status}`;
+    });
+    parts.push(`Timeline:\n${timeline.join("\n")}`);
   } else {
     parts.push("No actions yet — emit browser_snapshot first.");
   }
@@ -154,10 +159,18 @@ export const machine = setup({
       emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-green-400">✓ Playwright: ${event.tools.length} tools</div>` })),
     ]},
     "pw.error": { target: ".error", actions: assign({ error: ({ event }) => `PW: ${event.error}` }) },
-    // pw.result arrives while AI stream is running — accumulate in history
+    // pw.result arrives while AI stream is running — accumulate in timeline
     "pw.result": { actions: [
       assign({
-        history: ({ context, event }) => [...context.history, { tool: event.tool, result: event.result, error: event.error }],
+        history: ({ context, event }) => [...context.history, {
+          tool: event.tool,
+          args: event.args,
+          result: event.result,
+          error: event.error,
+          ts: Date.now(),
+          phase: context.phase,
+          turn: context.turn,
+        }],
         lastSnapshot: ({ context, event }) => event.tool === "browser_snapshot" ? (event.result || context.lastSnapshot) : context.lastSnapshot,
         phaseDone: ({ context, event }) => event.tool === "__done__" ? true : context.phaseDone,
         hints: ({ context, event }) => event.tool === "suggest_hint" ? (context.hints || "") + `\n[${event.args?.phase}] ${event.args?.new_hint || ""}` : context.hints,
