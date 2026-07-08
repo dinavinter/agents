@@ -17,7 +17,6 @@
  */
 
 import { assign, emit, fromPromise, setup } from "https://esm.sh/xstate";
-import { fromAIEventStream } from "https://esm.sh/@cxai/stream";
 
 // ─── Playwright MCP Client ──────────────────────────────────────────────────
 
@@ -113,13 +112,39 @@ const connectPlaywright = fromPromise(async ({ input }) => {
 });
 
 /**
- * The core turn: AI decides what tool to call next.
- * Returns { tool, args } or { tool: "__done__", args: {...} } to signal completion.
+ * AI actor: calls OpenAI-compatible endpoint directly.
+ * Uses OPENAI_BASE_URL (ai-core-proxy) with OPENAI_API_KEY.
  */
 const aiDecide = fromPromise(async ({ input }) => {
-  // This will be replaced by the runner's AI actor at runtime
-  // For now, use a simple fetch to the AI model
-  throw new Error("aiDecide should be overridden by the runner's AI infrastructure");
+  const baseUrl = globalThis.process?.env?.OPENAI_BASE_URL || "http://ai-core-proxy:3030/v1";
+  const apiKey = globalThis.process?.env?.OPENAI_API_KEY || "proxy";
+  const model = globalThis.process?.env?.AI_MODEL || "gpt-4o";
+
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: input.system },
+        { role: "user", content: input.prompt },
+      ],
+      max_tokens: 300,
+      temperature: 0.1,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`AI ${res.status}: ${text.substring(0, 200)}`);
+  }
+
+  const json = await res.json();
+  const content = json.choices?.[0]?.message?.content || "";
+  return content;
 });
 
 /**
@@ -145,7 +170,7 @@ export const machine = setup({
   actors: {
     connectPlaywright,
     execTool,
-    aiDecide: fromAIEventStream(),
+    aiDecide,
   },
   types: { input: {}, context: {}, emitted: {} },
 }).createMachine({
@@ -260,35 +285,18 @@ export const machine = setup({
           system: buildSystemPrompt(context),
           prompt: buildUserPrompt(context),
         }),
-        onError: {
-          target: "error",
-          actions: assign({ error: ({ event }) => `AI: ${event.error?.message}` }),
-        },
-      },
-      on: {
-        // AI emits final output — parse for tool call, then transition
-        "output": [
+        onDone: [
           {
             // AI said __done__ → move to next phase
             guard: ({ event }) => {
               const text = event.output || "";
               try {
-                const m = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+                const m = text.match(/\{[\s\S]*?"tool"[\s\S]*?\}/);
                 if (m) { const j = JSON.parse(m[0]); return j.tool === "__done__"; }
               } catch {}
-              return !text.includes('"tool"'); // no tool = done
+              return !text.includes('"tool"');
             },
             target: "transition",
-            actions: assign({
-              pendingAction: ({ event }) => {
-                const text = event.output || "";
-                try {
-                  const m = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
-                  if (m) return JSON.parse(m[0]);
-                } catch {}
-                return { tool: "__done__", args: {} };
-              },
-            }),
           },
           {
             // AI specified a tool → go execute it
@@ -297,15 +305,18 @@ export const machine = setup({
               pendingAction: ({ event }) => {
                 const text = event.output || "";
                 try {
-                  const m = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+                  const m = text.match(/\{[\s\S]*?"tool"[\s\S]*?\}/);
                   if (m) return JSON.parse(m[0]);
                 } catch {}
-                return { tool: "browser_snapshot", args: {} }; // fallback: take snapshot
+                return { tool: "browser_snapshot", args: {} };
               },
             }),
           },
         ],
-        "text-delta": { /* streaming — wait for output */ },
+        onError: {
+          target: "error",
+          actions: assign({ error: ({ event }) => `AI: ${event.error?.message}` }),
+        },
       },
     },
 
