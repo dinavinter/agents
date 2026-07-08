@@ -183,12 +183,119 @@ const execTool = fromPromise(async ({ input }) => {
   }
 });
 
+/**
+ * Deterministic IAS login — no AI needed for this predictable form.
+ * Steps: navigate → snapshot → fill email → continue → fill password → sign in → verify
+ */
+const performLogin = fromPromise(async ({ input }) => {
+  const { pw, targetUrl, username, password } = input;
+  const log = [];
+
+  // 1. Navigate to target
+  const navResult = await pw.tool("browser_navigate", { url: targetUrl });
+  log.push({ tool: "browser_navigate", args: { url: targetUrl }, result: "navigated" });
+
+  // 2. Wait for page load
+  await pw.tool("browser_wait_for", { time: 3 });
+
+  // 3. Take snapshot to see what we got
+  const snap1 = await pw.tool("browser_snapshot", {});
+  const snapText = snap1?.content?.map(c => c.text || "").join("\n") || "";
+  log.push({ tool: "browser_snapshot", result: snapText.substring(0, 200) });
+
+  // 4. Check if we're on IAS login page or already authenticated
+  if (snapText.includes("Conversations") || snapText.includes("Spaces") || snapText.includes("Develop")) {
+    log.push({ tool: "__done__", result: "Already authenticated" });
+    return { success: true, log, snapshot: snapText };
+  }
+
+  // 5. IAS login — try filling email field
+  // The IAS form has: textbox "E-Mail or User Name" and button "Continue"
+  try {
+    await pw.tool("browser_type", { target: "textbox \"E-Mail or User Name\"", text: username, submit: false });
+    log.push({ tool: "browser_type", args: { target: "email field" }, result: "filled" });
+  } catch (e1) {
+    // Fallback: try other selectors
+    try {
+      await pw.tool("browser_type", { target: "input[name=\"j_username\"]", text: username, submit: false });
+      log.push({ tool: "browser_type", args: { target: "j_username" }, result: "filled" });
+    } catch (e2) {
+      // Last resort: use code
+      await pw.tool("browser_run_code_unsafe", { 
+        code: `async (page) => { const input = page.locator('input[type="email"], input[type="text"], input[name*="user"], input[name*="email"]').first(); await input.fill('${username}'); }` 
+      });
+      log.push({ tool: "browser_run_code_unsafe", result: "filled via code" });
+    }
+  }
+
+  // 6. Click Continue/Log On
+  await pw.tool("browser_wait_for", { time: 1 });
+  try {
+    await pw.tool("browser_click", { target: "button \"Continue\"" });
+    log.push({ tool: "browser_click", args: { target: "Continue" }, result: "clicked" });
+  } catch {
+    try {
+      await pw.tool("browser_click", { target: "button \"Log On\"" });
+      log.push({ tool: "browser_click", args: { target: "Log On" }, result: "clicked" });
+    } catch {
+      await pw.tool("browser_run_code_unsafe", { 
+        code: `async (page) => { const btn = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first(); await btn.click(); }` 
+      });
+      log.push({ tool: "code_click", result: "clicked via code" });
+    }
+  }
+
+  // 7. Wait for password page
+  await pw.tool("browser_wait_for", { time: 2 });
+
+  // 8. Fill password
+  try {
+    await pw.tool("browser_type", { target: "textbox \"Password\"", text: password, submit: false });
+    log.push({ tool: "browser_type", args: { target: "password" }, result: "filled" });
+  } catch {
+    await pw.tool("browser_run_code_unsafe", { 
+      code: `async (page) => { const input = page.locator('input[type="password"]').first(); await input.fill('${password}'); }` 
+    });
+    log.push({ tool: "code_fill_password", result: "filled via code" });
+  }
+
+  // 9. Click Log On / Sign In
+  await pw.tool("browser_wait_for", { time: 1 });
+  try {
+    await pw.tool("browser_click", { target: "button \"Log On\"" });
+  } catch {
+    try {
+      await pw.tool("browser_click", { target: "button \"Continue\"" });
+    } catch {
+      await pw.tool("browser_run_code_unsafe", { 
+        code: `async (page) => { const btn = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first(); await btn.click(); }` 
+      });
+    }
+  }
+  log.push({ tool: "browser_click", args: { target: "submit" }, result: "clicked" });
+
+  // 10. Wait for redirect back to app
+  await pw.tool("browser_wait_for", { time: 5 });
+
+  // 11. Final snapshot to verify
+  const snap2 = await pw.tool("browser_snapshot", {});
+  const finalSnap = snap2?.content?.map(c => c.text || "").join("\n") || "";
+  log.push({ tool: "browser_snapshot", result: finalSnap.substring(0, 200) });
+
+  const success = finalSnap.includes("Conversations") || finalSnap.includes("Spaces") || 
+                  finalSnap.includes("Develop") || finalSnap.includes("Build") ||
+                  finalSnap.includes("/new");
+
+  return { success, log, snapshot: finalSnap };
+});
+
 // ─── The Machine ────────────────────────────────────────────────────────────
 
 export const machine = setup({
   actors: {
     connectPlaywright,
     execTool,
+    performLogin,
     aiDecide,
   },
   types: { input: {}, context: {}, emitted: {} },
@@ -262,7 +369,7 @@ export const machine = setup({
           url: globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp:8931/mcp",
         }),
         onDone: {
-          target: "thinking",
+          target: "authenticating",
           actions: [
             assign({
               pw: ({ event }) => event.output.pw,
@@ -278,6 +385,50 @@ export const machine = setup({
         onError: {
           target: "error",
           actions: assign({ error: ({ event }) => `Connection: ${event.error?.message}` }),
+        },
+      },
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // AUTHENTICATING: Deterministic IAS login (no AI needed)
+    // ═══════════════════════════════════════════════════════════════════════
+    authenticating: {
+      entry: [
+        emit({ type: "@status", data: `<span class="text-blue-400">● authenticating</span>` }),
+        emit({ type: "@progress", data: `<div class="text-xs text-gray-400">Logging in to Joule Studio...</div>` }),
+      ],
+      invoke: {
+        src: "performLogin",
+        input: ({ context }) => ({
+          pw: context.pw,
+          targetUrl: (globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com") + "/new/build",
+          username: globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com",
+          password: globalThis.process?.env?.IAS_PASSWORD || "openCODE1!",
+        }),
+        onDone: [
+          {
+            guard: ({ event }) => event.output.success,
+            target: "thinking",
+            actions: [
+              assign({
+                phase: () => "create",
+                lastSnapshot: ({ event }) => event.output.snapshot || "",
+                history: ({ event }) => event.output.log || [],
+              }),
+              emit({ type: "@progress", data: `<div class="text-xs text-green-400">✓ Logged in</div>` }),
+            ],
+          },
+          {
+            target: "error",
+            actions: assign({
+              error: ({ event }) => `Login failed — page: ${(event.output.snapshot || "").substring(0, 100)}`,
+              history: ({ event }) => event.output.log || [],
+            }),
+          },
+        ],
+        onError: {
+          target: "error",
+          actions: assign({ error: ({ event }) => `Login error: ${event.error?.message}` }),
         },
       },
     },
@@ -381,7 +532,6 @@ export const machine = setup({
     // ═══════════════════════════════════════════════════════════════════════
     transition: {
       always: [
-        { guard: ({ context }) => context.phase === "authenticating", target: "thinking", actions: assign({ phase: () => "create", turn: () => 0, history: () => [] }) },
         { guard: ({ context }) => context.phase === "create", target: "thinking", actions: assign({ phase: () => "intent", turn: () => 0 }) },
         { guard: ({ context }) => context.phase === "intent", target: "thinking", actions: assign({ phase: () => "requirements", turn: () => 0 }) },
         { guard: ({ context }) => context.phase === "requirements", target: "thinking", actions: assign({ phase: () => "solution", turn: () => 0 }) },
@@ -438,27 +588,28 @@ export const machine = setup({
 
 function buildSystemPrompt(context) {
   return `You are Zara, a browser automation agent testing Joule Studio.
-You have access to these Playwright MCP tools:
+You control a browser via Playwright MCP tools. Available tools:
 ${context.toolCatalog}
 
-IMPORTANT: Respond with ONLY a JSON object specifying the next tool to call:
-{"tool": "browser_navigate", "args": {"url": "..."}}
-
-When the current phase objective is complete, respond with:
-{"tool": "__done__", "args": {}}
+IMPORTANT RULES:
+1. Respond with ONLY a JSON object: {"tool": "tool_name", "args": {...}}
+2. Always use "target" field with the exact ref from the snapshot (e.g. "S1e2f3" or quoted text)
+3. To type text use: {"tool": "browser_type", "args": {"target": "<ref>", "text": "...", "submit": false}}
+4. To click use: {"tool": "browser_click", "args": {"target": "<ref>"}}
+5. Always take a snapshot first if you don't know the page state: {"tool": "browser_snapshot", "args": {}}
+6. When the current phase objective is COMPLETE, respond: {"tool": "__done__", "args": {}}
 
 Current phase: ${context.phase}
 Phase objectives:
-- authenticating: Navigate to ${globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com"}/new/build, login with ${globalThis.process?.env?.IAS_USERNAME || "user@example.com"} / ${globalThis.process?.env?.IAS_PASSWORD || "***"}. Done when you see Conversations/Spaces/Develop nav.
-- create: Type the solution prompt in chat input, submit. Done when URL contains /solutions/<uuid>.
-- intent: Answer Joule's clarifying questions. Done when Intent step shows ✓.
-- requirements: Wait/answer. Done when Requirements shows ✓.
-- solution: Wait for code generation. Done when Solution shows ✓ or Try/Test button appears.
-- testing: Click Try, test the solution. Done when Deploy button is enabled.
-- deployment: Click Deploy, wait. Done when status shows Running/Deployed.
-- deployed: Verify in Conversations. Done when agent responds correctly.
+- create: Find the chat input, type the solution description, submit. Done when URL contains /solutions/<uuid>.
+- intent: Answer Joule's clarifying questions via chat. Done when Intent step shows ✓ or Requirements becomes active.
+- requirements: Wait/answer questions. Done when Requirements shows ✓ or Solution step becomes active.
+- solution: Wait for code generation. Done when Solution shows ✓ or Try/Test/Deploy button appears.
+- testing: Click Try, test the solution in sandbox. Done when Deploy button is enabled.
+- deployment: Click Deploy, wait for status Running/Deployed. Done when deployed.
+- deployed: Navigate to Conversations, @mention agent, verify response. Done when agent responds.
 
-RESPOND ONLY WITH JSON. No explanations.`;
+NO explanations. JSON only.`;
 }
 
 function buildUserPrompt(context) {
