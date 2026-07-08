@@ -66,72 +66,110 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
 
 // ─── Schema & Helpers ───────────────────────────────────────────────────────
 
-const toolCallSchema = z.object({
-  tool: z.string().describe("Tool: browser_navigate, browser_snapshot, browser_click, browser_type, browser_run_code_unsafe, browser_wait_for, get_context, suggest_hint, __done__"),
-  args: z.record(z.any()).describe("Arguments"),
-  reasoning: z.string().optional().describe("Why"),
-});
+/**
+ * Build the output schema for a given phase.
+ * Every element AI yields = an xstate event. Schema is the union of:
+ *   - MCP tools (forwarded to pw actor)
+ *   - Virtual tools (get_context, suggest_hint)
+ *   - Phase transitions (events that cause state changes)
+ */
+function buildPhaseSchema(tools, phase) {
+  const mcpToolNames = tools.map(t => t.name);
+  const virtualTools = ["get_context", "suggest_hint"];
+  const phaseTransitions = PHASE_EVENTS[phase] || ["__done__"];
+  const allActions = [...mcpToolNames, ...virtualTools, ...phaseTransitions];
 
-function buildToolCatalog(tools) {
-  return tools.map(t => `- ${t.name}: ${t.description || ""}`).join("\n")
-    + "\n- get_context: Fresh snapshot"
-    + "\n- suggest_hint: Save hint. Args: {phase, old_hint, new_hint}"
-    + "\n- __done__: Phase complete";
+  return z.object({
+    tool: z.enum(allActions).describe(`Action to perform. MCP tools: ${mcpToolNames.slice(0, 5).join(", ")}... Transitions: ${phaseTransitions.join(", ")}`),
+    args: z.record(z.any()).describe("Arguments for the action"),
+    reasoning: z.string().optional().describe("Brief reasoning"),
+  });
 }
 
-function formatTimeline(history) {
-  return history.slice(-8).map(h => {
-    const t = new Date(h.ts).toISOString().slice(11, 19);
-    const s = h.error ? `ERR: ${h.error.substring(0, 80)}` : (h.result || "ok").substring(0, 100);
-    return `[${t}][${h.phase}] ${h.tool}(${JSON.stringify(h.args || {}).substring(0, 40)}) → ${s}`;
-  }).join("\n");
-}
+/** Events each phase can emit to trigger transitions */
+const PHASE_EVENTS = {
+  create: ["__done__", "solution.created"],
+  intent: ["__done__", "intent.complete"],
+  requirements: ["__done__", "requirements.complete"],
+  solution: ["__done__", "solution.ready"],
+  testing: ["__done__", "test.passed", "test.failed"],
+  deployment: ["__done__", "deploy.success", "deploy.failed"],
+  deployed: ["__done__", "verified"],
+};
 
 const PHASES = {
   create: { objective: "Create solution — type prompt in Joule chat, submit", done: "URL contains /solutions/<uuid>", hints: "Chat may be shadow DOM. Use browser_run_code_unsafe." },
   intent: { objective: "Answer Joule's clarifying questions", done: "Stepper advances past Intent", hints: "Answer in chat." },
-  requirements: { objective: "Wait for requirements", done: "Stepper advances past Requirements", hints: "Poll with get_context." },
+  requirements: { objective: "Wait for requirements", done: "Stepper advances past Requirements", hints: "Poll with get_context every 15s." },
   solution: { objective: "Wait for code gen", done: "Try/Test/Deploy visible", hints: "Poll. Takes 60-180s." },
   testing: { objective: "Test in sandbox", done: "Deploy enabled", hints: "Click Try, test, verify." },
   deployment: { objective: "Deploy", done: "Status Running/Deployed", hints: "Click Deploy. Poll." },
   deployed: { objective: "Verify deployed solution", done: "Agent responds", hints: "@mention in Conversations." },
 };
 
+function buildToolCatalog(tools) {
+  return tools.map(t => `- ${t.name}: ${t.description || ""}`).join("\n")
+    + "\n- get_context: Fresh page snapshot + URL"
+    + "\n- suggest_hint: Save UI hint for future. Args: {phase, old_hint, new_hint}";
+}
+
+/**
+ * Build invoke input for a phase.
+ * Uses Mustache template — resolved against machine context at invoke time.
+ */
 function phaseInput(context, phase) {
   const p = PHASES[phase];
-  const userPrompt = `Task: ${context.prompt}
-Solution: ${context.solutionId || "creating..."}
-${context.solutionUrl ? `URL: ${context.solutionUrl}` : ""}
-${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 2000)}` : "emit get_context."}
-${context.history.length ? `Timeline:\n${formatTimeline(context.history)}` : ""}`;
+  const transitions = PHASE_EVENTS[phase] || ["__done__"];
   return {
     model,
-    schema: toolCallSchema,
-    prompt: userPrompt,
+    schema: buildPhaseSchema(context.tools || [], phase),
+    template: `Task: {{prompt}}
+Solution: {{solutionId}}
+{{#solutionUrl}}URL: {{solutionUrl}}{{/solutionUrl}}
+{{#lastSnapshot}}
+Page:
+{{lastSnapshot}}
+{{/lastSnapshot}}
+{{^lastSnapshot}}No page state — emit get_context first.{{/lastSnapshot}}
+{{#timeline}}
+Timeline:
+{{timeline}}
+{{/timeline}}`,
     system: `You are Zara, browser automation agent for Joule Studio.
-Emit tool calls as structured objects — each executes immediately.
+Each object you emit becomes an EVENT that executes immediately.
+
+AVAILABLE ACTIONS:
+${context.toolCatalog || "Loading..."}
+
+PHASE TRANSITIONS (emit these to signal completion):
+${transitions.map(t => `- ${t}`).join("\n")}
 
 RULES:
-1. get_context to see page
-2. "target" with refs (ref=e22 → target:"e22")
-3. URL is most reliable signal
-4. Errors repeat → browser_run_code_unsafe
-5. __done__ when objective met
+1. emit get_context first if you don't know page state
+2. Use "target" with element refs from snapshot (ref=e22 → target:"e22")
+3. URL is the most reliable completion signal
+4. If same error 3x, try browser_run_code_unsafe
+5. Emit a phase transition event (${transitions[0]}) when objective is met
 
-SOLUTION: ${context.solutionId || "pending"}
 PHASE: ${phase}
 OBJECTIVE: ${p.objective}
 DONE WHEN: ${p.done}
 HINTS: ${p.hints}
-${context.hints ? `LEARNED:\n${context.hints}` : ""}
-TOOLS:\n${context.toolCatalog}`,
+${context.hints ? `\nLEARNED:\n${context.hints}` : ""}`,
   };
 }
 
-function phaseEvents() {
+/** Handle AI-emitted events: forward to pw actor or trigger transition */
+function phaseEvents(phase) {
+  const transitions = PHASE_EVENTS[phase] || ["__done__"];
   return {
+    // Transition events — AI signals phase complete
+    ...Object.fromEntries(transitions.map(t => [t, {
+      target: "next",  // will be overridden per-state
+    }])),
+    // All other events (tool calls) — forward to pw
     "*": {
-      guard: ({ event }) => !!event.tool && event.type !== "output",
+      guard: ({ event }) => !!event.tool && event.type !== "output" && !(PHASE_EVENTS[phase] || []).includes(event.tool),
       actions: [
         emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}(${JSON.stringify(event.args || {}).substring(0, 50)})</div>` })),
         sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} })),
@@ -154,7 +192,7 @@ export const machine = setup({
     prompt: input?.prompt || "",
     projectId: input?.projectId || "",
     tools: [], toolCatalog: "",
-    lastSnapshot: "", history: [],
+    lastSnapshot: "", history: [], timeline: "",
     error: null, retries: 0, turn: 0, maxTurns: 50,
     hints: "", hintSuggestions: [], phaseDone: false,
     ...input,
@@ -175,6 +213,14 @@ export const machine = setup({
     "pw.result": { actions: [
       assign({
         history: ({ context, event }) => [...context.history, { tool: event.tool, args: event.args, result: event.result, error: event.error, ts: Date.now(), phase: "active", turn: context.turn }],
+        timeline: ({ context, event }) => {
+          const h = { tool: event.tool, result: event.result, error: event.error, ts: Date.now() };
+          const t = new Date(h.ts).toISOString().slice(11, 19);
+          const s = h.error ? `ERR: ${h.error.substring(0, 60)}` : (h.result || "ok").substring(0, 80);
+          const line = `[${t}] ${h.tool} → ${s}`;
+          const lines = (context.timeline || "").split("\n").filter(Boolean).slice(-7);
+          return [...lines, line].join("\n");
+        },
         lastSnapshot: ({ context, event }) => (event.tool === "browser_snapshot" || event.tool === "get_context") ? (event.result || context.lastSnapshot) : context.lastSnapshot,
         phaseDone: ({ context, event }) => event.tool === "__done__" ? true : context.phaseDone,
         hints: ({ context, event }) => event.tool === "suggest_hint" ? (context.hints || "") + `\n[${event.args?.phase}] ${event.args?.new_hint || ""}` : context.hints,
@@ -252,10 +298,20 @@ export const machine = setup({
           entry: [assign({ phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-blue-400">● create</span>` })],
           invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "create") },
           on: {
-            ...phaseEvents(),
+            // Phase transitions — AI detected solution created
+            "__done__": { target: "building", guard: ({ context }) => !!context.solutionId },
+            "solution.created": { target: "building", actions: assign({ solutionId: ({ event }) => event.args?.solutionId, solutionUrl: ({ event }) => event.args?.solutionUrl }) },
+            // Tool calls → forward to pw
+            "*": {
+              guard: ({ event }) => !!event.tool && event.type !== "output" && event.tool !== "__done__" && event.tool !== "solution.created",
+              actions: [
+                emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}(${JSON.stringify(event.args || {}).substring(0, 50)})</div>` })),
+                sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} })),
+              ],
+            },
+            // Stream done — loop or transition if solutionId was detected
             output: [
               { guard: ({ context }) => !!context.solutionId, target: "building" },
-              { guard: ({ context }) => context.phaseDone, target: "building" },
               { target: "create" },
             ],
           },
@@ -285,36 +341,60 @@ export const machine = setup({
               on: { "pw.result": "intent" },
             },
 
-            // Phase states
+            // Phase states — each has its own transition events + tool forwarding
             intent: {
               entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● intent</span>` })],
               invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "intent") },
-              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "requirements" }, { target: "intent" }] },
+              on: {
+                "__done__": "requirements", "intent.complete": "requirements",
+                "*": { guard: ({ event }) => !!event.tool && !["output","__done__","intent.complete"].includes(event.type || event.tool), actions: [emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}</div>` })), sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} }))] },
+                output: [{ guard: ({ context }) => context.phaseDone, target: "requirements" }, { target: "intent" }],
+              },
             },
             requirements: {
               entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● requirements</span>` })],
               invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "requirements") },
-              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "solution" }, { target: "requirements" }] },
+              on: {
+                "__done__": "solution", "requirements.complete": "solution",
+                "*": { guard: ({ event }) => !!event.tool && !["output","__done__","requirements.complete"].includes(event.type || event.tool), actions: [emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}</div>` })), sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} }))] },
+                output: [{ guard: ({ context }) => context.phaseDone, target: "solution" }, { target: "requirements" }],
+              },
             },
             solution: {
               entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● solution</span>` })],
               invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "solution") },
-              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "testing" }, { target: "solution" }] },
+              on: {
+                "__done__": "testing", "solution.ready": "testing",
+                "*": { guard: ({ event }) => !!event.tool && !["output","__done__","solution.ready"].includes(event.type || event.tool), actions: [emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}</div>` })), sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} }))] },
+                output: [{ guard: ({ context }) => context.phaseDone, target: "testing" }, { target: "solution" }],
+              },
             },
             testing: {
               entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-orange-400">● testing</span>` })],
               invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "testing") },
-              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "deployment" }, { target: "testing" }] },
+              on: {
+                "__done__": "deployment", "test.passed": "deployment", "test.failed": "testing",
+                "*": { guard: ({ event }) => !!event.tool && !["output","__done__","test.passed","test.failed"].includes(event.type || event.tool), actions: [emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}</div>` })), sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} }))] },
+                output: [{ guard: ({ context }) => context.phaseDone, target: "deployment" }, { target: "testing" }],
+              },
             },
             deployment: {
               entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-orange-400">● deployment</span>` })],
               invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "deployment") },
-              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "deployed" }, { target: "deployment" }] },
+              on: {
+                "__done__": "deployed", "deploy.success": "deployed", "deploy.failed": "deployment",
+                "*": { guard: ({ event }) => !!event.tool && !["output","__done__","deploy.success","deploy.failed"].includes(event.type || event.tool), actions: [emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}</div>` })), sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} }))] },
+                output: [{ guard: ({ context }) => context.phaseDone, target: "deployed" }, { target: "deployment" }],
+              },
             },
             deployed: {
               entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-cyan-400">● deployed</span>` })],
               invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "deployed") },
-              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "complete" }, { target: "deployed" }] },
+              on: {
+                "__done__": "complete", "verified": "complete",
+                "*": { guard: ({ event }) => !!event.tool && !["output","__done__","verified"].includes(event.type || event.tool), actions: [emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.tool}</div>` })), sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} }))] },
+                output: [{ guard: ({ context }) => context.phaseDone, target: "complete" }, { target: "deployed" }],
+              },
             },
             complete: { type: "final" },
           },
