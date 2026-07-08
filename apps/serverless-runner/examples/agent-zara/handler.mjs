@@ -99,9 +99,16 @@ const PHASES = {
 
 function phaseInput(context, phase) {
   const p = PHASES[phase];
+  const userPrompt = `Task: ${context.prompt}
+Solution: ${context.solutionId || "creating..."}
+${context.solutionUrl ? `URL: ${context.solutionUrl}` : ""}
+${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 2000)}` : "emit get_context."}
+${context.history.length ? `Timeline:\n${formatTimeline(context.history)}` : ""}`;
   return {
     model,
     schema: toolCallSchema,
+    prompt: userPrompt,
+    template: userPrompt,
     system: `You are Zara, browser automation agent for Joule Studio.
 Emit tool calls as structured objects — each executes immediately.
 
@@ -119,11 +126,6 @@ DONE WHEN: ${p.done}
 HINTS: ${p.hints}
 ${context.hints ? `LEARNED:\n${context.hints}` : ""}
 TOOLS:\n${context.toolCatalog}`,
-    template: `Task: ${context.prompt}
-Solution: ${context.solutionId || "creating..."}
-${context.solutionUrl ? `URL: ${context.solutionUrl}` : ""}
-${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 3000)}` : "emit get_context."}
-${context.history.length ? `Timeline:\n${formatTimeline(context.history)}` : ""}`,
   };
 }
 
