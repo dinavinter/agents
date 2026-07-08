@@ -266,39 +266,47 @@ export const machine = setup({
         },
       },
       on: {
-        // AI streams text — parse for tool call JSON
-        "output": {
-          actions: assign({
-            pendingAction: ({ event, context }) => {
+        // AI emits final output — parse for tool call, then transition
+        "output": [
+          {
+            // AI said __done__ → move to next phase
+            guard: ({ event }) => {
               const text = event.output || "";
-              // Try to parse a JSON tool call from the AI output
               try {
-                // Look for JSON in the response
-                const match = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
-                if (match) return JSON.parse(match[0]);
+                const m = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+                if (m) { const j = JSON.parse(m[0]); return j.tool === "__done__"; }
               } catch {}
-              // Fallback: treat as done if no tool call found
-              return { tool: "__done__", args: {} };
+              return !text.includes('"tool"'); // no tool = done
             },
-          }),
-        },
-        // After AI finishes, check what it decided
-        "text-delta": { /* accumulate — handled by output */ },
+            target: "transition",
+            actions: assign({
+              pendingAction: ({ event }) => {
+                const text = event.output || "";
+                try {
+                  const m = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+                  if (m) return JSON.parse(m[0]);
+                } catch {}
+                return { tool: "__done__", args: {} };
+              },
+            }),
+          },
+          {
+            // AI specified a tool → go execute it
+            target: "acting",
+            actions: assign({
+              pendingAction: ({ event }) => {
+                const text = event.output || "";
+                try {
+                  const m = text.match(/\{[\s\S]*"tool"[\s\S]*\}/);
+                  if (m) return JSON.parse(m[0]);
+                } catch {}
+                return { tool: "browser_snapshot", args: {} }; // fallback: take snapshot
+              },
+            }),
+          },
+        ],
+        "text-delta": { /* streaming — wait for output */ },
       },
-      // When invoke completes (actor done), transition based on pendingAction
-      onDone: [
-        {
-          guard: ({ context }) => context.pendingAction?.tool === "__done__",
-          target: "transition",
-        },
-        {
-          guard: ({ context }) => !!context.pendingAction?.tool,
-          target: "acting",
-        },
-        {
-          target: "transition", // no action = phase complete
-        },
-      ],
     },
 
     // ═══════════════════════════════════════════════════════════════════════
