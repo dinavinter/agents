@@ -198,6 +198,9 @@ const performLogin = fromPromise(async ({ input }) => {
   const { pw, targetUrl, username, password } = input;
   const log = [];
 
+  // Debug: verify session
+  log.push({ tool: "__debug__", result: `session=${pw.id}, url=${targetUrl}` });
+
   // 1. Navigate to target
   const navResult = await pw.tool("browser_navigate", { url: targetUrl });
   log.push({ tool: "browser_navigate", args: { url: targetUrl }, result: "navigated" });
