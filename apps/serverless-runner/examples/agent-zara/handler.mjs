@@ -103,6 +103,25 @@ function formatHistory(history, limit = 10) {
   ).join("\n");
 }
 
+/** Extract a JSON tool call from AI text output. Handles nested braces. */
+function parseToolCall(text) {
+  // Find the first { and match balanced braces
+  const start = text.indexOf("{");
+  if (start === -1) return null;
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === "{") depth++;
+    else if (text[i] === "}") { depth--; if (depth === 0) {
+      try { 
+        const obj = JSON.parse(text.substring(start, i + 1));
+        if (obj.tool) return obj;
+      } catch {} 
+      break;
+    }}
+  }
+  return null;
+}
+
 // ─── Actors ─────────────────────────────────────────────────────────────────
 
 const connectPlaywright = fromPromise(async ({ input }) => {
@@ -289,12 +308,8 @@ export const machine = setup({
           {
             // AI said __done__ → move to next phase
             guard: ({ event }) => {
-              const text = event.output || "";
-              try {
-                const m = text.match(/\{[\s\S]*?"tool"[\s\S]*?\}/);
-                if (m) { const j = JSON.parse(m[0]); return j.tool === "__done__"; }
-              } catch {}
-              return !text.includes('"tool"');
+              const parsed = parseToolCall(event.output || "");
+              return !parsed || parsed.tool === "__done__";
             },
             target: "transition",
           },
@@ -303,12 +318,7 @@ export const machine = setup({
             target: "acting",
             actions: assign({
               pendingAction: ({ event }) => {
-                const text = event.output || "";
-                try {
-                  const m = text.match(/\{[\s\S]*?"tool"[\s\S]*?\}/);
-                  if (m) return JSON.parse(m[0]);
-                } catch {}
-                return { tool: "browser_snapshot", args: {} };
+                return parseToolCall(event.output || "") || { tool: "browser_snapshot", args: {} };
               },
             }),
           },
