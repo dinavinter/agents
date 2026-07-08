@@ -78,13 +78,13 @@ async function fetchSource() {
 
 function rewriteImports(src) {
   return src.replace(
-    /from\s+["'](https:\/\/esm\.sh\/|https:\/\/esm\.town\/v\/[^"']+\/)([@\w\/-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
+    /from\s+["'](https:\/\/esm\.sh\/|https:\/\/esm\.town\/v\/[^"']+\/)([@\w\/.\-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
     (match, prefix, pkg) => `from "${pkg}"`
   ).replace(
-    /import\s+["'](https:\/\/esm\.sh\/)([@\w\/-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
+    /import\s+["'](https:\/\/esm\.sh\/)([@\w\/.\-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
     (match, prefix, pkg) => `import "${pkg}"`
   ).replace(
-    /import\(["'](https:\/\/esm\.sh\/)([@\w\/-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']\)/g,
+    /import\(["'](https:\/\/esm\.sh\/)([@\w\/.\-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']\)/g,
     (match, prefix, pkg) => `import("${pkg}")`
   ).replace(
     /from\s+["']jsr:@([^"']+)["']/g,
