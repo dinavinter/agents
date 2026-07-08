@@ -137,6 +137,8 @@ let _pw = null;
 const connectPlaywright = fromPromise(async ({ input }) => {
   _pw = new PlaywrightMCP(input.url);
   await _pw.init();
+  // Verify session works by navigating to about:blank
+  await _pw.tool("browser_navigate", { url: "about:blank" });
   return { tools: _pw.tools, sessionId: _pw.sessionId };
 });
 
