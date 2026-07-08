@@ -8,7 +8,7 @@
  */
 
 import { assign, emit, fromCallback, fromPromise, sendTo, setup, spawnChild } from "https://esm.sh/xstate";
-import { Client } from "https://esm.sh/@modelcontextprotocol/sdk/client/index.js";
+import { Client } from "https://esm.sh/@modelcontextprotocol/sdk/client";
 import { StreamableHTTPClientTransport } from "https://esm.sh/@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 // ─── Playwright MCP actor ───────────────────────────────────────────────────
