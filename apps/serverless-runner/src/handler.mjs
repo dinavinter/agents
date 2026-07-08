@@ -99,22 +99,22 @@ async function fetchSource() {
  */
 function rewriteImports(src) {
   // Match: from "https://esm.sh/PACKAGE" or from 'https://esm.sh/PACKAGE'
-  // Captures the package name (with optional @scope/ prefix and version)
+  // Captures the package name (with optional @scope/ prefix, version, and deep path with dots)
   return src.replace(
-    /from\s+["'](https:\/\/esm\.sh\/|https:\/\/esm\.town\/v\/[^"']+\/)([@\w\/-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
+    /from\s+["'](https:\/\/esm\.sh\/|https:\/\/esm\.town\/v\/[^"']+\/)([@\w\/.\-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
     (match, prefix, pkg) => {
       // Handle esm.sh package URLs → npm package name
       return `from "${pkg}"`;
     }
   ).replace(
     // Also handle: import "https://esm.sh/..."
-    /import\s+["'](https:\/\/esm\.sh\/)([@\w\/-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
+    /import\s+["'](https:\/\/esm\.sh\/)([@\w\/.\-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']/g,
     (match, prefix, pkg) => {
       return `import "${pkg}"`;
     }
   ).replace(
     // Handle: const X = await import("https://esm.sh/...")
-    /import\(["'](https:\/\/esm\.sh\/)([@\w\/-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']\)/g,
+    /import\(["'](https:\/\/esm\.sh\/)([@\w\/.\-]+)(?:@[^?"']*)?(?:\?[^"']*)?["']\)/g,
     (match, prefix, pkg) => {
       return `import("${pkg}")`;
     }
