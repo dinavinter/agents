@@ -108,7 +108,6 @@ ${context.history.length ? `Timeline:\n${formatTimeline(context.history)}` : ""}
     model,
     schema: toolCallSchema,
     prompt: userPrompt,
-    template: userPrompt,
     system: `You are Zara, browser automation agent for Joule Studio.
 Emit tool calls as structured objects — each executes immediately.
 
