@@ -123,18 +123,11 @@ function phaseInput(context, phase) {
   return {
     model,
     schema: buildPhaseSchema(context.tools || [], phase),
-    template: `Task: {{prompt}}
-Solution: {{solutionId}}
-{{#solutionUrl}}URL: {{solutionUrl}}{{/solutionUrl}}
-{{#lastSnapshot}}
-Page:
-{{lastSnapshot}}
-{{/lastSnapshot}}
-{{^lastSnapshot}}No page state — emit get_context first.{{/lastSnapshot}}
-{{#timeline}}
-Timeline:
-{{timeline}}
-{{/timeline}}`,
+    prompt: `Task: ${context.prompt || "test"}
+Solution: ${context.solutionId || "creating..."}
+${context.solutionUrl ? `URL: ${context.solutionUrl}` : ""}
+${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 2000)}` : "No page — emit get_context first."}
+${context.timeline ? `Timeline:\n${context.timeline}` : ""}`,
     system: `You are Zara, browser automation agent for Joule Studio.
 Each object you emit becomes an EVENT that executes immediately.
 
