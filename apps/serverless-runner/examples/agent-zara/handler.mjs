@@ -1,11 +1,16 @@
 /**
  * Zara — E2E Testing Agent
  *
- * States: idle → login → create | building (sub-machine)
- *   - If no solutionId: go to "create" — AI creates solution, posts solution.created
- *   - If solutionId exists: go to "building" directly (restore/resume)
- *   - "building" is a sub-machine: intent → requirements → solution → testing → deployment → deployed
- *   - building entry verifies we're on the solution page
+ * Parallel states:
+ *   - auth: not_authenticated → logging_in → authenticated (parallel, independent)
+ *   - workflow: idle → create → building.* (the actual work)
+ *
+ * Auth is a parallel state machine — it manages login independently.
+ * Workflow can check auth state, wait for it, or trigger re-auth.
+ * IAS naturally redirects back after login, so browser stays on same page.
+ *
+ * pw actor: inits MCP on spawn, proxies tool calls
+ * workflow.building: sub-machine with phase states, AI transitions upon detection
  */
 
 import { assign, emit, fromCallback, setup, sendTo, spawnChild } from "https://esm.sh/xstate";
@@ -51,15 +56,13 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
   return () => { if (connected) client.close().catch(() => {}); };
 });
 
-// ─── Schema ─────────────────────────────────────────────────────────────────
+// ─── Schema & Helpers ───────────────────────────────────────────────────────
 
 const toolCallSchema = z.object({
   tool: z.string().describe("Tool: browser_navigate, browser_snapshot, browser_click, browser_type, browser_run_code_unsafe, browser_wait_for, get_context, suggest_hint, __done__"),
   args: z.record(z.any()).describe("Arguments"),
   reasoning: z.string().optional().describe("Why"),
 });
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function buildToolCatalog(tools) {
   return tools.map(t => `- ${t.name}: ${t.description || ""}`).join("\n")
@@ -77,13 +80,13 @@ function formatTimeline(history) {
 }
 
 const PHASES = {
-  create: { objective: "Create a new solution — type prompt in Joule chat, submit", done: "URL contains /solutions/<uuid>", hints: "Chat may be shadow DOM. Use browser_run_code_unsafe: async (page) => { await page.locator('[placeholder*=\"Message\"], textarea, [contenteditable]').first().fill('TEXT'); await page.keyboard.press('Enter'); }" },
-  intent: { objective: "Answer Joule's clarifying questions", done: "Stepper advances past Intent", hints: "Answer in chat. Look for stepper." },
-  requirements: { objective: "Wait for requirements generation", done: "Stepper advances past Requirements", hints: "Poll with get_context every 15-30s." },
-  solution: { objective: "Wait for code generation", done: "Try/Test/Deploy button visible", hints: "Poll with get_context. Takes 60-180s." },
-  testing: { objective: "Test in sandbox", done: "Deploy button enabled", hints: "Click Try, send test, verify." },
-  deployment: { objective: "Deploy", done: "Status = Running/Deployed", hints: "Click Deploy. Poll. Takes 60-300s." },
-  deployed: { objective: "Verify deployed solution", done: "Agent responds", hints: "@mention agent in Conversations." },
+  create: { objective: "Create solution — type prompt in Joule chat, submit", done: "URL contains /solutions/<uuid>", hints: "Chat may be shadow DOM. Use browser_run_code_unsafe." },
+  intent: { objective: "Answer Joule's clarifying questions", done: "Stepper advances past Intent", hints: "Answer in chat." },
+  requirements: { objective: "Wait for requirements", done: "Stepper advances past Requirements", hints: "Poll with get_context." },
+  solution: { objective: "Wait for code gen", done: "Try/Test/Deploy visible", hints: "Poll. Takes 60-180s." },
+  testing: { objective: "Test in sandbox", done: "Deploy enabled", hints: "Click Try, test, verify." },
+  deployment: { objective: "Deploy", done: "Status Running/Deployed", hints: "Click Deploy. Poll." },
+  deployed: { objective: "Verify deployed solution", done: "Agent responds", hints: "@mention in Conversations." },
 };
 
 function phaseInput(context, phase) {
@@ -94,12 +97,11 @@ function phaseInput(context, phase) {
 Emit tool calls as structured objects — each executes immediately.
 
 RULES:
-1. get_context to see page state
-2. "target" with refs from snapshot (ref=e22 → target:"e22")
+1. get_context to see page
+2. "target" with refs (ref=e22 → target:"e22")
 3. URL is most reliable signal
 4. Errors repeat → browser_run_code_unsafe
 5. __done__ when objective met
-6. get_context between actions to see changes
 
 SOLUTION: ${context.solutionId || "pending"}
 PHASE: ${phase}
@@ -107,14 +109,11 @@ OBJECTIVE: ${p.objective}
 DONE WHEN: ${p.done}
 HINTS: ${p.hints}
 ${context.hints ? `LEARNED:\n${context.hints}` : ""}
-
 TOOLS:\n${context.toolCatalog}`,
     template: `Task: ${context.prompt}
 Solution: ${context.solutionId || "creating..."}
 ${context.solutionUrl ? `URL: ${context.solutionUrl}` : ""}
-
-${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 3000)}` : "No page — emit get_context."}
-
+${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 3000)}` : "emit get_context."}
 ${context.history.length ? `Timeline:\n${formatTimeline(context.history)}` : ""}`,
   };
 }
@@ -138,7 +137,7 @@ export const machine = setup({
   types: { input: {}, context: {}, emitted: {} },
 }).createMachine({
   id: "zara",
-  initial: "idle",
+  type: "parallel",
   context: ({ input }) => ({
     solutionId: input?.solutionId || null,
     solutionUrl: input?.solutionUrl || null,
@@ -156,13 +155,13 @@ export const machine = setup({
     spawnChild("playwrightActor", { id: "pw", systemId: "pw", input: { url: globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp-local.agents.svc.cluster.local:8931/mcp" } }),
   ],
 
-  // Global event handlers
+  // Global handlers
   on: {
     "pw.ready": { actions: [
       assign({ tools: ({ event }) => event.tools, toolCatalog: ({ event }) => buildToolCatalog(event.tools) }),
       emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-green-400">✓ PW: ${event.tools.length} tools</div>` })),
     ]},
-    "pw.error": { target: ".error", actions: assign({ error: ({ event }) => `PW: ${event.error}` }) },
+    "pw.error": { actions: assign({ error: ({ event }) => `PW: ${event.error}` }) },
     "pw.result": { actions: [
       assign({
         history: ({ context, event }) => [...context.history, { tool: event.tool, args: event.args, result: event.result, error: event.error, ts: Date.now(), phase: "active", turn: context.turn }],
@@ -173,157 +172,160 @@ export const machine = setup({
         solutionId: ({ context, event }) => { if (context.solutionId) return context.solutionId; const m = (event.result || "").match(/\/solutions\/([0-9a-f-]{36})/); return m ? m[1] : context.solutionId; },
         solutionUrl: ({ context, event }) => { if (context.solutionUrl) return context.solutionUrl; const m = (event.result || "").match(/(https?:\/\/[^\s]*\/solutions\/[0-9a-f-]{36}[^\s]*)/); return m ? m[1] : context.solutionUrl; },
       }),
-      emit(({ event }) => ({ type: "@progress", data: event.tool === "suggest_hint" ? `<div class="text-xs text-amber-400">💡 ${event.args?.new_hint || ""}</div>` : event.tool === "__done__" ? `<div class="text-xs text-green-400 font-semibold">✓ Done</div>` : `<div class="text-xs text-gray-500">← [${event.tool}] ${(event.error || event.result || "").substring(0, 80)}</div>` })),
+      emit(({ event }) => ({ type: "@progress", data: event.tool === "__done__" ? `<div class="text-xs text-green-400 font-semibold">✓ Done</div>` : `<div class="text-xs text-gray-500">← [${event.tool}] ${(event.error || event.result || "").substring(0, 80)}</div>` })),
     ]},
-    // solution.created event — can be posted externally or by AI detecting URL change
-    "solution.created": { actions: assign({ solutionId: ({ event }) => event.solutionId, solutionUrl: ({ event }) => event.solutionUrl }) },
   },
 
   states: {
-    // ═══ IDLE ════════════════════════════════════════════════════════════════
-    idle: {
-      entry: emit({ type: "@status", data: `<span class="text-green-400">● idle</span>` }),
-      on: { request: { target: "login", actions: assign({
-        prompt: ({ event }) => event.prompt || "", projectId: ({ event }) => event.projectId || `s-${Date.now()}`,
-        solutionId: ({ event }) => event.solutionId || null, solutionUrl: ({ event }) => event.solutionUrl || null,
-        error: () => null, retries: () => 0, turn: () => 0, history: () => [],
-        hints: () => "", hintSuggestions: () => [], phaseDone: () => false,
-      })}},
-    },
-
-    // ═══ LOGIN ═══════════════════════════════════════════════════════════════
-    login: {
-      initial: "navigate",
-      entry: emit({ type: "@status", data: `<span class="text-blue-400">● login</span>` }),
+    // ═══ AUTH (parallel) — independent login state machine ═══════════════════
+    auth: {
+      initial: "not_authenticated",
       states: {
-        navigate: { entry: sendTo("pw", () => ({ type: "call", tool: "browser_navigate", args: { url: (globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com") + "/new/build" } })), on: { "pw.result": "wait" } },
-        wait: { entry: sendTo("pw", { type: "call", tool: "browser_wait_for", args: { time: 3 } }), on: { "pw.result": "fill" } },
-        fill: {
-          entry: [
-            emit({ type: "@progress", data: `<div class="text-xs text-blue-300">Logging in...</div>` }),
-            sendTo("pw", () => ({ type: "call", tool: "browser_run_code_unsafe", args: { code: `async (page) => { const u = '${globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com"}'; const p = '${globalThis.process?.env?.IAS_PASSWORD || "openCODE1!"}'; try { const e = page.locator('input[type="email"], input[type="text"], input[name*="user"]').first(); await e.fill(u); const b = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first(); await b.click(); await page.waitForTimeout(2000); const pw = page.locator('input[type="password"]').first(); await pw.fill(p); const s = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first(); await s.click(); await page.waitForTimeout(5000); } catch(err) {} return page.url(); }` } })),
-          ],
-          on: { "pw.result": "snapshot" },
-        },
-        snapshot: { entry: sendTo("pw", { type: "call", tool: "browser_snapshot", args: {} }), on: { "pw.result": { target: "done", actions: assign({ lastSnapshot: ({ event }) => event.result || "" }) } } },
-        done: { type: "final" },
-      },
-      onDone: [
-        // If we have a solutionId → go to building (resume)
-        { guard: ({ context }) => !!context.solutionId, target: "building" },
-        // Otherwise → create new solution
-        { target: "create" },
-      ],
-    },
-
-    // ═══ CREATE: AI creates a new solution in Joule ══════════════════════════
-    create: {
-      entry: [
-        assign({ phaseDone: () => false }),
-        emit({ type: "@status", data: `<span class="text-blue-400">● create</span>` }),
-      ],
-      invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "create") },
-      on: {
-        ...phaseEvents(),
-        output: [
-          // AI done + solutionId detected → transition to building
-          { guard: ({ context }) => !!context.solutionId, target: "building", actions: emit(({ context }) => ({ type: "@progress", data: `<div class="text-xs text-green-400 font-semibold">✓ Solution created: ${context.solutionId}</div>` })) },
-          // AI done but no solutionId yet — loop (maybe URL hasn't updated)
-          { guard: ({ context }) => context.phaseDone, target: "building" },
-          // Not done — loop create
-          { target: "create" },
-        ],
-      },
-    },
-
-    // ═══ BUILDING: sub-machine (intent → requirements → solution → ...) ═════
-    // Entry action verifies we're on the solution page
-    building: {
-      initial: "verify",
-      entry: emit({ type: "@status", data: `<span class="text-purple-400">● building</span>` }),
-      states: {
-        // Verify we're on the solution page before proceeding
-        verify: {
-          entry: sendTo("pw", { type: "call", tool: "get_context", args: {} }),
+        not_authenticated: {
           on: {
-            "pw.result": [
-              // Already on solution page → detect phase
-              { guard: ({ context, event }) => (event.result || "").includes("/solutions/") || (context.lastSnapshot || "").includes("/solutions/"), target: "detect" },
-              // Not on solution page — navigate there
-              { target: "navigate_solution" },
+            login: "logging_in",
+            // Auto-login on request if not authenticated
+            request: "logging_in",
+          },
+        },
+        logging_in: {
+          initial: "navigate",
+          states: {
+            navigate: { entry: sendTo("pw", () => ({ type: "call", tool: "browser_navigate", args: { url: (globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com") + "/new/build" } })), on: { "pw.result": "wait" } },
+            wait: { entry: sendTo("pw", { type: "call", tool: "browser_wait_for", args: { time: 3 } }), on: { "pw.result": "fill" } },
+            fill: {
+              entry: sendTo("pw", () => ({ type: "call", tool: "browser_run_code_unsafe", args: { code: `async (page) => { const u = '${globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com"}'; const p = '${globalThis.process?.env?.IAS_PASSWORD || "openCODE1!"}'; try { const e = page.locator('input[type="email"], input[type="text"], input[name*="user"]').first(); await e.fill(u); const b = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first(); await b.click(); await page.waitForTimeout(2000); const pw = page.locator('input[type="password"]').first(); await pw.fill(p); const s = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first(); await s.click(); await page.waitForTimeout(5000); } catch(err) {} return page.url(); }` } })),
+              on: { "pw.result": "done" },
+            },
+            done: { type: "final" },
+          },
+          onDone: "authenticated",
+        },
+        authenticated: {
+          entry: emit({ type: "@progress", data: `<div class="text-xs text-green-400">✓ Authenticated</div>` }),
+          on: {
+            // Re-login if auth expires (triggered by workflow detecting login page)
+            "auth.expired": "logging_in",
+          },
+        },
+      },
+    },
+
+    // ═══ WORKFLOW (parallel) — the actual testing work ════════════════════════
+    workflow: {
+      initial: "idle",
+      states: {
+        idle: {
+          entry: emit({ type: "@status", data: `<span class="text-green-400">● idle</span>` }),
+          on: { request: { target: "waiting_auth", actions: assign({
+            prompt: ({ event }) => event.prompt || "", projectId: ({ event }) => event.projectId || `s-${Date.now()}`,
+            solutionId: ({ event }) => event.solutionId || null, solutionUrl: ({ event }) => event.solutionUrl || null,
+            error: () => null, retries: () => 0, turn: () => 0, history: () => [],
+            hints: () => "", hintSuggestions: () => [], phaseDone: () => false,
+          })}},
+        },
+
+        // Wait for auth to complete before starting work
+        waiting_auth: {
+          entry: emit({ type: "@status", data: `<span class="text-yellow-400">● waiting for auth</span>` }),
+          always: [
+            // If we already have a solutionId (restore) → go to building
+            { guard: ({ context }) => !!context.solutionId, target: "building" },
+            // Otherwise → create
+            { target: "create" },
+          ],
+          // TODO: could add a guard that waits until auth.authenticated
+        },
+
+        // Create new solution
+        create: {
+          entry: [assign({ phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-blue-400">● create</span>` })],
+          invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "create") },
+          on: {
+            ...phaseEvents(),
+            output: [
+              { guard: ({ context }) => !!context.solutionId, target: "building" },
+              { guard: ({ context }) => context.phaseDone, target: "building" },
+              { target: "create" },
             ],
           },
         },
-        navigate_solution: {
-          entry: sendTo("pw", ({ context }) => ({
-            type: "call", tool: "browser_navigate",
-            args: { url: context.solutionUrl || `${globalThis.process?.env?.DAS_HOST || ""}/new/build/solutions/${context.solutionId}` },
-          })),
-          on: { "pw.result": "wait_nav" },
-        },
-        wait_nav: {
-          entry: sendTo("pw", { type: "call", tool: "browser_wait_for", args: { time: 3 } }),
-          on: { "pw.result": "detect" },
+
+        // Building sub-machine — always has solutionId
+        building: {
+          initial: "verify",
+          entry: emit({ type: "@status", data: `<span class="text-purple-400">● building</span>` }),
+          states: {
+            // Verify browser is on solution page
+            verify: {
+              entry: sendTo("pw", { type: "call", tool: "get_context", args: {} }),
+              on: {
+                "pw.result": [
+                  { guard: ({ context, event }) => (event.result || context.lastSnapshot || "").includes("/solutions/"), target: "intent" },
+                  { target: "navigate_solution" },
+                ],
+              },
+            },
+            navigate_solution: {
+              entry: sendTo("pw", ({ context }) => ({ type: "call", tool: "browser_navigate", args: { url: context.solutionUrl || `${globalThis.process?.env?.DAS_HOST || ""}/new/build/solutions/${context.solutionId}` } })),
+              on: { "pw.result": "wait_nav" },
+            },
+            wait_nav: {
+              entry: sendTo("pw", { type: "call", tool: "browser_wait_for", args: { time: 3 } }),
+              on: { "pw.result": "intent" },
+            },
+
+            // Phase states
+            intent: {
+              entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● intent</span>` })],
+              invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "intent") },
+              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "requirements" }, { target: "intent" }] },
+            },
+            requirements: {
+              entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● requirements</span>` })],
+              invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "requirements") },
+              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "solution" }, { target: "requirements" }] },
+            },
+            solution: {
+              entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● solution</span>` })],
+              invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "solution") },
+              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "testing" }, { target: "solution" }] },
+            },
+            testing: {
+              entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-orange-400">● testing</span>` })],
+              invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "testing") },
+              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "deployment" }, { target: "testing" }] },
+            },
+            deployment: {
+              entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-orange-400">● deployment</span>` })],
+              invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "deployment") },
+              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "deployed" }, { target: "deployment" }] },
+            },
+            deployed: {
+              entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-cyan-400">● deployed</span>` })],
+              invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "deployed") },
+              on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "complete" }, { target: "deployed" }] },
+            },
+            complete: { type: "final" },
+          },
+          onDone: "done",
         },
 
-        // Detect current phase from page state
-        detect: {
-          entry: sendTo("pw", { type: "call", tool: "get_context", args: {} }),
-          on: { "pw.result": { target: "intent", actions: assign({ lastSnapshot: ({ event }) => event.result || "" }) } },
-          // TODO: smarter phase detection based on snapshot content
+        done: {
+          type: "final",
+          entry: [
+            emit({ type: "@status", data: `<span class="text-green-400">● done ✓</span>` }),
+            emit(({ context }) => ({ type: "@progress", data: `<div class="text-sm text-green-400 font-bold mt-4">✓ Solution ${context.solutionId || "?"} — ${context.history.length} actions</div>` })),
+          ],
         },
 
-        // ─── Phase states ────────────────────────────────────────────────
-        intent: {
-          entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● intent</span>` })],
-          invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "intent") },
-          on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "requirements" }, { target: "intent" }] },
+        error: {
+          entry: emit(({ context }) => ({ type: "@progress", data: `<div class="text-xs text-red-400">✗ ${context.error}</div>` })),
+          on: {
+            retry: { target: "waiting_auth", actions: assign({ retries: ({ context }) => context.retries + 1, error: () => null }) },
+            request: { target: "waiting_auth", actions: assign({ prompt: ({ event }) => event.prompt || "", error: () => null, retries: () => 0, turn: () => 0, history: () => [] }) },
+          },
         },
-        requirements: {
-          entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● requirements</span>` })],
-          invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "requirements") },
-          on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "solution" }, { target: "requirements" }] },
-        },
-        solution: {
-          entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-indigo-400">● solution</span>` })],
-          invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "solution") },
-          on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "testing" }, { target: "solution" }] },
-        },
-        testing: {
-          entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-orange-400">● testing</span>` })],
-          invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "testing") },
-          on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "deployment" }, { target: "testing" }] },
-        },
-        deployment: {
-          entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-orange-400">● deployment</span>` })],
-          invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "deployment") },
-          on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "deployed" }, { target: "deployment" }] },
-        },
-        deployed: {
-          entry: [assign({ phaseDone: () => false, turn: ({ context }) => context.turn + 1 }), emit({ type: "@status", data: `<span class="text-cyan-400">● deployed</span>` })],
-          invoke: { src: "aiStream", input: ({ context }) => phaseInput(context, "deployed") },
-          on: { ...phaseEvents(), output: [{ guard: ({ context }) => context.phaseDone, target: "complete" }, { target: "deployed" }] },
-        },
-        complete: { type: "final" },
-      },
-      onDone: "done",
-    },
-
-    // ═══ DONE ════════════════════════════════════════════════════════════════
-    done: { type: "final", entry: [
-      emit({ type: "@status", data: `<span class="text-green-400">● done ✓</span>` }),
-      emit(({ context }) => ({ type: "@progress", data: `<div class="text-sm text-green-400 font-bold mt-4">✓ Solution ${context.solutionId || "?"} — ${context.history.length} actions</div>` })),
-    ]},
-
-    // ═══ ERROR ═══════════════════════════════════════════════════════════════
-    error: {
-      entry: [
-        emit(({ context }) => ({ type: "@status", data: `<span class="text-red-400">● error</span>` })),
-        emit(({ context }) => ({ type: "@progress", data: `<div class="text-xs text-red-400">✗ ${context.error}</div>` })),
-      ],
-      on: {
-        retry: { guard: ({ context }) => context.retries < 3, target: "login", actions: assign({ retries: ({ context }) => context.retries + 1, error: () => null }) },
-        request: { target: "login", actions: assign({ prompt: ({ event }) => event.prompt || "", error: () => null, retries: () => 0, turn: () => 0, history: () => [] }) },
       },
     },
   },
