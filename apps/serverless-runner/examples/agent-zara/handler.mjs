@@ -22,7 +22,7 @@ import { assign, emit, fromPromise, setup } from "https://esm.sh/xstate";
 
 class PlaywrightMCP {
   #url;
-  #sessionId = null;
+  sessionId = null;  // public for xstate context serialization
   tools = [];
 
   constructor(url) {
@@ -35,12 +35,12 @@ class PlaywrightMCP {
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json, text/event-stream",
-        ...(this.#sessionId ? { "Mcp-Session-Id": this.#sessionId } : {}),
+        ...(this.sessionId ? { "Mcp-Session-Id": this.sessionId } : {}),
       },
       body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
     });
     const sid = res.headers.get("mcp-session-id");
-    if (sid) this.#sessionId = sid;
+    if (sid) this.sessionId = sid;
 
     const ct = res.headers.get("content-type") || "";
     if (ct.includes("text/event-stream")) {
@@ -88,7 +88,7 @@ class PlaywrightMCP {
   }
 
   async close() { try { await this.tool("browser_close"); } catch {} }
-  get id() { return this.#sessionId; }
+  get id() { return this.sessionId; }
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
