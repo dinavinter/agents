@@ -4,13 +4,13 @@
   "description": "Kyma Function that dynamically loads and runs agent code from GitHub or API",
   "main": "handler.js",
   "dependencies": {
-    "xstate": "^5.19.0",
+    "@ai-sdk/openai": "^1.0.0",
     "@cxai/stream": "^1.1.0",
     "@hocuspocus/provider": "^4.0.0",
-    "@modelcontextprotocol/sdk": "^1.12.0",
-    "yjs": "^13.6.23",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "ai": "^4.0.0",
-    "@ai-sdk/openai": "^1.0.0",
+    "xstate": "^5.19.0",
+    "yjs": "^13.6.23",
     "zod": "^3.24.0"
   }
 }
