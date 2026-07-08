@@ -45,6 +45,11 @@ class PlaywrightMCP {
     const ct = res.headers.get("content-type") || "";
     if (ct.includes("text/event-stream")) {
       const text = await res.text();
+      if (!text.trim()) {
+        // Empty SSE body — server accepted but no immediate result.
+        // This can happen with long-running tools. Return null (caller should handle).
+        return { content: [{ type: "text", text: "Operation accepted (async)" }] };
+      }
       for (const line of text.split("\n")) {
         if (line.startsWith("data: ")) {
           try {
@@ -54,8 +59,9 @@ class PlaywrightMCP {
           } catch (e) { if (e.message && !e.message.includes("JSON")) throw e; }
         }
       }
-      // If we got here, no result found — throw with context
-      throw new Error(`No result in SSE response: ${text.substring(0, 200)}`);
+      // No result line found but body wasn't empty — try raw parse
+      try { const raw = JSON.parse(text); if (raw.result !== undefined) return raw.result; } catch {}
+      throw new Error(`No result in SSE: ${text.substring(0, 150)}`);
     }
 
     if (!res.ok) {
