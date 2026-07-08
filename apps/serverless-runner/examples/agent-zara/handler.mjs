@@ -33,6 +33,17 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
       }
     }
     else if (event.type === "call") {
+      // Handle special tools locally
+      if (event.tool === "suggest_hint") {
+        // Save hint suggestion — send back as result so machine can store it
+        sendBack({ type: "pw.result", tool: "suggest_hint", args: event.args, result: `Hint saved: [${event.args?.phase}] ${event.args?.new_hint}` });
+        return;
+      }
+      if (event.tool === "__done__") {
+        sendBack({ type: "pw.result", tool: "__done__", args: event.args, result: "done" });
+        return;
+      }
+      // Real Playwright MCP call
       if (!connected) { sendBack({ type: "pw.result", tool: event.tool, error: "Not connected" }); return; }
       try {
         const result = await client.callTool({ name: event.tool, arguments: event.args || {} });
@@ -66,7 +77,8 @@ const aiDecide = fromPromise(async ({ input }) => {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function buildToolCatalog(tools) {
-  return tools.map(t => `- ${t.name}: ${t.description || ""}`).join("\n");
+  const pwTools = tools.map(t => `- ${t.name}: ${t.description || ""}`).join("\n");
+  return `${pwTools}\n- suggest_hint: Save a UI hint correction for future runs. Args: {phase, old_hint, new_hint}\n- __done__: Signal current phase is complete. Args: {}`;
 }
 
 function parseToolCall(text) {
@@ -81,14 +93,89 @@ function parseToolCall(text) {
 }
 
 function buildSystemPrompt(ctx) {
-  return `You are Zara, browser automation agent. Tools:\n${ctx.toolCatalog}\n\nRespond JSON only: {"tool":"name","args":{...}}\nWhen done: {"tool":"__done__","args":{}}\n\nPhase: ${ctx.phase}\n- create: type prompt in chat, submit. Done when URL has /solutions/<uuid>\n- intent: answer. Done when Intent ✓\n- requirements: wait. Done when Requirements ✓\n- solution: wait. Done when Try/Test\n- testing: test. Done when Deploy enabled\n- deployment: deploy. Done when Running\n- deployed: verify. Done when responds`;
+  return `You are Zara, a browser automation agent testing Joule Studio.
+
+TOOLS: You call Playwright MCP tools via JSON.
+RESPOND WITH ONLY ONE JSON object per turn: {"tool":"name","args":{...}}
+When the phase objective is met: {"tool":"__done__","args":{}}
+
+SPECIAL TOOL — suggest_hint:
+If a UI hint below is wrong or outdated, call:
+{"tool":"suggest_hint","args":{"phase":"<phase>","old_hint":"<what was wrong>","new_hint":"<what you observed instead>"}}
+This saves your observation for future runs. Then continue with the next browser action.
+
+CRITICAL RULES:
+1. ALWAYS take a browser_snapshot FIRST if you don't know the current page state
+2. If browser_wait_for times out, take a snapshot to see what's actually on the page
+3. Use the "target" field with refs from snapshot (e.g. "ref=e22" → target: "e22")
+4. The UI may look different from hints — trust the snapshot over hints
+5. If you see errors 3+ times with the same approach, try browser_snapshot and adapt
+6. URL is the most reliable signal — check it in snapshot's "Page URL" line
+
+PHASE: ${ctx.phase}
+
+PHASE OBJECTIVES & HINTS:
+━━━━━━━━━━━━━━━━━━━━━━━━━
+create:
+  Goal: Type the solution prompt into Joule chat and submit.
+  Done when: URL contains /solutions/<uuid> (36-char hex with dashes)
+  Hints: Look for textbox/textarea with placeholder like "Message Joule" or a chat input.
+         Submit via Enter key or a Send button. Joule may ask questions — answer them.
+         If URL already has /solutions/ — you're done, emit __done__.
+
+intent:
+  Goal: Joule asks clarifying questions. Answer them via chat.
+  Done when: The stepper/tab shows Intent with ✓, OR Requirements tab becomes active,
+             OR the page content changes to show requirements being generated.
+  Hints: The UI has a horizontal stepper (Intent → Requirements → Solution → ...).
+         Steps may show as tabs, badges, or breadcrumbs. Look for active/completed indicators.
+         If unsure, take a snapshot and look for "Requirements" being highlighted/active.
+
+requirements:
+  Goal: Wait for Joule to finish generating requirements. Answer if asked.
+  Done when: Requirements shows ✓ OR Solution step becomes active OR code/files appear.
+  Hints: May show a loading spinner, then a component list. Duration: 30-120s.
+
+solution:
+  Goal: Wait for solution code generation to complete.
+  Done when: Solution shows ✓ OR a Try/Test/Deploy button appears OR file tree is shown.
+  Hints: Shows streaming code, file names being generated. Can take 60-180s.
+
+testing:
+  Goal: Open the Try/sandbox interface and test the solution.
+  Done when: Deploy button becomes enabled/visible OR tests show passed.
+  Hints: Click "Try" or "Test" button. For agents, type a test message in sandbox chat.
+
+deployment:
+  Goal: Click Deploy and wait for it to complete.
+  Done when: Status shows Running/Deployed/Active OR a deployment URL appears.
+  Hints: Click "Deploy" button. Watch Jobs section or status badge. Can take 60-300s.
+
+deployed:
+  Goal: Verify the deployed solution works in production.
+  Done when: Solution responds correctly to a test interaction.
+  Hints: Navigate to Conversations, @mention the agent, send test message, verify response.
+
+${ctx.hints ? `\nLEARNED HINTS (from previous runs):\n${ctx.hints}` : ""}`;
 }
 
 function buildUserPrompt(ctx) {
-  const parts = [`Phase: ${ctx.phase}`, `Turn: ${ctx.turn}`];
-  if (ctx.lastSnapshot) parts.push(`Page:\n${ctx.lastSnapshot.substring(0, 3000)}`);
-  if (ctx.history.length) parts.push(`Recent:\n${ctx.history.slice(-5).map(h => `[${h.tool}] ${(h.error || h.result || "").substring(0, 150)}`).join("\n")}`);
-  else parts.push("Start with browser_snapshot.");
+  const parts = [`Phase: ${ctx.phase}`, `Turn: ${ctx.turn}/${ctx.maxTurns}`];
+  if (ctx.lastSnapshot) {
+    // Include URL prominently
+    const urlMatch = ctx.lastSnapshot.match(/Page URL: ([^\n]+)/);
+    if (urlMatch) parts.push(`Current URL: ${urlMatch[1]}`);
+    parts.push(`Page snapshot:\n${ctx.lastSnapshot.substring(0, 3000)}`);
+  }
+  if (ctx.history.length) {
+    const recent = ctx.history.slice(-5).map(h => {
+      const status = h.error ? `ERR: ${h.error.substring(0, 100)}` : (h.result || "ok").substring(0, 150);
+      return `[${h.tool}] ${status}`;
+    });
+    parts.push(`Recent actions:\n${recent.join("\n")}`);
+  } else {
+    parts.push("No actions yet. Start with browser_snapshot to see the page.");
+  }
   return parts.join("\n\n");
 }
 
@@ -105,7 +192,8 @@ export const machine = setup({
     projectId: input?.projectId || "", prompt: input?.prompt || "",
     phase: "create", lastSnapshot: "", history: [],
     pendingAction: null, error: null, retries: 0, turn: 0, maxTurns: 50,
-    loginStep: 0, ...input,
+    loginStep: 0, hints: "", hintSuggestions: [],
+    ...input,
   }),
 
   entry: [
@@ -201,7 +289,9 @@ export const machine = setup({
         src: "aiDecide",
         input: ({ context }) => ({ system: buildSystemPrompt(context), prompt: buildUserPrompt(context) }),
         onDone: [
+          // AI returned __done__ directly in output (no tool call wrapper)
           { guard: ({ event }) => { const p = parseToolCall(event.output || ""); return !p || p.tool === "__done__"; }, target: "transition" },
+          // AI returned a tool call → execute it (including __done__ and suggest_hint which are handled in acting)
           { target: "acting", actions: assign({ pendingAction: ({ event }) => parseToolCall(event.output || "") || { tool: "browser_snapshot", args: {} } }) },
         ],
         onError: { target: "error", actions: assign({ error: ({ event }) => `AI: ${event.error?.message}` }) },
@@ -215,17 +305,41 @@ export const machine = setup({
         sendTo("pw", ({ context }) => ({ type: "call", tool: context.pendingAction.tool, args: context.pendingAction.args || {} })),
       ],
       on: {
-        "pw.result": {
-          target: "thinking",
-          actions: [
-            assign({
-              history: ({ context, event }) => [...context.history, { tool: event.tool, result: event.result, error: event.error }],
-              lastSnapshot: ({ context, event }) => event.tool === "browser_snapshot" ? (event.result || context.lastSnapshot) : context.lastSnapshot,
-              pendingAction: () => null,
-            }),
-            emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-gray-500">← ${(event.error || event.result || "").substring(0, 80)}</div>` })),
-          ],
-        },
+        "pw.result": [
+          // __done__ from AI → transition to next phase
+          {
+            guard: ({ event }) => event.tool === "__done__",
+            target: "transition",
+          },
+          // suggest_hint → store and loop back to thinking
+          {
+            guard: ({ event }) => event.tool === "suggest_hint",
+            target: "thinking",
+            actions: [
+              assign({
+                hintSuggestions: ({ context, event }) => [...(context.hintSuggestions || []), event.args],
+                hints: ({ context, event }) => {
+                  const arg = event.args || {};
+                  return (context.hints || "") + `\n[${arg.phase}] ${arg.new_hint || ""}`;
+                },
+                history: ({ context, event }) => [...context.history, { tool: "suggest_hint", result: event.result }],
+              }),
+              emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-amber-400">💡 Hint: ${event.args?.new_hint || ""}</div>` })),
+            ],
+          },
+          // Normal tool result → store and think again
+          {
+            target: "thinking",
+            actions: [
+              assign({
+                history: ({ context, event }) => [...context.history, { tool: event.tool, result: event.result, error: event.error }],
+                lastSnapshot: ({ context, event }) => event.tool === "browser_snapshot" ? (event.result || context.lastSnapshot) : context.lastSnapshot,
+                pendingAction: () => null,
+              }),
+              emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-gray-500">← ${(event.error || event.result || "").substring(0, 80)}</div>` })),
+            ],
+          },
+        ],
       },
     },
 
