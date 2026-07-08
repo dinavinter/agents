@@ -237,7 +237,9 @@ export const machine = setup({
         src: "aiDecide",
         input: ({ context }) => ({ system: buildSystemPrompt(context), prompt: buildUserPrompt(context) }),
         onDone: [
-          { guard: ({ event }) => { const p = parseToolCall(event.output || ""); return !p || p.tool === "__done__"; }, target: "transition" },
+          // Only transition if AI explicitly said __done__
+          { guard: ({ event }) => { const p = parseToolCall(event.output || ""); return p?.tool === "__done__"; }, target: "transition" },
+          // Otherwise execute the tool (or fallback to snapshot)
           { target: "acting", actions: assign({ pendingAction: ({ event }) => parseToolCall(event.output || "") || { tool: "browser_snapshot", args: {} } }) },
         ],
         onError: { target: "error", actions: assign({ error: ({ event }) => `AI: ${event.error?.message}` }) },
