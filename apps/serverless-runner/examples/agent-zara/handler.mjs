@@ -54,7 +54,8 @@ class PlaywrightMCP {
           } catch (e) { if (e.message && !e.message.includes("JSON")) throw e; }
         }
       }
-      throw new Error("No result in SSE response");
+      // If we got here, no result found — throw with context
+      throw new Error(`No result in SSE response: ${text.substring(0, 200)}`);
     }
 
     if (!res.ok) {
