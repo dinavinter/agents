@@ -21,16 +21,16 @@ import { assign, emit, fromPromise, setup } from "https://esm.sh/xstate";
 // ─── Playwright MCP Client ──────────────────────────────────────────────────
 
 class PlaywrightMCP {
-  #url;
-  sessionId = null;  // public for xstate context serialization
+  url;
+  sessionId = null;
   tools = [];
 
   constructor(url) {
-    this.#url = url;
+    this.url = url;
   }
 
   async call(method, params = {}) {
-    const res = await fetch(this.#url, {
+    const res = await fetch(this.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
