@@ -39,6 +39,16 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
         sendBack({ type: "pw.result", tool: "__done__", args: event.args, result: "done" });
         return;
       }
+      if (event.tool === "get_context") {
+        // Alias for browser_snapshot — AI uses this to refresh its view mid-stream
+        if (!connected) { sendBack({ type: "pw.result", tool: "get_context", error: "Not connected" }); return; }
+        try {
+          const result = await client.callTool({ name: "browser_snapshot", arguments: {} });
+          const text = result?.content?.map(c => c.text || c.data || "").join("\n") || "";
+          sendBack({ type: "pw.result", tool: "get_context", args: {}, result: text });
+        } catch (e) { sendBack({ type: "pw.result", tool: "get_context", error: e.message }); }
+        return;
+      }
       if (!connected) { sendBack({ type: "pw.result", tool: event.tool, error: "Not connected" }); return; }
       try {
         const result = await client.callTool({ name: event.tool, arguments: event.args || {} });
@@ -56,72 +66,24 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
 // ─── Tool call schema for AI element stream ─────────────────────────────────
 
 const toolCallSchema = z.object({
-  tool: z.string().describe("The tool name to call (browser_navigate, browser_snapshot, browser_click, browser_type, browser_run_code_unsafe, browser_wait_for, suggest_hint, __done__)"),
-  args: z.record(z.any()).describe("Arguments for the tool"),
-  reasoning: z.string().optional().describe("Brief reasoning for this action"),
+  tool: z.string().describe("Tool to call: browser_navigate, browser_snapshot, browser_click, browser_type, browser_run_code_unsafe, browser_wait_for, get_context, suggest_hint, __done__"),
+  args: z.record(z.any()).describe("Tool arguments"),
+  reasoning: z.string().optional().describe("Why this action"),
 });
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function buildToolCatalog(tools) {
   const pw = tools.map(t => `- ${t.name}: ${t.description || ""}`).join("\n");
-  return `${pw}\n- suggest_hint: Save a UI hint for future runs. Args: {phase, old_hint, new_hint}\n- __done__: Phase complete. Args: {}`;
+  return `${pw}\n- get_context: Request fresh snapshot + current URL (use between actions to see results)\n- suggest_hint: Save UI hint for future runs. Args: {phase, old_hint, new_hint}\n- __done__: Phase complete. Args: {}`;
 }
 
-function buildSystemPrompt(ctx) {
-  return `You are Zara, a browser automation agent testing Joule Studio.
-
-You emit a SEQUENCE of tool calls as structured objects. Each object you emit will be executed on the browser immediately.
-
-RULES:
-1. ALWAYS start with browser_snapshot if you don't know page state
-2. Use "target" with refs from snapshot (ref=e22 → target:"e22")
-3. URL is the most reliable signal for phase completion
-4. If same error 3+ times, try browser_run_code_unsafe as fallback
-5. Emit __done__ as your LAST action when the phase objective is met
-6. If a hint is wrong, emit suggest_hint then continue with next action
-
-PHASE: ${ctx.phase}
-
-OBJECTIVES:
-- create: Type prompt in chat, submit. DONE when URL has /solutions/<uuid>
-- intent: Answer Joule questions. DONE when stepper advances past Intent
-- requirements: Wait/answer. DONE when stepper advances past Requirements
-- solution: Wait for code gen. DONE when Try/Test/Deploy button visible
-- testing: Test in sandbox. DONE when Deploy enabled
-- deployment: Click Deploy, wait. DONE when status=Running/Deployed
-- deployed: Verify via Conversations. DONE when agent responds
-
-HINTS:
-- Chat input may be in shadow DOM — use browser_run_code_unsafe if snapshot shows empty main
-- Example: {"tool":"browser_run_code_unsafe","args":{"code":"async (page) => { await page.locator('[placeholder*=\"Message\"], textarea, [contenteditable]').first().fill('text'); await page.keyboard.press('Enter'); }"}}
-- Wait 3-5s after actions that trigger page changes
-- If URL has /solutions/ at start of create phase → already done, emit __done__
-
-${ctx.hints ? `LEARNED:\n${ctx.hints}` : ""}
-
-TOOLS:\n${ctx.toolCatalog}`;
-}
-
-function buildUserPrompt(ctx) {
-  const parts = [`Phase: ${ctx.phase} | Turn: ${ctx.turn}/${ctx.maxTurns}`];
-  if (ctx.prompt) parts.push(`Task: ${ctx.prompt}`);
-  if (ctx.lastSnapshot) {
-    const urlMatch = ctx.lastSnapshot.match(/Page URL: ([^\n]+)/);
-    if (urlMatch) parts.push(`URL: ${urlMatch[1]}`);
-    parts.push(`Snapshot:\n${ctx.lastSnapshot.substring(0, 3000)}`);
-  }
-  if (ctx.history.length) {
-    const timeline = ctx.history.slice(-8).map(h => {
-      const t = new Date(h.ts).toISOString().slice(11, 19);
-      const status = h.error ? `ERROR: ${h.error.substring(0, 100)}` : (h.result || "ok").substring(0, 150);
-      return `[${t}] ${h.tool}(${JSON.stringify(h.args || {}).substring(0, 60)}) → ${status}`;
-    });
-    parts.push(`Timeline:\n${timeline.join("\n")}`);
-  } else {
-    parts.push("No actions yet — emit browser_snapshot first.");
-  }
-  return parts.join("\n\n");
+function formatTimeline(history) {
+  return history.slice(-8).map(h => {
+    const t = new Date(h.ts).toISOString().slice(11, 19);
+    const status = h.error ? `ERROR: ${h.error.substring(0, 80)}` : (h.result || "ok").substring(0, 120);
+    return `[${t}][${h.phase}] ${h.tool}(${JSON.stringify(h.args || {}).substring(0, 50)}) → ${status}`;
+  }).join("\n");
 }
 
 // ─── Machine ────────────────────────────────────────────────────────────────
@@ -171,7 +133,7 @@ export const machine = setup({
           phase: context.phase,
           turn: context.turn,
         }],
-        lastSnapshot: ({ context, event }) => event.tool === "browser_snapshot" ? (event.result || context.lastSnapshot) : context.lastSnapshot,
+        lastSnapshot: ({ context, event }) => (event.tool === "browser_snapshot" || event.tool === "get_context") ? (event.result || context.lastSnapshot) : context.lastSnapshot,
         phaseDone: ({ context, event }) => event.tool === "__done__" ? true : context.phaseDone,
         hints: ({ context, event }) => event.tool === "suggest_hint" ? (context.hints || "") + `\n[${event.args?.phase}] ${event.args?.new_hint || ""}` : context.hints,
         hintSuggestions: ({ context, event }) => event.tool === "suggest_hint" ? [...(context.hintSuggestions || []), event.args] : context.hintSuggestions,
@@ -234,12 +196,59 @@ export const machine = setup({
         src: "aiStream",
         input: ({ context }) => ({
           schema: toolCallSchema,
-          system: buildSystemPrompt(context),
-          template: buildUserPrompt(context),
+          system: `You are Zara, a browser automation agent testing Joule Studio.
+You emit a SEQUENCE of tool calls. Each is executed immediately on the browser.
+
+RULES:
+1. Start with get_context or browser_snapshot if you need to see the page
+2. Use "target" with element refs from snapshot (ref=e22 → target:"e22")
+3. URL is the most reliable completion signal — check it in snapshot
+4. If errors repeat, use browser_run_code_unsafe as fallback
+5. Emit __done__ LAST when phase objective is met
+6. Use get_context between actions to see updated page state
+7. If a hint is outdated, emit suggest_hint then continue
+
+PHASE: {{phase}}
+TASK: {{prompt}}
+
+OBJECTIVES:
+- create: Type prompt in chat, submit. DONE when URL has /solutions/<uuid>
+- intent: Answer Joule questions. DONE when stepper advances past Intent
+- requirements: Wait/answer. DONE when stepper advances
+- solution: Wait for code gen. DONE when Try/Test/Deploy visible
+- testing: Test in sandbox. DONE when Deploy enabled
+- deployment: Deploy. DONE when Running/Deployed
+- deployed: Verify. DONE when agent responds
+
+HINTS:
+- Chat input often in shadow DOM — use browser_run_code_unsafe:
+  async (page) => { await page.locator('[placeholder*="Message"], textarea, [contenteditable]').first().fill('text'); await page.keyboard.press('Enter'); }
+- Wait 3-5s after page-changing actions, then get_context
+- If URL already has /solutions/ → emit __done__
+{{#hints}}
+LEARNED:
+{{hints}}
+{{/hints}}
+
+TOOLS:
+{{toolCatalog}}`,
+          template: `Phase: {{phase}} | Turn: {{turn}}/{{maxTurns}}
+
+{{#lastSnapshot}}
+Current page:
+{{lastSnapshot}}
+{{/lastSnapshot}}
+
+{{#history.length}}
+Timeline:
+${formatTimeline(context.history)}
+{{/history.length}}
+{{^history.length}}
+No actions yet — start with get_context to see the page.
+{{/history.length}}`,
         }),
       },
       on: {
-        // Each streamed element is a tool call — forward to pw actor
         "*": {
           guard: ({ event }) => !!event.tool && event.type !== "output",
           actions: [
@@ -247,10 +256,9 @@ export const machine = setup({
             sendTo("pw", ({ event }) => ({ type: "call", tool: event.tool, args: event.args || {} })),
           ],
         },
-        // Stream complete — check if phase done, then loop or transition
         output: [
           { guard: ({ context }) => context.phaseDone, target: "transition" },
-          { target: "acting" },  // loop: re-invoke AI with updated context (history has pw.results)
+          { target: "acting" },
         ],
       },
     },
