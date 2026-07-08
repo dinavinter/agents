@@ -88,9 +88,8 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
       try {
         const { targetUrl, username, password } = event;
         const log = [];
-        log.push({ tool: "__debug__", result: `sessionId=${sessionId}` });
 
-        if (!sessionId) throw new Error("No session ID — init may not have completed");
+        if (!sessionId) throw new Error(`No session (sessionId=${sessionId})`);
 
         // Navigate
         await callTool("browser_navigate", { url: targetUrl });
@@ -134,7 +133,7 @@ const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
         const success = /Conversations|Spaces|Develop|Build|\/new/.test(finalSnap);
         sendBack({ type: "pw.loggedin", snapshot: finalSnap, log, success });
       } catch (e) {
-        sendBack({ type: "pw.error", error: `login: ${e.message}` });
+        sendBack({ type: "pw.error", error: `login(sid=${sessionId}): ${e.message}` });
       }
     }
 
