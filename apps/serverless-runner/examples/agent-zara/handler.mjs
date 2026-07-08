@@ -100,6 +100,7 @@ const PHASES = {
 function phaseInput(context, phase) {
   const p = PHASES[phase];
   return {
+    model,
     schema: toolCallSchema,
     system: `You are Zara, browser automation agent for Joule Studio.
 Emit tool calls as structured objects — each executes immediately.
@@ -141,7 +142,7 @@ function phaseEvents() {
 // ─── Machine ────────────────────────────────────────────────────────────────
 
 export const machine = setup({
-  actors: { playwrightActor, aiStream: fromAIElementStream({ model }) },
+  actors: { playwrightActor, aiStream: fromAIElementStream() },
   types: { input: {}, context: {}, emitted: {} },
 }).createMachine({
   id: "zara",
