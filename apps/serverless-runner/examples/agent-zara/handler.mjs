@@ -79,6 +79,7 @@ class PlaywrightMCP {
       capabilities: {},
       clientInfo: { name: "zara", version: "1.0" },
     });
+    const initSession = this.sessionId;
     // Send initialized notification (required by MCP spec before tool calls)
     await fetch(this.url, {
       method: "POST",
@@ -89,11 +90,13 @@ class PlaywrightMCP {
       },
       body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
     });
-    // Get tools
+    // Get tools — force session ID preservation
     try {
       const toolsResult = await this.call("tools/list", {});
       this.tools = toolsResult?.tools || [];
     } catch { this.tools = []; }
+    // ALWAYS restore session from initialize — tools/list may have changed it
+    this.sessionId = initSession;
   }
 
   async tool(name, args = {}) {
