@@ -152,83 +152,116 @@ let _pw = null;
 
 const connectAndLogin = fromPromise(async ({ input }) => {
   const { url, targetUrl, username, password } = input;
-  _pw = new PlaywrightMCP(url);
-  await _pw.init();
-  
   const log = [];
-  log.push({ tool: "init", result: `session=${_pw.sessionId}, tools=${_pw.tools.length}` });
 
-  // Navigate to target URL
-  await _pw.tool("browser_navigate", { url: targetUrl });
-  log.push({ tool: "browser_navigate", args: { url: targetUrl }, result: "navigated" });
-  await _pw.tool("browser_wait_for", { time: 3 });
+  // Raw MCP calls — no class, just fetch (proven to work in manual test)
+  async function mcpCall(sessionId, method, params) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/event-stream",
+        ...(sessionId ? { "Mcp-Session-Id": sessionId } : {}),
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params: params || {} }),
+    });
+    const sid = res.headers.get("mcp-session-id");
+    const ct = res.headers.get("content-type") || "";
+    let result;
+    if (ct.includes("text/event-stream")) {
+      const text = await res.text();
+      if (!text.trim()) return { sid: sid || sessionId, result: null };
+      for (const line of text.split("\n")) {
+        if (line.startsWith("data: ")) {
+          try {
+            const msg = JSON.parse(line.slice(6));
+            if (msg.error) throw new Error(msg.error.message);
+            if (msg.result !== undefined) { result = msg.result; break; }
+          } catch (e) { if (!e.message?.includes("JSON")) throw e; }
+        }
+      }
+    } else {
+      if (!res.ok) throw new Error(`MCP ${res.status}: ${await res.text()}`);
+      const json = await res.json();
+      if (json.error) throw new Error(json.error.message);
+      result = json.result;
+    }
+    return { sid: sid || sessionId, result };
+  }
 
-  // Snapshot to see what we got
-  const snap1 = await _pw.tool("browser_snapshot", {});
+  // 1. Initialize
+  const { sid } = await mcpCall(null, "initialize", {
+    protocolVersion: "2025-03-26",
+    capabilities: {},
+    clientInfo: { name: "zara", version: "1.0" },
+  });
+  log.push({ tool: "init", result: `session=${sid}` });
+
+  // 2. Send initialized notification
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json, text/event-stream", "Mcp-Session-Id": sid },
+    body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+  });
+
+  // 3. List tools
+  const { result: toolsData } = await mcpCall(sid, "tools/list");
+  const tools = toolsData?.tools || [];
+  log.push({ tool: "tools/list", result: `${tools.length} tools` });
+
+  // 4. Navigate to target
+  const { result: navResult } = await mcpCall(sid, "tools/call", { name: "browser_navigate", arguments: { url: targetUrl } });
+  const navText = navResult?.content?.map(c => c.text || "").join("\n") || "";
+  log.push({ tool: "browser_navigate", result: navText.substring(0, 150) });
+
+  // 5. Wait
+  await mcpCall(sid, "tools/call", { name: "browser_wait_for", arguments: { time: 3 } });
+
+  // 6. Snapshot
+  const { result: snap1 } = await mcpCall(sid, "tools/call", { name: "browser_snapshot", arguments: {} });
   const snapText = snap1?.content?.map(c => c.text || "").join("\n") || "";
   log.push({ tool: "browser_snapshot", result: snapText.substring(0, 200) });
 
   // Check if already logged in
   if (snapText.includes("Conversations") || snapText.includes("Spaces") || snapText.includes("Develop")) {
-    return { success: true, tools: _pw.tools, log, snapshot: snapText };
+    // Store session for later use
+    _pw = new PlaywrightMCP(url);
+    _pw.sessionId = sid;
+    _pw.tools = tools;
+    return { success: true, tools, log, snapshot: snapText };
   }
 
-  // Fill email
-  try {
-    await _pw.tool("browser_type", { target: "textbox \"E-Mail or User Name\"", text: username, submit: false });
-    log.push({ tool: "type_email", result: "ok" });
-  } catch {
-    try {
-      await _pw.tool("browser_run_code_unsafe", { 
-        code: `async (page) => { const i = page.locator('input[type="email"], input[type="text"]').first(); await i.fill('${username}'); }`
-      });
-      log.push({ tool: "code_email", result: "ok" });
-    } catch (e) { log.push({ tool: "email", error: e.message }); }
-  }
+  // 7. Login via code (most reliable)
+  await mcpCall(sid, "tools/call", { name: "browser_run_code_unsafe", arguments: { 
+    code: `async (page) => {
+      const emailInput = page.locator('input[type="email"], input[type="text"], input[name*="user"], input[name*="email"]').first();
+      await emailInput.fill('${username}');
+      const continueBtn = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first();
+      await continueBtn.click();
+      await page.waitForTimeout(2000);
+      const passInput = page.locator('input[type="password"]').first();
+      await passInput.fill('${password}');
+      const submitBtn = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first();
+      await submitBtn.click();
+      await page.waitForTimeout(5000);
+      return page.url();
+    }`
+  }});
+  log.push({ tool: "login_code", result: "executed" });
 
-  // Click Continue
-  await _pw.tool("browser_wait_for", { time: 1 });
-  try { await _pw.tool("browser_click", { target: "button \"Continue\"" }); }
-  catch { 
-    try { await _pw.tool("browser_click", { target: "button \"Log On\"" }); }
-    catch { await _pw.tool("browser_run_code_unsafe", { code: `async (page) => { await page.locator('button, input[type="submit"]').filter({hasText: /continue|log on/i}).first().click(); }` }); }
-  }
-  log.push({ tool: "click_continue", result: "ok" });
-
-  // Wait for password page
-  await _pw.tool("browser_wait_for", { time: 2 });
-
-  // Fill password
-  try {
-    await _pw.tool("browser_type", { target: "textbox \"Password\"", text: password, submit: false });
-    log.push({ tool: "type_password", result: "ok" });
-  } catch {
-    await _pw.tool("browser_run_code_unsafe", { 
-      code: `async (page) => { await page.locator('input[type="password"]').first().fill('${password}'); }`
-    });
-    log.push({ tool: "code_password", result: "ok" });
-  }
-
-  // Submit
-  await _pw.tool("browser_wait_for", { time: 1 });
-  try { await _pw.tool("browser_click", { target: "button \"Log On\"" }); }
-  catch { 
-    try { await _pw.tool("browser_click", { target: "button \"Continue\"" }); }
-    catch { await _pw.tool("browser_run_code_unsafe", { code: `async (page) => { await page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first().click(); }` }); }
-  }
-  log.push({ tool: "click_submit", result: "ok" });
-
-  // Wait for redirect
-  await _pw.tool("browser_wait_for", { time: 5 });
-
-  // Final verification
-  const snap2 = await _pw.tool("browser_snapshot", {});
+  // 8. Final snapshot
+  const { result: snap2 } = await mcpCall(sid, "tools/call", { name: "browser_snapshot", arguments: {} });
   const finalSnap = snap2?.content?.map(c => c.text || "").join("\n") || "";
   log.push({ tool: "final_snapshot", result: finalSnap.substring(0, 200) });
 
   const success = finalSnap.includes("Conversations") || finalSnap.includes("Spaces") || 
                   finalSnap.includes("Develop") || finalSnap.includes("Build") || finalSnap.includes("/new");
-  return { success, tools: _pw.tools, log, snapshot: finalSnap };
+
+  // Store session for AI tool calls
+  _pw = new PlaywrightMCP(url);
+  _pw.sessionId = sid;
+  _pw.tools = tools;
+  return { success, tools, log, snapshot: finalSnap };
 });
 
 /**
