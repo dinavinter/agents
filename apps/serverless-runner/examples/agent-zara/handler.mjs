@@ -16,8 +16,16 @@
 import { assign, emit, fromCallback, setup, sendTo, spawnChild } from "https://esm.sh/xstate";
 import { fromAIElementStream } from "https://esm.sh/@cxai/stream";
 import { z } from "https://esm.sh/zod";
+import { createOpenAI } from "https://esm.sh/@ai-sdk/openai";
 import { Client } from "https://esm.sh/@modelcontextprotocol/sdk/client";
 import { StreamableHTTPClientTransport } from "https://esm.sh/@modelcontextprotocol/sdk/client/streamableHttp.js";
+
+// ─── AI Model (configured for ai-core-proxy) ────────────────────────────────
+const openai = createOpenAI({
+  baseURL: globalThis.process?.env?.OPENAI_BASE_URL || "http://ai-core-proxy.agents.svc.cluster.local:3030/v1",
+  apiKey: globalThis.process?.env?.OPENAI_API_KEY || "proxy",
+});
+const model = openai(globalThis.process?.env?.AI_MODEL || "gpt-4o");
 
 // ─── Playwright MCP actor ───────────────────────────────────────────────────
 
@@ -133,7 +141,7 @@ function phaseEvents() {
 // ─── Machine ────────────────────────────────────────────────────────────────
 
 export const machine = setup({
-  actors: { playwrightActor, aiStream: fromAIElementStream() },
+  actors: { playwrightActor, aiStream: fromAIElementStream({ model }) },
   types: { input: {}, context: {}, emitted: {} },
 }).createMachine({
   id: "zara",
