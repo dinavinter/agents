@@ -131,10 +131,13 @@ function parseToolCall(text) {
 
 // ─── Actors ─────────────────────────────────────────────────────────────────
 
+// ─── Module-level Playwright session (survives xstate context serialization) ─
+let _pw = null;
+
 const connectPlaywright = fromPromise(async ({ input }) => {
-  const pw = new PlaywrightMCP(input.url);
-  await pw.init();
-  return { pw, tools: pw.tools };
+  _pw = new PlaywrightMCP(input.url);
+  await _pw.init();
+  return { tools: _pw.tools, sessionId: _pw.sessionId };
 });
 
 /**
@@ -177,10 +180,9 @@ const aiDecide = fromPromise(async ({ input }) => {
  * Execute a single Playwright MCP tool call and return the result.
  */
 const execTool = fromPromise(async ({ input }) => {
-  const { pw, tool, args } = input;
+  const { tool, args } = input;
   try {
-    const result = await pw.tool(tool, args || {});
-    // Extract text content from MCP result
+    const result = await _pw.tool(tool, args || {});
     const text = result?.content
       ?.map(c => c.text || c.data || "")
       .join("\n") || JSON.stringify(result);
@@ -195,11 +197,9 @@ const execTool = fromPromise(async ({ input }) => {
  * Steps: navigate → snapshot → fill email → continue → fill password → sign in → verify
  */
 const performLogin = fromPromise(async ({ input }) => {
-  const { pw, targetUrl, username, password } = input;
+  const { targetUrl, username, password } = input;
+  const pw = _pw;  // use module-level instance
   const log = [];
-
-  // Debug: verify session
-  log.push({ tool: "__debug__", result: `session=${pw.id}, url=${targetUrl}` });
 
   // 1. Navigate to target
   const navResult = await pw.tool("browser_navigate", { url: targetUrl });
@@ -313,7 +313,6 @@ export const machine = setup({
   id: "zara",
   initial: "idle",
   context: ({ input }) => ({
-    pw: null,
     tools: [],
     toolCatalog: "",
     projectId: input?.projectId || "",
@@ -382,13 +381,12 @@ export const machine = setup({
           target: "authenticating",
           actions: [
             assign({
-              pw: ({ event }) => event.output.pw,
               tools: ({ event }) => event.output.tools,
               toolCatalog: ({ event }) => buildToolCatalog(event.output.tools),
             }),
             emit(({ event }) => ({
               type: "@progress",
-              data: `<div class="text-xs text-green-400">✓ Playwright connected (${event.output.tools.length} tools)</div>`,
+              data: `<div class="text-xs text-green-400">✓ Playwright connected (${event.output.tools.length} tools, session=${event.output.sessionId})</div>`,
             })),
           ],
         },
@@ -409,8 +407,7 @@ export const machine = setup({
       ],
       invoke: {
         src: "performLogin",
-        input: ({ context }) => ({
-          pw: context.pw,
+        input: () => ({
           targetUrl: (globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com") + "/new/build",
           username: globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com",
           password: globalThis.process?.env?.IAS_PASSWORD || "openCODE1!",
@@ -502,7 +499,6 @@ export const machine = setup({
       invoke: {
         src: "execTool",
         input: ({ context }) => ({
-          pw: context.pw,
           tool: context.pendingAction.tool,
           args: context.pendingAction.args,
         }),
