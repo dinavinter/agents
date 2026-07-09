@@ -16,6 +16,7 @@
 import { assign, emit, fromCallback, setup, sendTo, spawnChild } from "https://esm.sh/xstate";
 import { fromAIEventCallback } from "https://esm.sh/@cxai/stream";
 import { z } from "https://esm.sh/zod";
+import { tool } from "https://esm.sh/ai";
 import { createOpenAI } from "https://esm.sh/@ai-sdk/openai";
 import { Client } from "https://esm.sh/@modelcontextprotocol/sdk/client";
 import { StreamableHTTPClientTransport } from "https://esm.sh/@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -73,6 +74,31 @@ function buildToolCatalog(tools) {
     + "\n- __done__: Current phase complete";
 }
 
+/** Convert MCP tool definitions to Vercel AI SDK tool() format */
+function buildAITools(mcpTools) {
+  const aiTools = {};
+  for (const t of mcpTools) {
+    // Convert JSON Schema properties to Zod (simplified — use z.record for complex args)
+    aiTools[t.name] = tool({
+      description: t.description || t.name,
+      parameters: z.object({
+        ...(t.inputSchema?.required?.includes("url") ? { url: z.string().describe("URL to navigate to") } : {}),
+        ...(t.inputSchema?.required?.includes("target") ? { target: z.string().describe("Element ref from snapshot") } : {}),
+        ...(t.inputSchema?.required?.includes("text") ? { text: z.string().describe("Text to type") } : {}),
+        ...(t.inputSchema?.properties?.code ? { code: z.string().describe("Playwright code to run") } : {}),
+        ...(t.inputSchema?.properties?.time ? { time: z.number().optional().describe("Seconds to wait") } : {}),
+        ...(t.inputSchema?.properties?.text && !t.inputSchema?.required?.includes("text") ? { text: z.string().optional().describe("Text to wait for") } : {}),
+        ...(t.inputSchema?.properties?.submit ? { submit: z.boolean().optional().describe("Press Enter after") } : {}),
+      }),
+    });
+  }
+  // Virtual tools
+  aiTools["get_context"] = tool({ description: "Get fresh page snapshot", parameters: z.object({}) });
+  aiTools["suggest_hint"] = tool({ description: "Save UI hint for future runs", parameters: z.object({ phase: z.string(), old_hint: z.string(), new_hint: z.string() }) });
+  aiTools["__done__"] = tool({ description: "Signal current phase is complete", parameters: z.object({}) });
+  return aiTools;
+}
+
 const PHASES = {
   create: { objective: "Create solution — type prompt in Joule chat, submit", done: "URL contains /solutions/<uuid>" },
   intent: { objective: "Answer Joule's clarifying questions", done: "Stepper advances past Intent" },
@@ -107,7 +133,7 @@ export const machine = setup({
     prompt: input?.prompt || "",
     projectId: input?.projectId || "",
     phase: "create",
-    tools: [], toolCatalog: "",
+    tools: [], toolCatalog: "", aiTools: {},
     lastSnapshot: "", history: [], timeline: "",
     error: null, retries: 0, turn: 0, maxTurns: 100,
     hints: "", hintSuggestions: [], phaseDone: false,
@@ -122,9 +148,13 @@ export const machine = setup({
 
   // ─── Global event routing ─────────────────────────────────────────────────
   on: {
-    // PW ready — store tools
+    // PW ready — store tools + build AI tools
     "pw.ready": { actions: [
-      assign({ tools: ({ event }) => event.tools, toolCatalog: ({ event }) => buildToolCatalog(event.tools) }),
+      assign({
+        tools: ({ event }) => event.tools,
+        toolCatalog: ({ event }) => buildToolCatalog(event.tools),
+        aiTools: ({ event }) => buildAITools(event.tools),
+      }),
       emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-green-400">✓ PW: ${event.tools.length} tools</div>` })),
     ]},
     "pw.error": { actions: assign({ error: ({ event }) => `PW: ${event.error}` }) },
@@ -146,21 +176,24 @@ export const machine = setup({
         solutionUrl: ({ context, event }) => { if (context.solutionUrl) return context.solutionUrl; const m = (event.result || "").match(/(https?:\/\/[^\s]*\/solutions\/[0-9a-f-]{36}[^\s]*)/); return m ? m[1] : context.solutionUrl; },
         turn: ({ context }) => context.turn + 1,
       }),
-      // Forward to AI actor as a "snapshot" event (AI reacts to it)
+      // Forward to AI actor as a "snapshot" event
       sendTo("ai", ({ context, event }) => ({
         type: "snapshot",
-        tool: event.tool,
-        result: event.result,
-        error: event.error,
-        phase: context.phase,
-        objective: PHASES[context.phase]?.objective || "",
-        done_when: PHASES[context.phase]?.done || "",
-        snapshot: (event.tool === "browser_snapshot" || event.tool === "get_context") ? event.result : context.lastSnapshot,
-        timeline: context.timeline,
-        solutionId: context.solutionId,
-        prompt: context.prompt,
-        toolCatalog: context.toolCatalog,
-        hints: context.hints,
+        tools: context.aiTools || {},
+        system: `You are Zara, browser automation agent for Joule Studio.
+Use tools to interact with the browser. Call __done__ when the phase objective is met.
+
+PHASE: ${context.phase}
+OBJECTIVE: ${PHASES[context.phase]?.objective || ""}
+DONE WHEN: ${PHASES[context.phase]?.done || ""}
+SOLUTION: ${context.solutionId || "creating..."}
+TASK: ${context.prompt}
+${context.hints ? `HINTS:\n${context.hints}` : ""}`,
+        prompt: `Last action: [${event.tool}] ${event.error ? "ERROR: " + event.error : (event.result || "ok").substring(0, 500)}
+
+${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 2000)}` : ""}
+
+${context.timeline ? `Timeline:\n${context.timeline}` : ""}`,
       })),
       emit(({ event }) => ({
         type: "@progress",
@@ -170,10 +203,10 @@ export const machine = setup({
       })),
     ]},
 
-    // AI streams back tool calls as text-delta parts — parse and forward to pw
+    // AI streams back tool-call parts → forward to pw
     "tool-call": { actions: [
-      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.toolName}(${JSON.stringify(event.args || {}).substring(0, 50)})</div>` })),
-      sendTo("pw", ({ event }) => ({ type: "call", tool: event.toolName, args: event.args || {} })),
+      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.toolName || event.tool}(${JSON.stringify(event.args || {}).substring(0, 50)})</div>` })),
+      sendTo("pw", ({ event }) => ({ type: "call", tool: event.toolName || event.tool, args: event.args || {} })),
     ]},
 
     // AI text output (non-tool) — try to parse as JSON tool call
