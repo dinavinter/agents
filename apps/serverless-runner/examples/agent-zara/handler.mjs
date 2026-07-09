@@ -116,11 +116,35 @@ function nextPhase(current) {
   return idx >= 0 && idx < PHASE_ORDER.length - 1 ? PHASE_ORDER[idx + 1] : "done";
 }
 
+// ─── Static AI tools (defined at setup time for fromAIEventCallback) ─────────
+const staticAITools = {
+  browser_navigate: tool({ description: "Navigate to URL", parameters: z.object({ url: z.string() }) }),
+  browser_snapshot: tool({ description: "Page accessibility snapshot", parameters: z.object({}) }),
+  browser_click: tool({ description: "Click element", parameters: z.object({ target: z.string().describe("Element ref from snapshot") }) }),
+  browser_type: tool({ description: "Type text", parameters: z.object({ target: z.string(), text: z.string(), submit: z.boolean().optional() }) }),
+  browser_run_code_unsafe: tool({ description: "Run Playwright code", parameters: z.object({ code: z.string() }) }),
+  browser_wait_for: tool({ description: "Wait", parameters: z.object({ time: z.number().optional(), text: z.string().optional() }) }),
+  browser_press_key: tool({ description: "Press key", parameters: z.object({ key: z.string() }) }),
+  browser_fill_form: tool({ description: "Fill form fields", parameters: z.object({ fields: z.array(z.object({ target: z.string(), name: z.string(), type: z.string(), value: z.string() })) }) }),
+  get_context: tool({ description: "Fresh page snapshot", parameters: z.object({}) }),
+  suggest_hint: tool({ description: "Save UI hint for future runs", parameters: z.object({ phase: z.string(), old_hint: z.string(), new_hint: z.string() }) }),
+  __done__: tool({ description: "Current phase complete", parameters: z.object({}) }),
+};
+
 // ─── Machine ────────────────────────────────────────────────────────────────
 
 export const machine = setup({
   actors: {
     playwrightActor,
+    aiActor: fromAIEventCallback({
+      model,
+      tools: staticAITools,
+      system: `You are Zara, browser automation agent for Joule Studio.
+Use tools to interact with the browser. Each tool call executes immediately.
+Call __done__ when the current phase objective is met.
+Call get_context to see the current page state.
+Call suggest_hint if a UI hint is outdated.`,
+    }),
   },
   types: { input: {}, context: {}, emitted: {} },
 }).createMachine({
@@ -142,27 +166,19 @@ export const machine = setup({
   entry: [
     emit({ type: "message", data: `<main class="mx-auto bg-gray-900 min-h-screen p-6 text-gray-100"><header class="sticky top-0 backdrop-blur-md border-b border-gray-700 flex items-center justify-between p-4"><span class="text-lg font-semibold text-purple-400">Zara</span><span class="text-sm" sse-swap="@status" hx-swap="innerHTML">● idle</span></header><div class="mt-4 space-y-1 max-h-[70vh] overflow-y-auto" sse-swap="@progress" hx-swap="beforeend"></div><form class="mt-4 flex gap-2"><input type="text" name="prompt" placeholder="What to test..." class="flex-1 p-3 bg-gray-800 border border-gray-600 rounded-lg"/><button type="submit" hx-post="events/request" class="px-6 py-3 bg-purple-600 rounded-lg">Start</button></form></main>` }),
     spawnChild("playwrightActor", { id: "pw", systemId: "pw", input: { url: globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp-local.agents.svc.cluster.local:8931/mcp" } }),
+    spawnChild("aiActor", { id: "ai", systemId: "ai", input: { type: "snapshot", template: "Phase: {{phase}}\nTask: {{prompt}}\nSolution: {{solutionId}}\n{{#lastSnapshot}}Page:\n{{lastSnapshot}}{{/lastSnapshot}}\n{{#timeline}}Timeline:\n{{timeline}}{{/timeline}}" } }),
   ],
 
   // ─── Global event routing ─────────────────────────────────────────────────
   on: {
-    // PW ready — store tools + spawn AI actor with tools configured
+    // PW ready — store tools
     "pw.ready": { actions: [
       assign({
         tools: ({ event }) => event.tools,
         toolCatalog: ({ event }) => buildToolCatalog(event.tools),
         aiTools: ({ event }) => buildAITools(event.tools),
       }),
-      spawnChild(({ context, event }) => fromAIEventCallback({
-        model,
-        tools: buildAITools(event.tools),
-        system: `You are Zara, browser automation agent for Joule Studio.
-Use tools to interact with the browser. Each tool call executes immediately.
-Call __done__ when the current phase objective is met.
-Call get_context to see the current page state.
-Call suggest_hint if a UI hint is outdated.`,
-      }), { id: "ai", systemId: "ai", input: { type: "snapshot", template: "Phase: {{phase}}\nTask: {{prompt}}\n{{#lastSnapshot}}Page:\n{{lastSnapshot}}{{/lastSnapshot}}\n{{#timeline}}Timeline:\n{{timeline}}{{/timeline}}" } }),
-      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-green-400">✓ PW: ${event.tools.length} tools + AI ready</div>` })),
+      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-green-400">✓ PW: ${event.tools.length} tools</div>` })),
     ]},
     "pw.error": { actions: assign({ error: ({ event }) => `PW: ${event.error}` }) },
 
