@@ -1,16 +1,17 @@
 /**
  * Zara — E2E Testing Agent
  *
- * Two long-lived actors spawned at machine entry:
- *   - pw: Playwright MCP client — executes browser tools
- *   - ai: fromAIEventCallback — receives pw.result events, streams tool calls back
+ * Two long-lived actors:
+ *   - pw: Playwright MCP client
+ *   - ai: fromAIEventCallback with executable tools (maxSteps for multi-turn)
  *
- * Machine routes events between them:
- *   pw.result → forward to ai actor
- *   ai streamed parts (tool calls) → forward to pw actor
- *   ai "output" → check for phase transitions
+ * Flow:
+ *   Machine sends {type:"snapshot"} to ai → AI calls tools (execute runs on MCP client)
+ *   → AI loops internally via maxSteps until __done__ → machine transitions phase
  *
- * States: idle → login → create → building (intent → requirements → ...)
+ * The AI actor holds the MCP client reference and tool execute functions call it directly.
+ * No event routing needed for tool execution — it's all inside the AI's streamText loop.
+ * Machine only sees: tool-call events (for UI progress) + output (phase complete signal)
  */
 
 import { assign, emit, fromCallback, setup, sendTo, spawnChild } from "https://esm.sh/xstate";
@@ -28,76 +29,87 @@ const openai = createOpenAI({
 });
 const model = openai(globalThis.process?.env?.AI_MODEL || "gpt-4o");
 
-// ─── Playwright MCP actor ───────────────────────────────────────────────────
+// ─── MCP Client (shared, used by AI tool execute functions) ─────────────────
+let mcpClient = null;
+let mcpConnected = false;
 
-const playwrightActor = fromCallback(({ sendBack, receive, input }) => {
-  const client = new Client({ name: "zara", version: "1.0" });
-  let connected = false;
+async function initMCP() {
+  const url = globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp-local.agents.svc.cluster.local:8931/mcp";
+  mcpClient = new Client({ name: "zara", version: "1.0" });
+  const transport = new StreamableHTTPClientTransport(new URL(url));
+  await mcpClient.connect(transport);
+  mcpConnected = true;
+}
 
-  (async () => {
-    try {
-      const transport = new StreamableHTTPClientTransport(new URL(input.url));
-      await client.connect(transport);
-      connected = true;
-      const { tools } = await client.listTools();
-      sendBack({ type: "pw.ready", tools: tools || [] });
-    } catch (e) { sendBack({ type: "pw.error", error: e.message }); }
-  })();
+async function callMCP(toolName, args) {
+  if (!mcpConnected) throw new Error("MCP not connected");
+  const r = await mcpClient.callTool({ name: toolName, arguments: args || {} });
+  return r?.content?.map(c => c.text || c.data || "").join("\n") || JSON.stringify(r);
+}
 
-  receive(async (event) => {
-    if (event.type !== "call") return;
-    const { tool, args } = event;
-    if (tool === "suggest_hint") { sendBack({ type: "pw.result", tool, args, result: `Hint saved: [${args?.phase}] ${args?.new_hint}` }); return; }
-    if (tool === "__done__") { sendBack({ type: "pw.result", tool, args, result: "done" }); return; }
-    if (tool === "get_context") {
-      if (!connected) { sendBack({ type: "pw.result", tool, error: "Not connected" }); return; }
-      try { const r = await client.callTool({ name: "browser_snapshot", arguments: {} }); sendBack({ type: "pw.result", tool, args: {}, result: r?.content?.map(c => c.text || "").join("\n") || "" }); }
-      catch (e) { sendBack({ type: "pw.result", tool, error: e.message }); }
-      return;
-    }
-    if (!connected) { sendBack({ type: "pw.result", tool, error: "Not connected" }); return; }
-    try {
-      const r = await client.callTool({ name: tool, arguments: args || {} });
-      sendBack({ type: "pw.result", tool, args, result: r?.content?.map(c => c.text || c.data || "").join("\n") || JSON.stringify(r) });
-    } catch (e) { sendBack({ type: "pw.result", tool, args, error: e.message }); }
-  });
+// ─── AI Tools (with execute functions that call MCP directly) ────────────────
 
-  return () => { if (connected) client.close().catch(() => {}); };
+const aiTools = {
+  browser_navigate: tool({
+    description: "Navigate to URL",
+    parameters: z.object({ url: z.string() }),
+    execute: async ({ url }) => callMCP("browser_navigate", { url }),
+  }),
+  browser_snapshot: tool({
+    description: "Page accessibility snapshot — use this to see current page state",
+    parameters: z.object({}),
+    execute: async () => callMCP("browser_snapshot", {}),
+  }),
+  browser_click: tool({
+    description: "Click element by ref from snapshot",
+    parameters: z.object({ target: z.string().describe("Element ref from snapshot e.g. 'e22'") }),
+    execute: async ({ target }) => callMCP("browser_click", { target }),
+  }),
+  browser_type: tool({
+    description: "Type text into element",
+    parameters: z.object({ target: z.string(), text: z.string(), submit: z.boolean().optional().describe("Press Enter after") }),
+    execute: async ({ target, text, submit }) => callMCP("browser_type", { target, text, submit }),
+  }),
+  browser_run_code_unsafe: tool({
+    description: "Run Playwright code directly — use when snapshot refs don't work",
+    parameters: z.object({ code: z.string().describe("async (page) => { ... }") }),
+    execute: async ({ code }) => callMCP("browser_run_code_unsafe", { code }),
+  }),
+  browser_wait_for: tool({
+    description: "Wait for time or text",
+    parameters: z.object({ time: z.number().optional(), text: z.string().optional() }),
+    execute: async ({ time, text }) => callMCP("browser_wait_for", { time, text }),
+  }),
+  browser_press_key: tool({
+    description: "Press keyboard key",
+    parameters: z.object({ key: z.string() }),
+    execute: async ({ key }) => callMCP("browser_press_key", { key }),
+  }),
+  get_context: tool({
+    description: "Get fresh page snapshot + URL (alias for browser_snapshot)",
+    parameters: z.object({}),
+    execute: async () => callMCP("browser_snapshot", {}),
+  }),
+  suggest_hint: tool({
+    description: "Save a UI hint observation for future runs",
+    parameters: z.object({ phase: z.string(), old_hint: z.string(), new_hint: z.string() }),
+    execute: async ({ phase, old_hint, new_hint }) => `Hint saved: [${phase}] ${new_hint}`,
+  }),
+  __done__: tool({
+    description: "Signal that the current phase objective is complete",
+    parameters: z.object({ reason: z.string().optional() }),
+    // No execute — this stops the tool loop
+  }),
+};
+
+// ─── PW init actor (connects MCP eagerly) ───────────────────────────────────
+
+const pwInitActor = fromCallback(({ sendBack }) => {
+  initMCP().then(() => sendBack({ type: "pw.ready" })).catch(e => sendBack({ type: "pw.error", error: e.message }));
+  return () => {};
 });
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-function buildToolCatalog(tools) {
-  return tools.map(t => `- ${t.name}: ${t.description || ""}`).join("\n")
-    + "\n- get_context: Fresh page snapshot"
-    + "\n- suggest_hint: Save hint for future. Args: {phase, old_hint, new_hint}"
-    + "\n- __done__: Current phase complete";
-}
-
-/** Convert MCP tool definitions to Vercel AI SDK tool() format */
-function buildAITools(mcpTools) {
-  const aiTools = {};
-  for (const t of mcpTools) {
-    // Convert JSON Schema properties to Zod (simplified — use z.record for complex args)
-    aiTools[t.name] = tool({
-      description: t.description || t.name,
-      parameters: z.object({
-        ...(t.inputSchema?.required?.includes("url") ? { url: z.string().describe("URL to navigate to") } : {}),
-        ...(t.inputSchema?.required?.includes("target") ? { target: z.string().describe("Element ref from snapshot") } : {}),
-        ...(t.inputSchema?.required?.includes("text") ? { text: z.string().describe("Text to type") } : {}),
-        ...(t.inputSchema?.properties?.code ? { code: z.string().describe("Playwright code to run") } : {}),
-        ...(t.inputSchema?.properties?.time ? { time: z.number().optional().describe("Seconds to wait") } : {}),
-        ...(t.inputSchema?.properties?.text && !t.inputSchema?.required?.includes("text") ? { text: z.string().optional().describe("Text to wait for") } : {}),
-        ...(t.inputSchema?.properties?.submit ? { submit: z.boolean().optional().describe("Press Enter after") } : {}),
-      }),
-    });
-  }
-  // Virtual tools
-  aiTools["get_context"] = tool({ description: "Get fresh page snapshot", parameters: z.object({}) });
-  aiTools["suggest_hint"] = tool({ description: "Save UI hint for future runs", parameters: z.object({ phase: z.string(), old_hint: z.string(), new_hint: z.string() }) });
-  aiTools["__done__"] = tool({ description: "Signal current phase is complete", parameters: z.object({}) });
-  return aiTools;
-}
 
 const PHASES = {
   create: { objective: "Create solution — type prompt in Joule chat, submit", done: "URL contains /solutions/<uuid>" },
@@ -109,41 +121,27 @@ const PHASES = {
   deployed: { objective: "Verify deployed solution", done: "Agent responds" },
 };
 
-const PHASE_ORDER = ["create", "intent", "requirements", "solution", "testing", "deployment", "deployed", "done"];
-
-function nextPhase(current) {
-  const idx = PHASE_ORDER.indexOf(current);
-  return idx >= 0 && idx < PHASE_ORDER.length - 1 ? PHASE_ORDER[idx + 1] : "done";
-}
-
-// ─── Static AI tools (defined at setup time for fromAIEventCallback) ─────────
-const staticAITools = {
-  browser_navigate: tool({ description: "Navigate to URL", parameters: z.object({ url: z.string() }) }),
-  browser_snapshot: tool({ description: "Page accessibility snapshot", parameters: z.object({}) }),
-  browser_click: tool({ description: "Click element", parameters: z.object({ target: z.string().describe("Element ref from snapshot") }) }),
-  browser_type: tool({ description: "Type text", parameters: z.object({ target: z.string(), text: z.string(), submit: z.boolean().optional() }) }),
-  browser_run_code_unsafe: tool({ description: "Run Playwright code", parameters: z.object({ code: z.string() }) }),
-  browser_wait_for: tool({ description: "Wait", parameters: z.object({ time: z.number().optional(), text: z.string().optional() }) }),
-  browser_press_key: tool({ description: "Press key", parameters: z.object({ key: z.string() }) }),
-  browser_fill_form: tool({ description: "Fill form fields", parameters: z.object({ fields: z.array(z.object({ target: z.string(), name: z.string(), type: z.string(), value: z.string() })) }) }),
-  get_context: tool({ description: "Fresh page snapshot", parameters: z.object({}) }),
-  suggest_hint: tool({ description: "Save UI hint for future runs", parameters: z.object({ phase: z.string(), old_hint: z.string(), new_hint: z.string() }) }),
-  __done__: tool({ description: "Current phase complete", parameters: z.object({}) }),
-};
-
 // ─── Machine ────────────────────────────────────────────────────────────────
 
 export const machine = setup({
   actors: {
-    playwrightActor,
+    pwInitActor,
     aiActor: fromAIEventCallback({
       model,
-      tools: staticAITools,
+      tools: aiTools,
+      maxSteps: 20,
       system: `You are Zara, browser automation agent for Joule Studio.
-Use tools to interact with the browser. Each tool call executes immediately.
-Call __done__ when the current phase objective is met.
-Call get_context to see the current page state.
-Call suggest_hint if a UI hint is outdated.`,
+You have browser tools that execute immediately and return results.
+Use browser_snapshot or get_context to see the page before acting.
+Use browser_run_code_unsafe when snapshot refs don't work (shadow DOM, custom elements).
+Call __done__ when the phase objective is met.
+
+IMPORTANT:
+- Always snapshot first if you don't know page state
+- Use element refs from snapshot (e.g. target: "e22")  
+- URL is the most reliable completion signal
+- Chat input may be in shadow DOM — use browser_run_code_unsafe
+- Wait 3-5s after page-changing actions before snapshotting`,
     }),
   },
   types: { input: {}, context: {}, emitted: {} },
@@ -156,109 +154,41 @@ Call suggest_hint if a UI hint is outdated.`,
     prompt: input?.prompt || "",
     projectId: input?.projectId || "",
     phase: "create",
-    tools: [], toolCatalog: "", aiTools: {},
-    lastSnapshot: "", history: [], timeline: "",
-    error: null, retries: 0, turn: 0, maxTurns: 100,
-    hints: "", hintSuggestions: [], phaseDone: false,
+    lastSnapshot: "", timeline: "",
+    error: null, retries: 0, turn: 0,
+    hints: "", phaseDone: false,
     ...input,
   }),
 
   entry: [
     emit({ type: "message", data: `<main class="mx-auto bg-gray-900 min-h-screen p-6 text-gray-100"><header class="sticky top-0 backdrop-blur-md border-b border-gray-700 flex items-center justify-between p-4"><span class="text-lg font-semibold text-purple-400">Zara</span><span class="text-sm" sse-swap="@status" hx-swap="innerHTML">● idle</span></header><div class="mt-4 space-y-1 max-h-[70vh] overflow-y-auto" sse-swap="@progress" hx-swap="beforeend"></div><form class="mt-4 flex gap-2"><input type="text" name="prompt" placeholder="What to test..." class="flex-1 p-3 bg-gray-800 border border-gray-600 rounded-lg"/><button type="submit" hx-post="events/request" class="px-6 py-3 bg-purple-600 rounded-lg">Start</button></form></main>` }),
-    spawnChild("playwrightActor", { id: "pw", systemId: "pw", input: { url: globalThis.process?.env?.PLAYWRIGHT_MCP_URL || "http://playwright-mcp-local.agents.svc.cluster.local:8931/mcp" } }),
-    spawnChild("aiActor", { id: "ai", systemId: "ai", input: { type: "snapshot", template: "Phase: {{phase}}\nTask: {{prompt}}\nSolution: {{solutionId}}\n{{#lastSnapshot}}Page:\n{{lastSnapshot}}{{/lastSnapshot}}\n{{#timeline}}Timeline:\n{{timeline}}{{/timeline}}" } }),
+    spawnChild("pwInitActor", { id: "pwInit" }),
+    spawnChild("aiActor", { id: "ai", systemId: "ai", input: { type: "phase", template: "PHASE: {{phase}}\nOBJECTIVE: {{objective}}\nDONE WHEN: {{doneWhen}}\nTASK: {{prompt}}\nSOLUTION: {{solutionId}}\n{{#hints}}HINTS:\n{{hints}}{{/hints}}" } }),
   ],
 
-  // ─── Global event routing ─────────────────────────────────────────────────
   on: {
-    // PW ready — store tools
-    "pw.ready": { actions: [
+    "pw.ready": { actions: emit({ type: "@progress", data: `<div class="text-xs text-green-400">✓ MCP connected</div>` }) },
+    "pw.error": { actions: assign({ error: ({ event }) => `MCP: ${event.error}` }) },
+    // AI emits tool-call events — show progress
+    "tool-call": { actions: emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.toolName}(${JSON.stringify(event.args || {}).substring(0, 60)})</div>` })) },
+    "tool-result": { actions: [
+      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-gray-500">← ${(event.result?.content?.[0]?.text || JSON.stringify(event.result) || "").substring(0, 80)}</div>` })),
       assign({
-        tools: ({ event }) => event.tools,
-        toolCatalog: ({ event }) => buildToolCatalog(event.tools),
-        aiTools: ({ event }) => buildAITools(event.tools),
-      }),
-      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-green-400">✓ PW: ${event.tools.length} tools</div>` })),
-    ]},
-    "pw.error": { actions: assign({ error: ({ event }) => `PW: ${event.error}` }) },
-
-    // PW result → update context + forward to AI actor
-    "pw.result": { actions: [
-      assign({
-        history: ({ context, event }) => [...context.history, { tool: event.tool, args: event.args, result: event.result, error: event.error, ts: Date.now(), phase: context.phase, turn: context.turn }],
-        timeline: ({ context, event }) => {
-          const t = new Date().toISOString().slice(11, 19);
-          const s = event.error ? `ERR: ${event.error.substring(0, 60)}` : (event.result || "ok").substring(0, 80);
-          return (context.timeline || "").split("\n").filter(Boolean).slice(-7).concat(`[${t}] ${event.tool} → ${s}`).join("\n");
-        },
-        lastSnapshot: ({ context, event }) => (event.tool === "browser_snapshot" || event.tool === "get_context") ? (event.result || context.lastSnapshot) : context.lastSnapshot,
-        phaseDone: ({ context, event }) => event.tool === "__done__" ? true : context.phaseDone,
-        hints: ({ context, event }) => event.tool === "suggest_hint" ? (context.hints || "") + `\n[${event.args?.phase}] ${event.args?.new_hint || ""}` : context.hints,
-        hintSuggestions: ({ context, event }) => event.tool === "suggest_hint" ? [...(context.hintSuggestions || []), event.args] : context.hintSuggestions,
-        solutionId: ({ context, event }) => { if (context.solutionId) return context.solutionId; const m = (event.result || "").match(/\/solutions\/([0-9a-f-]{36})/); return m ? m[1] : context.solutionId; },
-        solutionUrl: ({ context, event }) => { if (context.solutionUrl) return context.solutionUrl; const m = (event.result || "").match(/(https?:\/\/[^\s]*\/solutions\/[0-9a-f-]{36}[^\s]*)/); return m ? m[1] : context.solutionUrl; },
         turn: ({ context }) => context.turn + 1,
+        lastSnapshot: ({ context, event }) => {
+          const text = event.result?.content?.[0]?.text || "";
+          return text.includes("Page URL:") ? text : context.lastSnapshot;
+        },
+        solutionId: ({ context, event }) => {
+          if (context.solutionId) return context.solutionId;
+          const text = event.result?.content?.[0]?.text || "";
+          const m = text.match(/\/solutions\/([0-9a-f-]{36})/);
+          return m ? m[1] : context.solutionId;
+        },
       }),
-      // Forward to AI actor as a "snapshot" event
-      sendTo("ai", ({ context, event }) => ({
-        type: "snapshot",
-        tools: context.aiTools || {},
-        system: `You are Zara, browser automation agent for Joule Studio.
-Use tools to interact with the browser. Call __done__ when the phase objective is met.
-
-PHASE: ${context.phase}
-OBJECTIVE: ${PHASES[context.phase]?.objective || ""}
-DONE WHEN: ${PHASES[context.phase]?.done || ""}
-SOLUTION: ${context.solutionId || "creating..."}
-TASK: ${context.prompt}
-${context.hints ? `HINTS:\n${context.hints}` : ""}`,
-        prompt: `Last action: [${event.tool}] ${event.error ? "ERROR: " + event.error : (event.result || "ok").substring(0, 500)}
-
-${context.lastSnapshot ? `Page:\n${context.lastSnapshot.substring(0, 2000)}` : ""}
-
-${context.timeline ? `Timeline:\n${context.timeline}` : ""}`,
-      })),
-      emit(({ event }) => ({
-        type: "@progress",
-        data: event.tool === "__done__" ? `<div class="text-xs text-green-400 font-semibold">✓ Phase done</div>`
-          : event.tool === "suggest_hint" ? `<div class="text-xs text-amber-400">💡 ${event.args?.new_hint || ""}</div>`
-          : `<div class="text-xs text-gray-500">← [${event.tool}] ${(event.error || event.result || "").substring(0, 80)}</div>`,
-      })),
     ]},
-
-    // AI streams back tool-call parts → forward to pw
-    "tool-call": { actions: [
-      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.toolName || event.tool}(${JSON.stringify(event.args || {}).substring(0, 50)})</div>` })),
-      sendTo("pw", ({ event }) => ({ type: "call", tool: event.toolName || event.tool, args: event.args || {} })),
-    ]},
-
-    // AI text output (non-tool) — try to parse as JSON tool call
-    "text-delta": { actions: [] }, // accumulate silently
-
-    // AI output complete
-    "output": { actions: [
-      // Try to parse the full text as a tool call if no tool-call events came
-      ({ context, event }) => {
-        const text = event.output || "";
-        // Try JSON parse
-        const start = text.indexOf("{");
-        if (start === -1) return;
-        let depth = 0;
-        for (let i = start; i < text.length; i++) {
-          if (text[i] === "{") depth++;
-          else if (text[i] === "}") { depth--; if (depth === 0) {
-            try {
-              const obj = JSON.parse(text.substring(start, i + 1));
-              if (obj.tool) {
-                // Forward parsed tool call to pw
-                // This is a fallback — ideally tool-call events handle this
-              }
-            } catch {}
-            break;
-          }}
-        }
-      },
-    ]},
+    // AI output = phase done
+    "output": { actions: assign({ phaseDone: () => true }) },
   },
 
   states: {
@@ -267,90 +197,108 @@ ${context.timeline ? `Timeline:\n${context.timeline}` : ""}`,
       entry: emit({ type: "@status", data: `<span class="text-green-400">● idle</span>` }),
       on: { request: { target: "login", actions: assign({
         prompt: ({ event }) => event.prompt || "", projectId: ({ event }) => event.projectId || `s-${Date.now()}`,
-        solutionId: ({ event }) => event.solutionId || null, solutionUrl: ({ event }) => event.solutionUrl || null,
-        error: () => null, retries: () => 0, turn: () => 0, history: () => [], timeline: () => "",
-        phase: () => "create", hints: () => "", hintSuggestions: () => [], phaseDone: () => false,
+        solutionId: ({ event }) => event.solutionId || null,
+        error: () => null, retries: () => 0, turn: () => 0,
+        phase: () => "create", hints: () => "", phaseDone: () => false,
       })}},
     },
 
     // ═══ LOGIN ═══════════════════════════════════════════════════════════════
     login: {
-      initial: "navigate",
-      entry: emit({ type: "@status", data: `<span class="text-blue-400">● login</span>` }),
-      states: {
-        navigate: { entry: sendTo("pw", () => ({ type: "call", tool: "browser_navigate", args: { url: (globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com") + "/new/build" } })), on: { "pw.result": "wait" } },
-        wait: { entry: sendTo("pw", { type: "call", tool: "browser_wait_for", args: { time: 3 } }), on: { "pw.result": "fill" } },
-        fill: {
-          entry: sendTo("pw", () => ({ type: "call", tool: "browser_run_code_unsafe", args: { code: `async (page) => { const u = '${globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com"}'; const p = '${globalThis.process?.env?.IAS_PASSWORD || "openCODE1!"}'; try { const e = page.locator('input[type="email"], input[type="text"], input[name*="user"]').first(); await e.fill(u); const b = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first(); await b.click(); await page.waitForTimeout(2000); const pw = page.locator('input[type="password"]').first(); await pw.fill(p); const s = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first(); await s.click(); await page.waitForTimeout(5000); } catch(err) {} return page.url(); }` } })),
-          on: { "pw.result": "snapshot" },
-        },
-        snapshot: { entry: sendTo("pw", { type: "call", tool: "browser_snapshot", args: {} }), on: { "pw.result": "done" } },
-        done: { type: "final" },
-      },
-      onDone: [
-        { guard: ({ context }) => !!context.solutionId, target: "building" },
-        { target: "create" },
+      entry: [
+        emit({ type: "@status", data: `<span class="text-blue-400">● login</span>` }),
+        // Kick off login by sending to AI
+        sendTo("ai", ({ context }) => ({
+          type: "phase",
+          phase: "login",
+          objective: "Navigate to Joule Studio and login with IAS credentials",
+          doneWhen: "Page shows Conversations/Spaces/Develop nav",
+          prompt: `Login to ${globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com"}/new/build with username ${globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com"} and password ${globalThis.process?.env?.IAS_PASSWORD || "openCODE1!"}. Use browser_run_code_unsafe to fill the form.`,
+          solutionId: context.solutionId,
+          hints: "",
+        })),
       ],
+      on: {
+        "output": [
+          { guard: ({ context }) => !!context.solutionId, target: "building", actions: assign({ phaseDone: () => false }) },
+          { target: "create", actions: assign({ phaseDone: () => false }) },
+        ],
+      },
     },
 
     // ═══ CREATE ══════════════════════════════════════════════════════════════
-    // AI drives browser to create a solution. Transitions when solutionId detected.
     create: {
       entry: [
         assign({ phase: () => "create", phaseDone: () => false }),
         emit({ type: "@status", data: `<span class="text-blue-400">● create</span>` }),
-        // Kick off: send initial snapshot to AI to start thinking
-        sendTo("pw", { type: "call", tool: "get_context", args: {} }),
+        sendTo("ai", ({ context }) => ({
+          type: "phase",
+          phase: "create",
+          objective: PHASES.create.objective,
+          doneWhen: PHASES.create.done,
+          prompt: context.prompt,
+          solutionId: context.solutionId,
+          hints: context.hints + "\nChat input may be shadow DOM. Use browser_run_code_unsafe: async (page) => { await page.locator('[placeholder*=\"Message\"], textarea, [contenteditable]').first().fill('TEXT'); await page.keyboard.press('Enter'); }",
+        })),
       ],
-      always: [
-        { guard: ({ context }) => !!context.solutionId, target: "building" },
-        { guard: ({ context }) => context.phaseDone, target: "building" },
-        { guard: ({ context }) => context.turn > context.maxTurns, target: "error", actions: assign({ error: () => "Max turns in create" }) },
-      ],
+      on: { "output": [
+        { guard: ({ context }) => !!context.solutionId, target: "building", actions: assign({ phaseDone: () => false }) },
+        { target: "create" }, // loop if no solution yet
+      ]},
     },
 
-    // ═══ BUILDING (sub-machine) ══════════════════════════════════════════════
+    // ═══ BUILDING ════════════════════════════════════════════════════════════
     building: {
-      initial: "verify",
+      initial: "intent",
       entry: emit({ type: "@status", data: `<span class="text-purple-400">● building</span>` }),
       states: {
-        verify: {
-          entry: sendTo("pw", { type: "call", tool: "get_context", args: {} }),
-          on: { "pw.result": [
-            { guard: ({ context, event }) => (event.result || context.lastSnapshot || "").includes("/solutions/"), target: "intent" },
-            { target: "nav_solution" },
-          ]},
-        },
-        nav_solution: {
-          entry: sendTo("pw", ({ context }) => ({ type: "call", tool: "browser_navigate", args: { url: context.solutionUrl || `${globalThis.process?.env?.DAS_HOST || ""}/new/build/solutions/${context.solutionId}` } })),
-          on: { "pw.result": "wait_nav" },
-        },
-        wait_nav: { entry: sendTo("pw", { type: "call", tool: "browser_wait_for", args: { time: 3 } }), on: { "pw.result": "intent" } },
-
-        // Phase states — AI drives via the global event routing
         intent: {
-          entry: [assign({ phase: () => "intent", phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-indigo-400">● intent</span>` }), sendTo("pw", { type: "call", tool: "get_context", args: {} })],
-          always: [{ guard: ({ context }) => context.phaseDone, target: "requirements" }],
+          entry: [
+            assign({ phase: () => "intent", phaseDone: () => false }),
+            emit({ type: "@status", data: `<span class="text-indigo-400">● intent</span>` }),
+            sendTo("ai", ({ context }) => ({ type: "phase", phase: "intent", objective: PHASES.intent.objective, doneWhen: PHASES.intent.done, prompt: context.prompt, solutionId: context.solutionId, hints: context.hints })),
+          ],
+          on: { "output": { target: "requirements", actions: assign({ phaseDone: () => false }) } },
         },
         requirements: {
-          entry: [assign({ phase: () => "requirements", phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-indigo-400">● requirements</span>` }), sendTo("pw", { type: "call", tool: "get_context", args: {} })],
-          always: [{ guard: ({ context }) => context.phaseDone, target: "solution" }],
+          entry: [
+            assign({ phase: () => "requirements", phaseDone: () => false }),
+            emit({ type: "@status", data: `<span class="text-indigo-400">● requirements</span>` }),
+            sendTo("ai", ({ context }) => ({ type: "phase", phase: "requirements", objective: PHASES.requirements.objective, doneWhen: PHASES.requirements.done, prompt: context.prompt, solutionId: context.solutionId, hints: context.hints })),
+          ],
+          on: { "output": { target: "solution", actions: assign({ phaseDone: () => false }) } },
         },
         solution: {
-          entry: [assign({ phase: () => "solution", phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-indigo-400">● solution</span>` }), sendTo("pw", { type: "call", tool: "get_context", args: {} })],
-          always: [{ guard: ({ context }) => context.phaseDone, target: "testing" }],
+          entry: [
+            assign({ phase: () => "solution", phaseDone: () => false }),
+            emit({ type: "@status", data: `<span class="text-indigo-400">● solution</span>` }),
+            sendTo("ai", ({ context }) => ({ type: "phase", phase: "solution", objective: PHASES.solution.objective, doneWhen: PHASES.solution.done, prompt: context.prompt, solutionId: context.solutionId, hints: context.hints })),
+          ],
+          on: { "output": { target: "testing", actions: assign({ phaseDone: () => false }) } },
         },
         testing: {
-          entry: [assign({ phase: () => "testing", phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-orange-400">● testing</span>` }), sendTo("pw", { type: "call", tool: "get_context", args: {} })],
-          always: [{ guard: ({ context }) => context.phaseDone, target: "deployment" }],
+          entry: [
+            assign({ phase: () => "testing", phaseDone: () => false }),
+            emit({ type: "@status", data: `<span class="text-orange-400">● testing</span>` }),
+            sendTo("ai", ({ context }) => ({ type: "phase", phase: "testing", objective: PHASES.testing.objective, doneWhen: PHASES.testing.done, prompt: context.prompt, solutionId: context.solutionId, hints: context.hints })),
+          ],
+          on: { "output": { target: "deployment", actions: assign({ phaseDone: () => false }) } },
         },
         deployment: {
-          entry: [assign({ phase: () => "deployment", phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-orange-400">● deployment</span>` }), sendTo("pw", { type: "call", tool: "get_context", args: {} })],
-          always: [{ guard: ({ context }) => context.phaseDone, target: "deployed" }],
+          entry: [
+            assign({ phase: () => "deployment", phaseDone: () => false }),
+            emit({ type: "@status", data: `<span class="text-orange-400">● deployment</span>` }),
+            sendTo("ai", ({ context }) => ({ type: "phase", phase: "deployment", objective: PHASES.deployment.objective, doneWhen: PHASES.deployment.done, prompt: context.prompt, solutionId: context.solutionId, hints: context.hints })),
+          ],
+          on: { "output": { target: "deployed", actions: assign({ phaseDone: () => false }) } },
         },
         deployed: {
-          entry: [assign({ phase: () => "deployed", phaseDone: () => false }), emit({ type: "@status", data: `<span class="text-cyan-400">● deployed</span>` }), sendTo("pw", { type: "call", tool: "get_context", args: {} })],
-          always: [{ guard: ({ context }) => context.phaseDone, target: "complete" }],
+          entry: [
+            assign({ phase: () => "deployed", phaseDone: () => false }),
+            emit({ type: "@status", data: `<span class="text-cyan-400">● deployed</span>` }),
+            sendTo("ai", ({ context }) => ({ type: "phase", phase: "deployed", objective: PHASES.deployed.objective, doneWhen: PHASES.deployed.done, prompt: context.prompt, solutionId: context.solutionId, hints: context.hints })),
+          ],
+          on: { "output": { target: "complete", actions: assign({ phaseDone: () => false }) } },
         },
         complete: { type: "final" },
       },
@@ -360,7 +308,7 @@ ${context.timeline ? `Timeline:\n${context.timeline}` : ""}`,
     // ═══ DONE ════════════════════════════════════════════════════════════════
     done: { type: "final", entry: [
       emit({ type: "@status", data: `<span class="text-green-400">● done ✓</span>` }),
-      emit(({ context }) => ({ type: "@progress", data: `<div class="text-sm text-green-400 font-bold mt-4">✓ Solution ${context.solutionId || "?"} — ${context.history.length} actions</div>` })),
+      emit(({ context }) => ({ type: "@progress", data: `<div class="text-sm text-green-400 font-bold mt-4">✓ Solution ${context.solutionId || "?"} — ${context.turn} tool calls</div>` })),
     ]},
 
     // ═══ ERROR ═══════════════════════════════════════════════════════════════
@@ -369,10 +317,7 @@ ${context.timeline ? `Timeline:\n${context.timeline}` : ""}`,
         emit(({ context }) => ({ type: "@status", data: `<span class="text-red-400">● error</span>` })),
         emit(({ context }) => ({ type: "@progress", data: `<div class="text-xs text-red-400">✗ ${context.error}</div>` })),
       ],
-      on: {
-        retry: { target: "login", actions: assign({ retries: ({ context }) => context.retries + 1, error: () => null }) },
-        request: { target: "login", actions: assign({ prompt: ({ event }) => event.prompt || "", error: () => null, retries: () => 0, turn: () => 0, history: () => [], timeline: () => "" }) },
-      },
+      on: { retry: { target: "login", actions: assign({ retries: ({ context }) => context.retries + 1, error: () => null }) } },
     },
   },
 });
