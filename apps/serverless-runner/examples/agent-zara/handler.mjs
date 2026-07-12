@@ -172,23 +172,25 @@ IMPORTANT:
     // AI emits tool-call events — show progress
     "tool-call": { actions: emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-blue-300">→ ${event.toolName}(${JSON.stringify(event.args || {}).substring(0, 60)})</div>` })) },
     "tool-result": { actions: [
-      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-gray-500">← ${(event.result?.content?.[0]?.text || JSON.stringify(event.result) || "").substring(0, 80)}</div>` })),
+      emit(({ event }) => ({ type: "@progress", data: `<div class="text-xs text-gray-500">← [${event.toolName}] ${(typeof event.result === "string" ? event.result : JSON.stringify(event.result) || "").substring(0, 80)}</div>` })),
       assign({
         turn: ({ context }) => context.turn + 1,
         lastSnapshot: ({ context, event }) => {
-          const text = event.result?.content?.[0]?.text || "";
+          const text = typeof event.result === "string" ? event.result : "";
           return text.includes("Page URL:") ? text : context.lastSnapshot;
         },
         solutionId: ({ context, event }) => {
           if (context.solutionId) return context.solutionId;
-          const text = event.result?.content?.[0]?.text || "";
+          const text = typeof event.result === "string" ? event.result : "";
           const m = text.match(/\/solutions\/([0-9a-f-]{36})/);
           return m ? m[1] : context.solutionId;
         },
       }),
     ]},
-    // AI output = phase done
+    // AI output = stream finished (after __done__ or maxSteps)
     "output": { actions: assign({ phaseDone: () => true }) },
+    // AI finish = tool loop ended
+    "finish": { actions: assign({ phaseDone: () => true }) },
   },
 
   states: {
