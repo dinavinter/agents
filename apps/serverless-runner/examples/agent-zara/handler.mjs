@@ -205,27 +205,43 @@ IMPORTANT:
       })}},
     },
 
-    // ═══ LOGIN ═══════════════════════════════════════════════════════════════
+    // ═══ LOGIN (deterministic — no AI needed) ═════════════════════════════════
     login: {
-      entry: [
-        emit({ type: "@status", data: `<span class="text-blue-400">● login</span>` }),
-        // Kick off login by sending to AI
-        sendTo("ai", ({ context }) => ({
-          type: "phase",
-          phase: "login",
-          objective: "Navigate to Joule Studio and login with IAS credentials",
-          doneWhen: "Page shows Conversations/Spaces/Develop nav",
-          prompt: `Login to ${globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com"}/new/build with username ${globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com"} and password ${globalThis.process?.env?.IAS_PASSWORD || "openCODE1!"}. Use browser_run_code_unsafe to fill the form.`,
-          solutionId: context.solutionId,
-          hints: "",
-        })),
-      ],
-      on: {
-        "output": [
-          { guard: ({ context }) => !!context.solutionId, target: "building", actions: assign({ phaseDone: () => false }) },
-          { target: "create", actions: assign({ phaseDone: () => false }) },
-        ],
+      initial: "navigate",
+      entry: emit({ type: "@status", data: `<span class="text-blue-400">● login</span>` }),
+      states: {
+        navigate: {
+          entry: () => { callMCP("browser_navigate", { url: (globalThis.process?.env?.DAS_HOST || "https://joule-studio.example.com") + "/new/build" }).catch(() => {}); },
+          after: { 1000: "wait" },
+        },
+        wait: {
+          entry: () => { callMCP("browser_wait_for", { time: 3 }).catch(() => {}); },
+          after: { 4000: "fill" },
+        },
+        fill: {
+          entry: () => {
+            const u = globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com";
+            const p = globalThis.process?.env?.IAS_PASSWORD || "openCODE1!";
+            callMCP("browser_run_code_unsafe", { code: `async (page) => { try { const e = page.locator('input[type="email"], input[type="text"], input[name*="user"]').first(); await e.fill('${u}'); const b = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first(); await b.click(); await page.waitForTimeout(2000); const pw = page.locator('input[type="password"]').first(); await pw.fill('${p}'); const s = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first(); await s.click(); await page.waitForTimeout(5000); } catch(err) {} return page.url(); }` }).catch(() => {});
+          },
+          after: { 12000: "verify" },
+        },
+        verify: {
+          invoke: {
+            src: () => callMCP("browser_snapshot", {}),
+            onDone: {
+              target: "done",
+              actions: assign({ lastSnapshot: ({ event }) => typeof event.output === "string" ? event.output : "" }),
+            },
+            onError: { target: "done" },
+          },
+        },
+        done: { type: "final" },
       },
+      onDone: [
+        { guard: ({ context }) => !!context.solutionId, target: "building" },
+        { target: "create" },
+      ],
     },
 
     // ═══ CREATE ══════════════════════════════════════════════════════════════
