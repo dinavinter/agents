@@ -90,6 +90,14 @@ const aiTools = {
     parameters: z.object({}),
     execute: async () => callMCP("browser_snapshot", {}),
   }),
+  joule_chat_send: tool({
+    description: "Type a message into Joule Studio chat and submit. Use this when you need to send a prompt to Joule — it handles the shadow DOM chat input that may not appear in snapshots.",
+    parameters: z.object({ message: z.string().describe("The message to send to Joule") }),
+    execute: async ({ message }) => {
+      const escaped = message.replace(/'/g, "\\'").replace(/\n/g, "\\n");
+      return callMCP("browser_run_code_unsafe", { code: `async (page) => { const selectors = ['[placeholder*="Message"]', 'textarea', '[contenteditable="true"]', '[role="textbox"]', '.chat-input', 'tiptap-editor']; let input = null; for (const sel of selectors) { input = page.locator(sel).first(); if (await input.count() > 0) break; } if (!input || await input.count() === 0) { const frames = page.frames(); for (const f of frames) { for (const sel of selectors) { input = f.locator(sel).first(); if (await input.count() > 0) break; } if (input && await input.count() > 0) break; } } if (!input || await input.count() === 0) throw new Error('Chat input not found'); await input.click(); await input.fill('${escaped}'); await page.keyboard.press('Enter'); await page.waitForTimeout(2000); return 'Message sent: ${escaped.substring(0, 50)}'; }` });
+    },
+  }),
   suggest_hint: tool({
     description: "Save a UI hint observation for future runs",
     parameters: z.object({ phase: z.string(), old_hint: z.string(), new_hint: z.string() }),
@@ -132,16 +140,29 @@ export const machine = setup({
       maxSteps: 20,
       system: `You are Zara, browser automation agent for Joule Studio.
 You have browser tools that execute immediately and return results.
-Use browser_snapshot or get_context to see the page before acting.
-Use browser_run_code_unsafe when snapshot refs don't work (shadow DOM, custom elements).
-Call __done__ when the phase objective is met.
+
+KEY TOOLS:
+- browser_snapshot / get_context: See the current page. ALWAYS call this first.
+- joule_chat_send: Send a message to Joule's chat. USE THIS to create solutions and answer questions.
+  The chat input is in shadow DOM and won't appear in snapshots — joule_chat_send handles this.
+- browser_run_code_unsafe: Run arbitrary Playwright code when other tools don't work.
+- browser_click: Click elements using refs from snapshot (e.g. target: "e22").
+- browser_wait_for: Wait for time or text to appear.
+- __done__: Call this when the phase objective is complete.
+
+WORKFLOW FOR CREATE PHASE:
+1. get_context to see the page
+2. joule_chat_send with your solution description
+3. browser_wait_for time:10 (Joule processes)
+4. get_context to check if URL changed to /solutions/<uuid>
+5. If Joule asks questions, use joule_chat_send to answer
+6. __done__ when URL has /solutions/<uuid>
 
 IMPORTANT:
-- Always snapshot first if you don't know page state
-- Use element refs from snapshot (e.g. target: "e22")  
-- URL is the most reliable completion signal
-- Chat input may be in shadow DOM — use browser_run_code_unsafe
-- Wait 3-5s after page-changing actions before snapshotting`,
+- The chat input is NOT visible in snapshots — always use joule_chat_send
+- URL is the most reliable signal for phase completion
+- If something fails, try browser_run_code_unsafe as last resort
+- Wait 3-5s after actions before taking snapshots`,
     }),
   },
   types: { input: {}, context: {}, emitted: {} },
