@@ -243,9 +243,9 @@ IMPORTANT:
           entry: () => {
             const u = globalThis.process?.env?.IAS_USERNAME || "opencode@pyzlo.com";
             const p = globalThis.process?.env?.IAS_PASSWORD || "openCODE1!";
-            callMCP("browser_run_code_unsafe", { code: `async (page) => { try { const e = page.locator('input[type="email"], input[type="text"], input[name*="user"]').first(); await e.fill('${u}'); const b = page.locator('button, input[type="submit"]').filter({hasText: /continue|log on|sign in/i}).first(); await b.click(); await page.waitForTimeout(2000); const pw = page.locator('input[type="password"]').first(); await pw.fill('${p}'); const s = page.locator('button, input[type="submit"]').filter({hasText: /log on|continue|sign in/i}).first(); await s.click(); await page.waitForTimeout(5000); } catch(err) {} return page.url(); }` }).catch(() => {});
+            callMCP("browser_run_code_unsafe", { code: `async (page) => { try { await page.locator('input[type="text"], input[name*="user"], input[name*="email"], [placeholder*="Email"]').first().fill('${u}'); await page.locator('input[type="password"]').first().fill('${p}'); await page.locator('button:has-text("Continue"), button:has-text("Log On"), button:has-text("Sign In"), input[type="submit"]').first().click(); await page.waitForTimeout(8000); } catch(err) { console.log('login err:', err.message); } return page.url(); }` }).catch(() => {});
           },
-          after: { 12000: "verify" },
+          after: { 15000: "verify" },
         },
         verify: {
           invoke: {
