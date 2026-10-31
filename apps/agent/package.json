@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "type": "module",
-  "packageManager": "pnpm@9.12.3",
-  "scripts": {
+   "scripts": {
     "dev": "pnpm tsx-env ./server/dev.ts --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "pnpm tsx-env ./index.ts",
@@ -48,9 +47,9 @@
     "openai": "^4.20.1",
     "parse5": "^7.1.2",
     "pinecone-client": "^2.0.0",
-    "sap-ai-token": "REDACTED",
+    "sap-ai-token": "workspace:*",
     "xstate": "^5.16.0",
-    "yjs": "^13.6.18"
+    "yjs": "^13.6.23"
   },
   "devDependencies": {
     "@fastify/one-line-logger": "^1.4.0",

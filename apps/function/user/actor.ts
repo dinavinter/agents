@@ -78,11 +78,11 @@ export const setAccount: PromiseActorLogic<any, Account & { access_token: string
       "timestamp": 1738767327,
       "callId": "ec02199312f54572b49c03d26252d64d",
       "version": "3.0",
-      "apiKey": "REDACTED",
+      "apiKey": "4_duyw1TGSxtcBMz-EOZYtWg",
       "endpoint": "accounts.register",
       "data": {
         "accountType": "full",
-        "apiKey": "REDACTED",
+        "apiKey": "4_duyw1TGSxtcBMz-EOZYtWg",
         "uid": "f57a2f18e174407aa6d1fbdfe5fd8127",
         "params": {
           "profile": { "firstName": null, "lastName": null },

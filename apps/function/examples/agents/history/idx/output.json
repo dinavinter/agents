@@ -1,0 +1,186 @@
+{
+    "id": "idx-gen:203",
+    "collection": null,
+    "loaded": false,
+    "synced": false,
+    "should_load": true,
+    "meta": null,
+    "json": {
+      "emitted": [
+        {
+          "offset": 0,
+          "id": "1",
+          "data": "\u003Cmain class=\"mx-auto bg-slate-100 min-h-screen p-6\"\u003E\n                            \u003Cheader class=\"sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-center p-4 text-lg font-medium shadow\"\u003E\n                                IDX Flow Builder\n                            \u003C/header\u003E\n                            \u003Cdiv class=\"flex flex-col items-center justify-center gap-6\"  hx-swap=\"beforeend\"  \u003E\n                                \u003Cform  class=\"isolate flex flex-col gap-4 w-full p-4\"\u003E\n                                    \u003Cdiv class=\"flex gap-2\" sse-swap=\"request\" hx-swap=\"outerHTML\"\u003E\n                                        \u003Cinput type=\"text\"\n                                            autocomplete=\"on\"\n                                            list=\"idx-prompt\"\n                                            class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                                            name=\"request\"\n                                            placeholder=\"What kind of app would you like to build?\" /\u003E\n                                        \u003Cbutton class=\"px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors\"\n                                                hx-post=\"events/request\"\n                                                hx-target=\"this\"\u003ECreate\u003C/button\u003E\n                                    \u003C/div\u003E\n                                    \u003Cpre sse-swap=\"@steps.text-delta\" \u003E \u003C/pre\u003E\n                                    \u003Cdatalist id=\"idx-prompt\" \u003E\n                                        \u003Coption value=\"please create me a dataflow which sync my accounts with sftp\"\u003E\u003C/option\u003E\n                                    \u003C/datalist\u003E\n                                \u003C/form\u003E\n                               \n                                \u003Cpre class=\"text-pretty\" contenteditable\u003E\u003Ccode sse-swap=\"steps\" hx-swap=\"beforeend\"\u003E\u003C/code\u003E \u003C/pre\u003E\n                                \u003Cpre class=\"text-red-900 text-pretty\" sse-swap=\"error\" hx-swap=\"innerHTML\" contenteditable\u003E \u003C/pre\u003E \n       \n                            \u003C/div\u003E\n                        \u003C/main\u003E",
+          "type": "message",
+          "timestamp": 1738425074004
+        },
+        {
+          "offset": 0,
+          "id": "1",
+          "data": "\u003Cmain class=\"mx-auto bg-slate-100 min-h-screen p-6\"\u003E\n                            \u003Cheader class=\"sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-center p-4 text-lg font-medium shadow\"\u003E\n                                IDX Flow Builder\n                            \u003C/header\u003E\n                            \u003Cdiv class=\"flex flex-col items-center justify-center gap-6\"  hx-swap=\"beforeend\"  \u003E\n                                \u003Cform  class=\"isolate flex flex-col gap-4 w-full p-4\"\u003E\n                                    \u003Cdiv class=\"flex gap-2\" sse-swap=\"request\" hx-swap=\"outerHTML\"\u003E\n                                        \u003Cinput type=\"text\"\n                                            autocomplete=\"on\"\n                                            list=\"idx-prompt\"\n                                            class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                                            name=\"request\"\n                                            placeholder=\"What kind of app would you like to build?\" /\u003E\n                                        \u003Cbutton class=\"px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors\"\n                                                hx-post=\"events/request\"\n                                                hx-target=\"this\"\u003ECreate\u003C/button\u003E\n                                    \u003C/div\u003E\n                                    \u003Cpre sse-swap=\"@steps.text-delta\" \u003E \u003C/pre\u003E\n                                    \u003Cdatalist id=\"idx-prompt\" \u003E\n                                        \u003Coption value=\"please create me a dataflow which sync my accounts with sftp\"\u003E\u003C/option\u003E\n                                    \u003C/datalist\u003E\n                                \u003C/form\u003E\n                               \n                                \u003Cpre class=\"text-pretty\" contenteditable\u003E\u003Ccode sse-swap=\"steps\" hx-swap=\"beforeend\"\u003E\u003C/code\u003E \u003C/pre\u003E\n                                \u003Cpre class=\"text-red-900 text-pretty\" sse-swap=\"error\" hx-swap=\"innerHTML\" contenteditable\u003E \u003C/pre\u003E \n       \n                            \u003C/div\u003E\n                        \u003C/main\u003E",
+          "type": "message",
+          "timestamp": 1738425080820
+        },
+        {
+          "offset": 9395,
+          "id": "1",
+          "data": "\u003Cdiv class=\"flex gap-2 w-full p-4\"\u003E\n                                   \u003Cinput type=\"text\"\n                                   class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                                   name=\"request\"\n                                   disabled\n                                   value=\"please create me a dataflow which sync my accounts'  age  with sftp\" /\u003E\n                                 \u003C/div\u003E ",
+          "type": "request",
+          "defer": 250,
+          "timestamp": 1738425083399
+        },
+        {
+          "offset": 9393,
+          "id": "1",
+          "data": "\u003Cdiv class=\"flex gap-2 w-full p-4\"\u003E\n                                   \u003Cinput type=\"text\"\n                                   class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                                   name=\"request\"\n                                   disabled\n                                   value=\"please create me a dataflow which sync my accounts'  age  with sftp\" /\u003E\n                                 \u003C/div\u003E ",
+          "type": "request",
+          "defer": 250,
+          "timestamp": 1738425083397
+        },
+        {
+          "offset": 11101,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"1\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"1\",\n  \"type\": \"datasource.read.gigya.account\",\n  \"next\": \"2\",\n  \"outputs\": [\n    {\n      \"description\": \"Array of user account objects containing profile data\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425085105
+        },
+        {
+          "offset": 11126,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"1\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"1\",\n  \"type\": \"datasource.read.gigya.account\",\n  \"next\": \"2\",\n  \"outputs\": [\n    {\n      \"description\": \"Array of user account objects containing profile data\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425085130
+        },
+        {
+          "offset": 11485,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"2\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"2\",\n  \"type\": \"field.rename\",\n  \"next\": \"3\",\n  \"outputs\": [\n    {\n      \"description\": \"Array of objects with 'age' field renamed\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425085489
+        },
+        {
+          "offset": 11595,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"2\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"2\",\n  \"type\": \"field.remove\",\n  \"next\": \"3\",\n  \"outputs\": [\n    {\n      \"description\": \"Array of user account objects containing only the 'age' field\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425085599
+        },
+        {
+          "offset": 11905,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"3\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"3\",\n  \"type\": \"file.format.dsv\",\n  \"next\": \"4\",\n  \"outputs\": [\n    {\n      \"description\": \"DSV file containing account data with 'age' field\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425085909
+        },
+        {
+          "offset": 12064,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"3\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"3\",\n  \"type\": \"file.format.dsv\",\n  \"next\": \"4\",\n  \"outputs\": [\n    {\n      \"description\": \"String of age data in DSV format\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425086068
+        },
+        {
+          "offset": 12285,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"4\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"4\",\n  \"type\": \"datasource.write.sftp\",\n  \"outputs\": [\n    {\n      \"description\": \"Confirmation of successful file upload to SFTP server\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425086289
+        },
+        {
+          "offset": 12613,
+          "id": "1",
+          "data": "\u003Carticle class=\"shadow\"\u003E\u003Ccode sse-swap=\"4\" hx-swap=\"innerHTML\" lang=\"json\"\u003E{\n  \"id\": \"4\",\n  \"type\": \"datasource.write.sftp\",\n  \"outputs\": [\n    {\n      \"description\": \"Indicates whether the age data was successfully uploaded to the SFTP server\"\n    }\n  ]\n}\u003C/code\u003E,\u003C/article\u003E",
+          "type": "steps",
+          "timestamp": 1738425086617
+        },
+        {
+          "offset": 13220,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425085103,\n  \"offset\": 1706,\n  \"id\": \"1\",\n  \"type\": \"datasource.read.gigya.account\",\n  \"next\": \"2\",\n  \"outputs\": [\n    {\n      \"name\": \"accounts\",\n      \"type\": \"array\",\n      \"description\": \"Array of user account objects containing UID and age\"\n    }\n  ],\n  \"description\": \"Reads user accounts from Gigya platform\",\n  \"params\": {\n    \"select\": \"UID, profile.age\",\n    \"from\": \"accounts\",\n    \"where\": \"profile.age IS NOT NULL\",\n    \"consent\": \"consent\",\n    \"orderBy\": \"UID\",\n    \"deltaField\": \"lastUpdatedTimestamp\"\n  }\n}",
+          "type": "1",
+          "timestamp": 1738425087224
+        },
+        {
+          "offset": 13597,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425085129,\n  \"offset\": 24,\n  \"id\": \"1\",\n  \"type\": \"datasource.read.gigya.account\",\n  \"next\": \"2\",\n  \"outputs\": [\n    {\n      \"name\": \"accounts\",\n      \"type\": \"array\",\n      \"description\": \"Array of user account objects containing UID and age\"\n    }\n  ],\n  \"description\": \"Syncs user account ages with an SFTP server\",\n  \"params\": {\n    \"select\": \"UID, profile.age\",\n    \"from\": \"accounts\",\n    \"where\": \"profile.age IS NOT NULL\",\n    \"consent\": \"consent\",\n    \"orderBy\": \"UID\",\n    \"deltaField\": \"lastUpdatedTimestamp\"\n  }\n}",
+          "type": "1",
+          "timestamp": 1738425087601
+        },
+        {
+          "offset": 14056,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425085488,\n  \"offset\": 358,\n  \"id\": \"2\",\n  \"type\": \"field.rename\",\n  \"next\": \"3\",\n  \"outputs\": [\n    {\n      \"name\": \"renamedData\",\n      \"type\": \"object\",\n      \"description\": \"Array of objects with 'age' field renamed\"\n    }\n  ],\n  \"description\": \"Renames the 'age' field to sync with SFTP\",\n  \"params\": {\n    \"fields\": [\n      {\n        \"sourceField\": \"age\",\n        \"targetField\": \"accountAge\"\n      }\n    ]\n  }\n}",
+          "type": "2",
+          "timestamp": 1738425088060
+        },
+        {
+          "offset": 14506,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425085597,\n  \"offset\": 108,\n  \"id\": \"2\",\n  \"type\": \"field.remove\",\n  \"next\": \"3\",\n  \"outputs\": [\n    {\n      \"name\": \"accounts\",\n      \"type\": \"object\",\n      \"description\": \"Array of user account objects containing only the 'age' field\"\n    }\n  ],\n  \"description\": \"Array of user account objects containing only the 'age' field\",\n  \"params\": {\n    \"fields\": [\n      \"profile.firstName\",\n      \"profile.lastName\",\n      \"profile.email\",\n      \"profile.address\"\n    ]\n  }\n}",
+          "type": "2",
+          "timestamp": 1738425088510
+        },
+        {
+          "offset": 15155,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425085908,\n  \"offset\": 309,\n  \"id\": \"3\",\n  \"type\": \"file.format.dsv\",\n  \"next\": \"4\",\n  \"outputs\": [\n    {\n      \"name\": \"formatted_dsv_file\",\n      \"type\": \"file\",\n      \"description\": \"DSV file containing account data with 'age' field\"\n    }\n  ],\n  \"description\": \"Format account data with 'age' field to DSV for SFTP sync\",\n  \"params\": {\n    \"fileName\": \"account_data_${now}.dsv\",\n    \"columnSeparator\": \",\",\n    \"quoteFields\": true,\n    \"writeHeader\": true,\n    \"lineEnd\": \"\\n\",\n    \"createEmptyFile\": false\n  }\n}",
+          "type": "3",
+          "timestamp": 1738425089159
+        },
+        {
+          "offset": 15693,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425086067,\n  \"offset\": 158,\n  \"id\": \"3\",\n  \"type\": \"file.format.dsv\",\n  \"next\": \"4\",\n  \"outputs\": [\n    {\n      \"name\": \"ageDataDSV\",\n      \"type\": \"string\",\n      \"description\": \"String of age data in DSV format\"\n    }\n  ],\n  \"description\": \"Format age data in DSV format for SFTP transfer\",\n  \"params\": {\n    \"fileName\": \"AGE_DATA_SYNC_${now}.csv\",\n    \"columnSeparator\": \",\",\n    \"quoteFields\": true,\n    \"writeHeader\": true,\n    \"lineEnd\": \"\\n\",\n    \"createEmptyFile\": false\n  }\n}",
+          "type": "3",
+          "timestamp": 1738425089697
+        },
+        {
+          "offset": 15979,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425086287,\n  \"offset\": 219,\n  \"id\": \"4\",\n  \"type\": \"datasource.write.sftp\",\n  \"outputs\": [\n    {\n      \"name\": \"confirmation\",\n      \"type\": \"string\",\n      \"description\": \"Confirmation of successful account age sync to SFTP server\"\n    }\n  ],\n  \"description\": \"Syncs account ages with SFTP server\",\n  \"params\": {\n    \"host\": \"sftp.example.com\",\n    \"username\": \"user123\",\n    \"password\": \"securepassword\",\n    \"remotePath\": \"AccountAges\",\n    \"port\": 22\n  }\n}",
+          "type": "4",
+          "timestamp": 1738425089983
+        },
+        {
+          "offset": 15979,
+          "id": "1",
+          "data": "Done &#128640; &#128582;",
+          "type": "status",
+          "timestamp": 1738425089983
+        },
+        {
+          "offset": 16615,
+          "id": "1",
+          "data": "{\n  \"timestamp\": 1738425086616,\n  \"offset\": 327,\n  \"id\": \"4\",\n  \"type\": \"datasource.write.sftp\",\n  \"outputs\": [\n    {\n      \"name\": \"upload_status\",\n      \"type\": \"boolean\",\n      \"description\": \"Indicates whether the age data was successfully uploaded to the SFTP server\"\n    }\n  ],\n  \"description\": \"Syncs account age data with an SFTP server\",\n  \"params\": {\n    \"host\": \"sftp.example.com\",\n    \"username\": \"user123\",\n    \"password\": \"pass123\",\n    \"remotePath\": \"AccountAgeData\",\n    \"port\": 22\n  }\n}",
+          "type": "4",
+          "timestamp": 1738425090619
+        },
+        {
+          "offset": 16615,
+          "id": "1",
+          "data": "Done &#128640; &#128582;",
+          "type": "status",
+          "timestamp": 1738425090619
+        },
+        {
+          "offset": 0,
+          "id": "1",
+          "data": "\u003Cmain class=\"mx-auto bg-slate-100 min-h-screen p-6\"\u003E\n                            \u003Cheader class=\"sticky top-0 z-10 backdrop-blur-md bg-opacity-70 border-b border-gray-300 bg-white dark:bg-gray-800 flex items-center justify-center p-4 text-lg font-medium shadow\"\u003E\n                                IDX Flow Builder\n                            \u003C/header\u003E\n                            \u003Cdiv class=\"flex flex-col items-center justify-center gap-6\"  hx-swap=\"beforeend\"  \u003E\n                                \u003Cform  class=\"isolate flex flex-col gap-4 w-full p-4\"\u003E\n                                    \u003Cdiv class=\"flex gap-2\" sse-swap=\"request\" hx-swap=\"outerHTML\"\u003E\n                                        \u003Cinput type=\"text\"\n                                            autocomplete=\"on\"\n                                            list=\"idx-prompt\"\n                                            class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                                            name=\"request\"\n                                            placeholder=\"What kind of app would you like to build?\" /\u003E\n                                        \u003Cbutton class=\"px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors\"\n                                                hx-post=\"events/request\"\n                                                hx-target=\"this\"\u003ECreate\u003C/button\u003E\n                                    \u003C/div\u003E\n                                    \u003Cpre sse-swap=\"@steps.text-delta\" \u003E \u003C/pre\u003E\n                                    \u003Cdatalist id=\"idx-prompt\" \u003E\n                                        \u003Coption value=\"please create me a dataflow which sync my accounts with sftp\"\u003E\u003C/option\u003E\n                                    \u003C/datalist\u003E\n                                \u003C/form\u003E\n                               \n                                \u003Cpre class=\"text-pretty\" contenteditable\u003E\u003Ccode sse-swap=\"steps\" hx-swap=\"beforeend\"\u003E\u003C/code\u003E \u003C/pre\u003E\n                                \u003Cpre class=\"text-red-900 text-pretty\" sse-swap=\"error\" hx-swap=\"innerHTML\" contenteditable\u003E \u003C/pre\u003E \n       \n                            \u003C/div\u003E\n                        \u003C/main\u003E",
+          "type": "message",
+          "timestamp": 1738425271903
+        },
+        {
+          "offset": 198018,
+          "id": "1",
+          "data": "\u003Cdiv class=\"flex gap-2 w-full p-4\"\u003E\n                                   \u003Cinput type=\"text\"\n                                   class=\"flex-1 p-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent\"\n                                   name=\"request\"\n                                   disabled\n                                   value=\"please create me a dataflow which sync my accounts'  age  with sftp\" /\u003E\n                                 \u003C/div\u003E ",
+          "type": "request",
+          "defer": 250,
+          "timestamp": 1738425272022
+        }
+      ],
+      "": {
+  
+      }
+    }
+  }

@@ -1,0 +1,34 @@
+{
+  "name": "websocket-server",
+  "version": "1.0.0",
+  "main": "dist/index.cjs",
+  "bin": "dist/index.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "rollup -c --watch",
+    "start": "HOST=0.0.0.0 PORT=8080  node dist/index.cjs",
+    "build": "rm -rf dist && rollup -c ",
+    "lint": "standard && tsc",
+    "test": "npm run lint" 
+
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "engines": {
+    "yarn": "1.22.19",
+    "npm": "10.9.2",
+    "node": "22.*"
+  },
+  "dependencies": {
+    "@y/websocket-server": "^0.1.1",
+    "dotenv": "^16.5.0",
+    "lib0": "^0.2.108",
+    "ws": "^6.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "rollup": "^4.39.0",
+    "standard": "^17.0.0"
+  }
+}

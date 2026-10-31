@@ -22,7 +22,7 @@
     "jest": "npm:jest@^29.7.0",
     "xstate": "https://esm.sh/xstate@^5.19.0",
     "y-partykit": "https://esm.sh/y-partykit@^0.0.32",
-    "yjs": "https://esm.sh/yjs@^13.6.23",
+    "yjs": "https://esm.sh/yjs@^13.6.26",
     "https://esm.sh/lib0@0.2.99/denonex": "https://esm.sh/lib0@0.2.99/time?target=es2022",
     "zod": "npm:zod@^3.24.1"
   },

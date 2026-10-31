@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "clean-all-node-modules-in-workspace": "rm -rf $(ls -d */node_modules | awk '{print $1}')",
+    "clan-lock-file": "rm -f pnpm-lock.yaml && rm -f apps/agent/pnpm-lock.yaml && rm -f apps/hocuspocus/pnpm-lock.yaml && rm -f apps/agent/package-lock.json && rm -f apps/hocuspocus/package-lock.json && rm -f apps/agent/yarn.lock && rm -f apps/hocuspocus/yarn.lock",
+    "clean": "rm -rf node_modules && rm -rf apps/agent/node_modules && rm -rf apps/hocuspocus/node_modules && rm -rf apps/agent/dist && rm -rf apps/hocuspocus/dist",
     "dev": "pnpm agent:dev",
     "agent:dev": "cd apps/agent && pnpm dev",
     "agent:start": "cd apps/agent && pnpm start"

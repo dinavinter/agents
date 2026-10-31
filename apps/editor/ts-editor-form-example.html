@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YJS Components Test</title>
+  <!-- <script type="module" src="/src/ts-editor-form.ts"></script> -->
+   <script type="module" src="/src/connect.ts"></script>
+  <script type="module" src="/src/index.ts"></script>
+  <script type="module" src="/src/yjs-text-input.ts"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .test-case {
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+    }
+    .test-inputs {
+      display: grid;
+      gap: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+    }
+    .banner {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      border-bottom-left-radius: 1.5rem;
+      border-bottom-right-radius: 1.5rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .container {
+      background: #fff;
+      margin-top: -60px;
+      border-radius: 1.5rem;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+      padding: 2.5rem 2rem 2rem 2rem;
+      max-width: 800px;
+      width: 100%;
+      z-index: 1;
+      position: relative;
+    }
+    h1, h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      margin: 0 0 1.5rem 0;
+    }
+    h1 {
+      font-size: 2rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 2rem;
+    }
+    .lucide {
+      width: 2rem;
+      height: 2rem;
+      color: #6366f1;
+      vertical-align: middle;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .test-group {
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .test-group h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+      color: #4b5563;
+    }
+    .test-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      
+    }
+    button {
+      background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-right: 0.5rem;
+    }
+    button[type="reset"] {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .result {
+      background: #f1f5f9;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      color: #334155;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    #result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f5f5f5;
+      border-radius: 0.5rem;
+    }
+    .success { color: #22c55e; }
+    .error { color: #ef4444; }
+    .buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <img class="banner" src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80" alt="Banner" />
+  <div class="container">
+    <h1>
+      <svg class="lucide" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16.5 7.5L7.5 16.5M8 8l8 8"/></svg>
+      YJS Components Test
+    </h1>
+    <ts-editor
+    component="test1"
+    url="%YJS_URL%"
+    room="test-room-2"
+  ></ts-editor>
+    <form id="test-form">
+      <div class="test-case">
+        <h2>Test: YJS Form Integration</h2>
+        <div class="test-inputs">
+          <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+            <p>Required Text Input:</p>
+            <yjs-text-input
+              name="input1"
+              url="%YJS_URL%"
+              room="test-room-1"
+              component="test1"
+              required
+            >
+            <ts-editor
+              component="test1"
+              url="%YJS_URL%"
+              room="test-room-1"
+              style="width: 100%; height: 100px;"
+            ></ts-editor>
+            </yjs-text-input>
+            <ts-editor
+            component="test1"
+            url="%YJS_URL%"
+            room="test-room-1"
+            style="width: 100%; height: 100px;"
+          ></ts-editor>
+          </div>
+          
+        </div>
+        <div class="buttons">
+          <button type="button" onclick="testSync()">Test Sync</button>
+          <button type="button" onclick="testForm()">Test Form</button>
+          <button type="submit">Submit Form</button>
+          <button type="reset">Reset Form</button>
+        </div>
+        <div id="result"></div>
+      </div>
+    </form>
+ 
+  </div>
+
+  <script>
+    const form = document.getElementById('test-form');
+    
+    // Form submission handler
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const result = document.getElementById('result');
+      result.innerHTML += `
+        <h3>Form Submission:</h3>
+        <pre>${JSON.stringify(Object.fromEntries(formData), null, 2)}</pre>
+      `;
+    });
+
+    // Form reset handler
+    form.addEventListener('reset', () => {
+      const result = document.getElementById('result');
+      result.innerHTML = '';
+    });
+
+    // Test function to verify YJS sync
+    async function testSync() {
+      const result = document.getElementById('result');
+      const input1 = document.querySelector('[name="input1"]');
+      const input2 = document.querySelector('[name="input2"]');
+      const editor1 = document.querySelectorAll('ts-editor')[0];
+      const editor2 = document.querySelectorAll('ts-editor')[1];
+      
+      result.innerHTML = '<p>Running tests...</p>';
+      
+      try {
+        // Test 1: YJS Text Input Sync
+        const testValue1 = 'test-input-' + Math.random().toString(36).slice(2);
+        await testComponents('YJS Text Input', input1, input2, testValue1);
+        
+        // Test 2: TS Editor Sync
+        const testValue2 = 'test-editor-' + Math.random().toString(36).slice(2);
+        await testComponents('TS Editor', editor1, editor2, testValue2);
+        
+      } catch (error) {
+        result.innerHTML += `<p class="error">Error: ${error.message}</p>`;
+      }
+    }
+
+    // Test form validation and submission
+    async function testForm() {
+      const result = document.getElementById('result');
+      const input1 = document.querySelector('[name="input1"]');
+      
+      result.innerHTML = '<h3>Form Test:</h3>';
+      
+      try {
+        // Test 1: Required field validation
+        input1.value = '';
+        const isValid = input1.checkValidity();
+        result.innerHTML += `
+          <p>Empty required field validation: <span class="${!isValid ? 'success' : 'error'}">${!isValid ? '✓' : '✗'}</span></p>
+        `;
+
+        // Test 2: Form submission with empty required field
+        const formValid = form.checkValidity();
+        result.innerHTML += `
+          <p>Form validity with empty required field: <span class="${!formValid ? 'success' : 'error'}">${!formValid ? '✓' : '✗'}</span></p>
+        `;
+
+        // Test 3: Form submission with valid data
+        input1.value = 'Test Value';
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const formValidAfter = form.checkValidity();
+        result.innerHTML += `
+          <p>Form validity with required field filled: <span class="${formValidAfter ? 'success' : 'error'}">${formValidAfter ? '✓' : '✗'}</span></p>
+        `;
+
+        // Test 4: Form Data collection
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        result.innerHTML += `
+          <p>Form Data:</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+
+      } catch (error) {
+        result.innerHTML += `<p class="error">Error: ${error.message}</p>`;
+      }
+    }
+
+    async function testComponents(testName, comp1, comp2, testValue) {
+      const result = document.getElementById('result');
+      
+      // Wait for initial sync
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check initial values
+      const initialMatch = comp1.value === comp2.value;
+      result.innerHTML += `
+        <h3>${testName} Test:</h3>
+        <p>Initial values match: <span class="${initialMatch ? 'success' : 'error'}">${initialMatch ? '✓' : '✗'}</span></p>
+        <p>Component 1: ${comp1.value || '(empty)'}</p>
+        <p>Component 2: ${comp2.value || '(empty)'}</p>
+      `;
+      
+      // Set new value
+      comp1.value = testValue;
+      
+      // Wait for sync
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Check sync
+      const syncMatch = comp1.value === comp2.value;
+      result.innerHTML += `
+        <p>After sync:</p>
+        <p>Values match: <span class="${syncMatch ? 'success' : 'error'}">${syncMatch ? '✓' : '✗'}</span></p>
+        <p>Component 1: ${comp1.value || '(empty)'}</p>
+        <p>Component 2: ${comp2.value || '(empty)'}</p>
+        <hr>
+      `;
+    }
+  </script>
+</body>
+</html> 

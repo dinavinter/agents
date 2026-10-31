@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",
+  "packageManager": "yarn@1.22.22",
+
   "scripts": {
     "build": "pnpm build:pkgroll",
     "build:tsup": "npx tsup ./index.ts --outDir ./dist --target=esnext --format esm --treeshake --shims --publicDir  ",
@@ -16,7 +18,7 @@
     "cf:deploy:test": "yarn run build && cf target -o gengig -s test && cf push -f ./manifest-test.yaml",
     "start": "node ./dist/index.mjs",
     "test": "node --import=tsx  --experimental-vm-modules --env-file=.env ./src/test.ts",
-    "cf:mount": "cf bind-service yjs flit -c '{\"readonly\":false, \"mount\":\"/var/yjs\"}'"
+    "cf:mount": "cf bind-service hp flit -c '{\"readonly\":false, \"mount\":\"/var/yjs\"}'"
   },
   "dependencies": {
     "@hocuspocus/extension-logger": "^2.14.0",
@@ -25,7 +27,7 @@
     "@hocuspocus/server": "^2.15.2",
     "sqlite3": "^5.1.7",
     "y-protocols": "^1.0.6",
-    "yjs": "^13.6.8"
+    "yjs": "^13.6.26"
 
 
   },
@@ -50,7 +52,7 @@
     }
   },
   "engines": {
-    "yarn": "1.22.19",
+    "yarn": "1.22.22",
     "npm": "10.9.2",
     "node": "22.*"
   }

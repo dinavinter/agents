@@ -1,27 +1,30 @@
-import { azure } from "https://esm.sh/@ai-sdk/azure";
-import {
-    asyncBatchEvents,
-    asyncEventGenerator,
+import { azure } from "@ai-sdk/azure";
+import {    
     fromAIElementStream,
     fromAIEventCallback,
     fromAIEventStream,
-    fromEventAsyncGenerator,
     pipeToAI,
-} from "https://esm.sh/@cxai/stream@1.0.17?target=esnext&yjs=13.6.20";
-import { type AnyStateMachine } from "https://esm.sh/xstate@5.19.w?target=esnext";
+} from "./";
+import { type AnyStateMachine } from "xstate";
+import {asyncBatchEvents, asyncEventGenerator} from "@/xstate";
+ 
 export type Actors = {
     stream: ReturnType<typeof fromAIEventStream>;
-    batch: ReturnType<typeof asyncBatchEvents>;
+    batch:  typeof asyncBatchEvents;
     aiElementStream: ReturnType<typeof fromAIElementStream>;
     aiStream: ReturnType<typeof fromAIEventStream>;
 };
 
-export type Actions = {
-    push: (context: { doc: Y.Doc }, params: string) => void;
-    appandText: (context: { doc: Y.Doc }, params: string) => void;
+
+
+type StateMachineWithAI<T extends AnyStateMachine = AnyStateMachine> = T & {
+    implementations: {
+        actors: T["implementations"]["actors"] & Actors
+    }
 };
 
-export default function (machine: AnyStateMachine): AnyStateMachine {
+
+export default function <T extends AnyStateMachine>(machine: T) {
     return machine.provide({
         actors: {
             stream: asyncEventGenerator,
@@ -43,6 +46,6 @@ export default function (machine: AnyStateMachine): AnyStateMachine {
                 temperature: 0.9,
             }),
         },
-    });
+    }) as StateMachineWithAI<T>;
 }
 

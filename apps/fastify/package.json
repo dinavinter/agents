@@ -2,7 +2,6 @@
   "name": "agent-route",
   "version": "1.0.0",
   "description": "",
-  "packageManager": "yarn@1.22.19",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -33,7 +32,7 @@
     "ws": "^8.18.0",
     "xstate": "^5.19.0",
     "y-partykit": "^0.0.32",
-    "yjs": "^13.6.23"
+    "yjs": "^13.6.26"
   },
   "devDependencies": {
     "@ai-sdk/openai": "^0.0.54",

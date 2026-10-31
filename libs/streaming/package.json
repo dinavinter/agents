@@ -1,6 +1,6 @@
 {
   "name": "@cxai/stream",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "",
   "scripts": {
     "build": "npm run build:pkgroll",
@@ -8,7 +8,7 @@
     "build:tsup": "tsup src/index.ts --format cjs,esm --dts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run build",
-    "publish": "npm publish --access public"
+    "publish": "npm publish --access public --no-git-check"
   },
   "publishConfig": {
     "access": "public",
@@ -48,13 +48,13 @@
     "atomico": "^1.79.2",
     "dotenv": "^16.4.5",
     "it-pushable": "^3.2.3",
-    "sap-ai-token": "REDACTED",
+    "sap-ai-token": "workspace:*",
     "ts-node": "^10.9.2",
     "tslib": "^2.6.3",
     "tsup": "^8.1.0",
     "tsx": "^4.16.2",
     "vite": "^5.3.1",
-    "xstate": "^5.16.0"
+    "xstate": "^5.19.2"
   },
   "default": "./dist/index.mjs",
   "main": "./dist/index.cjs",

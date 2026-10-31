@@ -19,7 +19,7 @@ export function codeiumCopilot() {
             ],
         }),
         copilotPlugin({
-            apiKey: "REDACTED",
+            apiKey: import.meta.env.VITE_COPILOT_API_KEY,
             shouldComplete(context) {
                 if (context.tokenBefore(["String"])) {
                     return true;

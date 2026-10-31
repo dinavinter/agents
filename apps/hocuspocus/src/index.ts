@@ -33,7 +33,7 @@ const server = Server.configure({
             
         }),
         new SQLite({
-            database: env.DATABASE || "yjs.sqlite",
+            database: env.DATABASE || "hp.sqlite",
         }),
     ],
     onRequest(data) {
